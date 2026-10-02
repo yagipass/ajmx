@@ -108,13 +108,21 @@ final class LocalAttachIT {
         assumeTrue(Ajmx.nativeMode(), "only the native binary runs in a process of its own that can be stalled");
         try (TargetJvm t = TargetJvm.start("-XX:-UsePerfData", "-XX:+DisableAttachMechanism")) {
             Ajmx.Result r = Ajmx.runNativeWhile(ajmx -> {
-                Thread.sleep(700);
+                awaitHandshake(t, ajmx);
                 signal("STOP", Long.toString(ajmx.pid()));
-                Thread.sleep(1600);
+                Thread.sleep(2500);
                 signal("CONT", Long.toString(ajmx.pid()));
             }, "--pid", t.pidArg(), "--timeout", "2s", "ping").assertError("ATTACH_NOT_SUPPORTED", 3);
             assertEquals(false, r.error().get("retryable"));
             assertEquals(List.of(), attachFiles(t.pid()));
+        }
+    }
+
+    private static void awaitHandshake(TargetJvm t, Process ajmx) throws InterruptedException {
+        long start = System.nanoTime();
+        while (attachFiles(t.pid()).isEmpty()) {
+            assertTrue(ajmx.isAlive() && elapsedMs(start) < 10_000, "ajmx must start the attach handshake");
+            Thread.sleep(1);
         }
     }
 

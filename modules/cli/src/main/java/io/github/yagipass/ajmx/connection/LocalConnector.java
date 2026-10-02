@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -26,7 +27,8 @@ final class LocalConnector {
     private static final long DETACH_TIMEOUT_MS = 1000;
     private static final long ATTACH_POLL_STEP_MS = 100;
     private static final long ATTACH_MARGIN_MS = 100;
-    private static final long HANDSHAKE_GRACE_MS = 1000;
+    private static final long HANDSHAKE_END_TIMEOUT_MS = 1000;
+    private static final long HANDSHAKE_INTERRUPT_STEP_MS = 10;
     private static final String DELETED = " (deleted)";
 
     private LocalConnector() {
@@ -35,20 +37,40 @@ final class LocalConnector {
     static JMXConnector connect(long pid, long timeoutMs) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         Map<String, Object> context = Map.of("pid", pid);
-        AtomicReference<CompletableFuture<AjmxException>> handshake = new AtomicReference<>();
+        AtomicReference<Handshake> handshake = new AtomicReference<>();
         return Timeouts.call(() -> attachAndConnect(pid, timeoutMs, deadline, handshake), timeoutMs,
                 () -> timedOutDuring(handshake.get(), timeoutMs), e -> JmxErrors.translate(e, context));
     }
 
-    private static AjmxException timedOutDuring(CompletableFuture<AjmxException> handshake, long timeoutMs) {
-        AjmxException failure = handshake == null ? null
-                : handshake.completeOnTimeout(null, HANDSHAKE_GRACE_MS, TimeUnit.MILLISECONDS).join();
-        return failure != null ? failure : timedOut(timeoutMs, null);
+    record Handshake(Thread thread, boolean hasPerfData, CompletableFuture<AjmxException> outcome) {
+        void end() {
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_END_TIMEOUT_MS);
+            while (!outcome.isDone() && deadline - System.nanoTime() > 0) {
+                thread.interrupt();
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_INTERRUPT_STEP_MS));
+            }
+        }
+
+        boolean answered() {
+            return outcome.isDone() && outcome.join() == null;
+        }
+    }
+
+    static AjmxException timedOutDuring(Handshake handshake, long timeoutMs) {
+        if (handshake == null) {
+            return timedOut(timeoutMs, null);
+        }
+        if (handshake.outcome().isDone()) {
+            AjmxException failure = handshake.outcome().join();
+            return failure != null ? failure : timedOut(timeoutMs, null);
+        }
+        handshake.end();
+        return handshake.answered() ? timedOut(timeoutMs, null) : notResponding(timeoutMs, null, handshake.hasPerfData());
     }
 
     @SuppressWarnings("BanJNDI")
     private static JMXConnector attachAndConnect(long pid, long timeoutMs, long deadline,
-            AtomicReference<CompletableFuture<AjmxException>> handshake) throws IOException {
+            AtomicReference<Handshake> handshake) throws IOException {
         ProcessHandle process = ProcessHandle.of(pid).filter(ProcessHandle::isAlive).orElseThrow(
                 () -> new AjmxException(ErrorCode.PROCESS_NOT_FOUND, "Process was not found"));
         ProcessHandle.Info info = process.info();
@@ -84,20 +106,20 @@ final class LocalConnector {
     }
 
     private static String startLocalAgent(long pid, long timeoutMs, long deadline, boolean hasPerfData,
-            AtomicReference<CompletableFuture<AjmxException>> handshake) {
+            AtomicReference<Handshake> handshake) {
         long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime());
         System.setProperty("sun.tools.attach.attachTimeout", Long.toString(attachTimeout(remainingMs - ATTACH_MARGIN_MS)));
-        CompletableFuture<AjmxException> failure = new CompletableFuture<>();
-        handshake.set(failure);
+        Handshake attempt = new Handshake(Thread.currentThread(), hasPerfData, new CompletableFuture<>());
+        handshake.set(attempt);
         VirtualMachine vm;
         try {
             vm = VirtualMachine.attach(Long.toString(pid));
         } catch (AttachNotSupportedException | IOException e) {
             AjmxException classified = classifyAttachFailure(timeoutMs, e, hasPerfData);
-            failure.complete(classified);
+            attempt.outcome().complete(classified);
             throw classified;
         } finally {
-            failure.complete(null);
+            attempt.outcome().complete(null);
         }
         try {
             return vm.startLocalManagementAgent();
@@ -127,13 +149,17 @@ final class LocalConnector {
         return e instanceof AttachOperationFailedException ? unavailable.disableRetry() : unavailable;
     }
 
+    private static AjmxException notResponding(long timeoutMs, Exception cause, boolean hasPerfData) {
+        return hasPerfData ? timedOut(timeoutMs, cause)
+                : new AjmxException(ErrorCode.ATTACH_NOT_SUPPORTED,
+                        "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)", cause)
+                        .with("timeoutMs", timeoutMs);
+    }
+
     static AjmxException classifyAttachFailure(long timeoutMs, Exception e, boolean hasPerfData) {
         String m = String.valueOf(e.getMessage()).toLowerCase(Locale.ROOT);
         if (m.contains("doesn't respond within")) {
-            return hasPerfData ? timedOut(timeoutMs, e)
-                    : new AjmxException(ErrorCode.ATTACH_NOT_SUPPORTED,
-                            "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)", e)
-                            .with("timeoutMs", timeoutMs);
+            return notResponding(timeoutMs, e, hasPerfData);
         }
         ErrorCode code;
         String message;

@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -96,6 +99,31 @@ final class LocalConnectorTest {
             } while (spent <= timeout);
             assertTrue(spent <= budget, budget + ": the JDK waits " + spent + "ms");
             assertTrue(spent + delay + 100 > budget, budget + ": the JDK could wait one more step");
+        }
+    }
+
+    @Test
+    void handshakeStillRunningWhenAjmxTimesOutIsEndedSoTheJdkRemovesItsAttachFileBeforeAjmxExits() {
+        for (boolean hasPerfData : new boolean[] { false, true }) {
+            CompletableFuture<AjmxException> outcome = new CompletableFuture<>();
+            AtomicInteger ignoredInterrupts = new AtomicInteger();
+            AtomicBoolean attachFileRemoved = new AtomicBoolean();
+            Thread jdk = Thread.ofPlatform().daemon().start(() -> {
+                for (int step = 1; step <= 10; step++) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException _) {
+                        ignoredInterrupts.incrementAndGet();
+                    }
+                }
+                attachFileRemoved.set(true);
+                outcome.complete(LocalConnector.classifyAttachFailure(2000, new AttachNotSupportedException(NO_RESPONSE), hasPerfData));
+            });
+            AjmxException e = LocalConnector.timedOutDuring(new LocalConnector.Handshake(jdk, hasPerfData, outcome), 2000);
+            assertTrue(attachFileRemoved.get(), "the JDK ignored " + ignoredInterrupts.get() + " interrupts and is still waiting");
+            assertEquals(hasPerfData ? ErrorCode.CONNECTION_TIMEOUT : ErrorCode.ATTACH_NOT_SUPPORTED, e.code());
+            assertEquals(hasPerfData, e.retryable());
+            assertEquals(2000L, e.details().get("timeoutMs"));
         }
     }
 
