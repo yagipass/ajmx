@@ -103,8 +103,27 @@ final class LocalAttachIT {
         }
     }
 
+    @Test
+    void jvmWithoutPerfDataThatIgnoresAttachIsNotRetryableEvenWhenAjmxTimesOutBeforeTheJdkGivesUp() throws Exception {
+        assumeTrue(Ajmx.nativeMode(), "only the native binary runs in a process of its own that can be stalled");
+        try (TargetJvm t = TargetJvm.start("-XX:-UsePerfData", "-XX:+DisableAttachMechanism")) {
+            Ajmx.Result r = Ajmx.runNativeWhile(ajmx -> {
+                Thread.sleep(700);
+                signal("STOP", Long.toString(ajmx.pid()));
+                Thread.sleep(1600);
+                signal("CONT", Long.toString(ajmx.pid()));
+            }, "--pid", t.pidArg(), "--timeout", "2s", "ping").assertError("ATTACH_NOT_SUPPORTED", 3);
+            assertEquals(false, r.error().get("retryable"));
+            assertEquals(List.of(), attachFiles(t.pid()));
+        }
+    }
+
     private static void signal(String name, TargetJvm t) throws Exception {
-        assertEquals(0, new ProcessBuilder("kill", "-" + name, t.pidArg()).start().waitFor());
+        signal(name, t.pidArg());
+    }
+
+    private static void signal(String name, String pid) throws Exception {
+        assertEquals(0, new ProcessBuilder("kill", "-" + name, pid).start().waitFor());
     }
 
     private static List<Path> attachFiles(long pid) {

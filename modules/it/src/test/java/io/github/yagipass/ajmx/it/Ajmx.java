@@ -83,7 +83,19 @@ final class Ajmx {
     }
 
     static Result run(Map<String, String> env, String stdin, String... args) throws Exception {
-        Result r = nativeMode() ? runNative(env, stdin, args) : runInProcess(env, stdin, args);
+        Result r = nativeMode() ? runNative(env, stdin, p -> {
+        }, args) : runInProcess(env, stdin, args);
+        assertSingleJsonDocument(r.stdout());
+        return r;
+    }
+
+    @FunctionalInterface
+    interface WhileRunning {
+        void accept(Process ajmx) throws Exception;
+    }
+
+    static Result runNativeWhile(WhileRunning whileRunning, String... args) throws Exception {
+        Result r = runNative(Map.of(), "", whileRunning, args);
         assertSingleJsonDocument(r.stdout());
         return r;
     }
@@ -109,7 +121,8 @@ final class Ajmx {
         return command;
     }
 
-    private static Result runNative(Map<String, String> env, String stdin, String... args) throws Exception {
+    private static Result runNative(Map<String, String> env, String stdin, WhileRunning whileRunning, String... args)
+            throws Exception {
         List<String> command = command(args);
         Path out = Files.createTempFile("ajmx-out", ".json");
         Path err = Files.createTempFile("ajmx-err", ".txt");
@@ -122,6 +135,7 @@ final class Ajmx {
             Process p = pb.start();
             p.getOutputStream().write(stdin.getBytes(StandardCharsets.UTF_8));
             p.getOutputStream().close();
+            whileRunning.accept(p);
             if (!p.waitFor(120, TimeUnit.SECONDS)) {
                 p.destroyForcibly();
                 fail("ajmx did not exit: " + command);

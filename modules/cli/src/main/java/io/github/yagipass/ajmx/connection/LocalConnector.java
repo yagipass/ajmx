@@ -5,7 +5,9 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -24,6 +26,7 @@ final class LocalConnector {
     private static final long DETACH_TIMEOUT_MS = 1000;
     private static final long ATTACH_POLL_STEP_MS = 100;
     private static final long ATTACH_MARGIN_MS = 100;
+    private static final long HANDSHAKE_GRACE_MS = 1000;
     private static final String DELETED = " (deleted)";
 
     private LocalConnector() {
@@ -32,12 +35,20 @@ final class LocalConnector {
     static JMXConnector connect(long pid, long timeoutMs) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         Map<String, Object> context = Map.of("pid", pid);
-        return Timeouts.call(() -> attachAndConnect(pid, timeoutMs, deadline), timeoutMs, () -> timedOut(timeoutMs, null),
-                e -> JmxErrors.translate(e, context));
+        AtomicReference<CompletableFuture<AjmxException>> handshake = new AtomicReference<>();
+        return Timeouts.call(() -> attachAndConnect(pid, timeoutMs, deadline, handshake), timeoutMs,
+                () -> timedOutDuring(handshake.get(), timeoutMs), e -> JmxErrors.translate(e, context));
+    }
+
+    private static AjmxException timedOutDuring(CompletableFuture<AjmxException> handshake, long timeoutMs) {
+        AjmxException failure = handshake == null ? null
+                : handshake.completeOnTimeout(null, HANDSHAKE_GRACE_MS, TimeUnit.MILLISECONDS).join();
+        return failure != null ? failure : timedOut(timeoutMs, null);
     }
 
     @SuppressWarnings("BanJNDI")
-    private static JMXConnector attachAndConnect(long pid, long timeoutMs, long deadline) throws IOException {
+    private static JMXConnector attachAndConnect(long pid, long timeoutMs, long deadline,
+            AtomicReference<CompletableFuture<AjmxException>> handshake) throws IOException {
         ProcessHandle process = ProcessHandle.of(pid).filter(ProcessHandle::isAlive).orElseThrow(
                 () -> new AjmxException(ErrorCode.PROCESS_NOT_FOUND, "Process was not found"));
         ProcessHandle.Info info = process.info();
@@ -52,7 +63,7 @@ final class LocalConnector {
             if (perf.isPresent() && !perf.get().attachable()) {
                 throw new AjmxException(ErrorCode.ATTACH_NOT_SUPPORTED, "The JVM disables the attach mechanism");
             }
-            address = startLocalAgent(pid, timeoutMs, deadline, perf.isPresent());
+            address = startLocalAgent(pid, timeoutMs, deadline, perf.isPresent(), handshake);
         }
         return JMXConnectorFactory.connect(new JMXServiceURL(address));
     }
@@ -72,14 +83,21 @@ final class LocalConnector {
         return name != null && name.toString().equals("java");
     }
 
-    private static String startLocalAgent(long pid, long timeoutMs, long deadline, boolean hasPerfData) {
+    private static String startLocalAgent(long pid, long timeoutMs, long deadline, boolean hasPerfData,
+            AtomicReference<CompletableFuture<AjmxException>> handshake) {
         long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime());
         System.setProperty("sun.tools.attach.attachTimeout", Long.toString(attachTimeout(remainingMs - ATTACH_MARGIN_MS)));
+        CompletableFuture<AjmxException> failure = new CompletableFuture<>();
+        handshake.set(failure);
         VirtualMachine vm;
         try {
             vm = VirtualMachine.attach(Long.toString(pid));
         } catch (AttachNotSupportedException | IOException e) {
-            throw classifyAttachFailure(timeoutMs, e, hasPerfData);
+            AjmxException classified = classifyAttachFailure(timeoutMs, e, hasPerfData);
+            failure.complete(classified);
+            throw classified;
+        } finally {
+            failure.complete(null);
         }
         try {
             return vm.startLocalManagementAgent();
