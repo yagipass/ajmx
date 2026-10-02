@@ -1,0 +1,6 @@
+[tagpr]
+	vPrefix = true
+	releaseBranch = main
+	versionFile = pom.xml,modules/cli/pom.xml,modules/it/pom.xml
+	changelog = false
+	release = false
