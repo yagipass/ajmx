@@ -1,6 +1,6 @@
 [tagpr]
 	vPrefix = true
 	releaseBranch = main
-	versionFile = pom.xml,modules/cli/pom.xml,modules/it/pom.xml
+	versionFile = pom.xml,modules/cli/pom.xml,modules/it/pom.xml,nix/ajmx.nix
 	changelog = false
 	release = false

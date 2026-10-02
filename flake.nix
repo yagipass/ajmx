@@ -1,6 +1,13 @@
 {
   description = "ajmx — agent-first JMX CLI";
 
+  nixConfig = {
+    extra-substituters = [ "https://ajmx.cachix.org" ];
+    extra-trusted-public-keys = [
+      "ajmx.cachix.org-1:GIHBWC7DAYdQHwsuTKF6ouPF0ziSXtxRcktMOr4xXMk="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts = {
@@ -38,6 +45,15 @@
           maven = pkgs.maven.override { jdk_headless = graalvm; };
         in
         {
+          packages = rec {
+            ajmx = pkgs.callPackage ./nix/ajmx.nix { };
+            default = ajmx;
+          };
+
+          checks = {
+            inherit (config.packages) ajmx;
+          };
+
           treefmt = {
             projectRootFile = "flake.nix";
             programs.nixfmt.enable = true;

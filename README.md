@@ -21,6 +21,8 @@ On macOS (Apple silicon) and Linux (x86_64, arm64):
 curl -fsSL https://github.com/yagipass/ajmx/releases/latest/download/install.sh | sh -s -- -b ~/.local/bin
 # or
 brew install yagipass/tap/ajmx
+# or
+nix profile install github:yagipass/ajmx
 ```
 
 ### Agent skill
