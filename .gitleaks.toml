@@ -1,0 +1,10 @@
+title = "ajmx"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated build output is never committed, but keep it out of manual scans."
+paths = [
+  '''(^|/)target/''',
+]

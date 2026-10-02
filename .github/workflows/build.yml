@@ -1,0 +1,128 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - run: nix flake check -L
+
+  native:
+    name: native (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-latest
+          - target: linux-amd64
+            runner: ubuntu-latest
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1.6.7
+        with:
+          java-version: "25"
+          distribution: graalvm-community
+          cache: maven
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and test the native executable
+        run: mvn -B -Pnative verify
+      - name: Check that only system libraries are linked
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then
+            otool -L modules/cli/target/ajmx
+            ! otool -L modules/cli/target/ajmx | tail -n +2 | grep -vE '^[[:space:]]+/(usr/lib|System/Library)/'
+          else
+            ldd modules/cli/target/ajmx
+            ! ldd modules/cli/target/ajmx | grep -vE 'linux-vdso|ld-linux|lib(c|z|m|dl|pthread|rt)\.so'
+          fi
+      - name: Package
+        run: |
+          cp modules/cli/target/ajmx "ajmx-${{ matrix.target }}"
+          shasum -a 256 "ajmx-${{ matrix.target }}" > "ajmx-${{ matrix.target }}.sha256"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ajmx-${{ matrix.target }}
+          path: |
+            ajmx-${{ matrix.target }}
+            ajmx-${{ matrix.target }}.sha256
+          if-no-files-found: error
+
+  jdk-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: zulu
+          java-version: |
+            8
+            11
+            17
+            21
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1.6.7
+        with:
+          java-version: "25"
+          distribution: graalvm-community
+          cache: maven
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unit and integration tests (JVM mode)
+        run: mvn -B verify
+      - name: Build the native executable
+        run: mvn -B -Pnative package -DskipTests
+      - name: Integration tests of the native executable per target JDK
+        run: |
+          for java in "$JAVA_HOME_8_X64" "$JAVA_HOME_11_X64" "$JAVA_HOME_17_X64" "$JAVA_HOME_21_X64" "$JAVA_HOME"; do
+            echo "::group::target $("$java/bin/java" -version 2>&1 | head -n 1)"
+            mvn -B -Pnative verify -DskipNativeBuild -Dajmx.test.java="$java/bin/java"
+            echo "::endgroup::"
+          done
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [checks, native, jdk-matrix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: ajmx-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            dist/*
+            install.sh
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* install.sh --repo "$GITHUB_REPOSITORY" --generate-notes
+
+  homebrew:
+    needs: release
+    permissions:
+      contents: read
+    uses: yagipass/homebrew-tap/.github/workflows/bump.yml@main
+    with:
+      formula: ajmx
+      tag: ${{ github.ref_name }}
+    secrets:
+      tap-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
