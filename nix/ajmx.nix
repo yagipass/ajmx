@@ -24,7 +24,7 @@ let
         ../modules/it/pom.xml
       ];
     };
-    mvnHash = "sha256-i8KuuAONVh5OdJs029TjWUt5WA8GWMDJeBS5cOf87s0=";
+    mvnHash = "sha256-2sEevyYPpy3GzO+YIdyf1/1Tey8nULqiqT8rvxTuZw8=";
     mvnParameters = "-pl modules/cli -am";
     doCheck = false;
     installPhase = ''
