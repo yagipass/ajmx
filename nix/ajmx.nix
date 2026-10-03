@@ -46,6 +46,10 @@ buildGraalvmNativeImage {
     runHook postInstallCheck
   '';
 
+  passthru = {
+    inherit (jar) fetchedMavenDeps;
+  };
+
   meta = {
     description = "JMX CLI for AI agents";
     homepage = "https://github.com/yagipass/ajmx";
