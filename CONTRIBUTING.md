@@ -26,7 +26,7 @@ Inside `modules/cli`, `mvn verify` runs only the unit tests. Inside `modules/it`
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
 - When the CLI's behavior changes, update `README.md` and `skills/ajmx/SKILL.md` with it.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
-- After changing a dependency or plugin in a POM, set `mvnHash` in `nix/ajmx.nix` to the hash that `nix build` reports as `got:`.
+- After changing a dependency or plugin in a POM, set `mvnHash` in `nix/ajmx.nix` to the hash that `nix build` reports as `got:`. On Dependabot pull requests, `mvn-hash.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
 
 ## Release
 
