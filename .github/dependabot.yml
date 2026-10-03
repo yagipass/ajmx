@@ -5,4 +5,8 @@ updates:
     schedule:
       interval: weekly
     commit-message:
-      prefix: ci
+      prefix: build
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
