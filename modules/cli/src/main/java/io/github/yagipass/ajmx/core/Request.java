@@ -6,6 +6,8 @@ import java.util.List;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 
@@ -42,21 +44,21 @@ public sealed interface Request {
         }
     }
 
-    record Write(ObjectName mbean, String attribute, Object value) implements Request {
+    record Write(ObjectName mbean, String attribute, @Nullable Object value) implements Request {
         @Override
         public Op op() {
             return Op.WRITE;
         }
     }
 
-    record Invoke(ObjectName mbean, String operation, List<Object> args, List<String> signature) implements Request {
+    record Invoke(ObjectName mbean, String operation, List<Object> args, @Nullable List<String> signature) implements Request {
         @Override
         public Op op() {
             return Op.INVOKE;
         }
     }
 
-    static Search search(String pattern) {
+    static Search search(@Nullable String pattern) {
         return new Search(objectName(pattern != null ? pattern : DEFAULT_SEARCH_PATTERN, "pattern"));
     }
 
@@ -74,11 +76,11 @@ public sealed interface Request {
         return new Read(name, distinct);
     }
 
-    static Write write(String mbean, String attribute, Object value) {
+    static Write write(String mbean, String attribute, @Nullable Object value) {
         return new Write(mbean(mbean), attribute, value);
     }
 
-    static Invoke invoke(String mbean, String operation, List<Object> args, List<String> signature) {
+    static Invoke invoke(String mbean, String operation, List<Object> args, @Nullable List<String> signature) {
         return new Invoke(mbean(mbean), operation, args, signature);
     }
 

@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -22,12 +24,13 @@ import io.github.yagipass.ajmx.json.Json;
 final class CliTest {
 
     private record Run(int exit, Map<?, ?> json, int bytes) {
+        @Nullable
         Object code() {
             return error().get("code");
         }
 
         Map<?, ?> error() {
-            return (Map<?, ?>) json.get("error");
+            return (Map<?, ?>) Objects.requireNonNull(json.get("error"));
         }
     }
 
@@ -35,7 +38,7 @@ final class CliTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int exit = Cli.run(args, new ByteArrayInputStream(new byte[0]), out,
                 new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8), Map.of());
-        return new Run(exit, (Map<?, ?>) Json.parse(out.toString(StandardCharsets.UTF_8)), out.size());
+        return new Run(exit, (Map<?, ?>) Objects.requireNonNull(Json.parse(out.toString(StandardCharsets.UTF_8))), out.size());
     }
 
     @Test
@@ -52,9 +55,9 @@ final class CliTest {
     @Test
     void envelopeFollowsTheContract() {
         Run r = run("nope");
-        assertEquals(1L, ((Number) r.json().get("schemaVersion")).longValue());
+        assertEquals(1L, ((Number) Objects.requireNonNull(r.json().get("schemaVersion"))).longValue());
         assertEquals(false, r.json().get("ok"));
-        Map<?, ?> error = (Map<?, ?>) r.json().get("error");
+        Map<?, ?> error = (Map<?, ?>) Objects.requireNonNull(r.json().get("error"));
         assertEquals(Set.of("code", "message", "retryable", "details"), error.keySet());
         assertTrue(r.json().get("durationMs") instanceof Number);
     }
@@ -66,9 +69,9 @@ final class CliTest {
         assertTrue(r.bytes() <= 512, () -> r.bytes() + " bytes");
         assertEquals("INVALID_ARGUMENT", r.code());
         assertEquals(2, r.exit());
-        Map<?, ?> details = (Map<?, ?>) r.error().get("details");
+        Map<?, ?> details = (Map<?, ?>) Objects.requireNonNull(r.error().get("details"));
         assertEquals(true, details.get("truncated"));
-        assertTrue(((String) details.get("argument")).startsWith("xxxxxxxx"), details.toString());
+        assertTrue(((String) Objects.requireNonNull(details.get("argument"))).startsWith("xxxxxxxx"), details.toString());
     }
 
     @Test
@@ -76,9 +79,9 @@ final class CliTest {
         for (int n = 100; n <= 140; n++) {
             Run r = run("--max-bytes", "512", "describe", "a" + "😀".repeat(n));
             assertTrue(r.bytes() <= 512, r.bytes() + " bytes");
-            Map<?, ?> details = (Map<?, ?>) r.error().get("details");
+            Map<?, ?> details = (Map<?, ?>) Objects.requireNonNull(r.error().get("details"));
             assertEquals(true, details.get("truncated"), "n=" + n);
-            String mbean = (String) details.get("mbean");
+            String mbean = (String) Objects.requireNonNull(details.get("mbean"));
             assertTrue(mbean.startsWith("a😀") && mbean.endsWith("…"), "n=" + n + ": " + mbean);
             assertTrue(mbean.codePoints().noneMatch(c -> Character.getType(c) == Character.SURROGATE),
                     "n=" + n + " leaves half a surrogate pair: " + mbean);
@@ -88,7 +91,7 @@ final class CliTest {
     @Test
     void errorCutToMaxBytesKeepsAsMuchOfANonAsciiDetailAsFits() {
         Run r = run("--max-bytes", "512", "describe", "a" + "あ".repeat(500));
-        Map<?, ?> details = (Map<?, ?>) r.error().get("details");
+        Map<?, ?> details = (Map<?, ?>) Objects.requireNonNull(r.error().get("details"));
         assertTrue(details.get("mbean") instanceof String mbean && mbean.startsWith("aあ") && mbean.endsWith("…"),
                 details.toString());
         assertTrue(r.bytes() <= 512 && r.bytes() > 512 - "あ".getBytes(StandardCharsets.UTF_8).length,
@@ -99,7 +102,7 @@ final class CliTest {
     void helpIsJsonToo() {
         Run r = run("--help");
         assertEquals(0, r.exit());
-        assertTrue(((Map<?, ?>) r.json().get("result")).containsKey("commands"));
+        assertTrue(((Map<?, ?>) Objects.requireNonNull(r.json().get("result"))).containsKey("commands"));
     }
 
     @Test
@@ -114,17 +117,17 @@ final class CliTest {
 
     @Test
     void helpListsEveryCommandAndOptionInTheFormTheParserAccepts() {
-        Map<?, ?> usage = (Map<?, ?>) run("help").json().get("result");
+        Map<?, ?> usage = (Map<?, ?>) Objects.requireNonNull(run("help").json().get("result"));
         List<String> commands = new ArrayList<>();
-        for (Object syntax : ((Map<?, ?>) usage.get("commands")).keySet()) {
+        for (Object syntax : ((Map<?, ?>) Objects.requireNonNull(usage.get("commands"))).keySet()) {
             String token = ((String) syntax).split(" ", -1)[0];
             commands.add(token);
-            assertEquals(token, Options.parse(new String[] { token }).command().token());
+            assertEquals(token, Objects.requireNonNull(Options.parse(new String[] { token }).command()).token());
         }
         assertEquals(Command.tokens(), commands);
 
         List<String> options = new ArrayList<>();
-        for (Object syntax : ((Map<?, ?>) usage.get("options")).keySet()) {
+        for (Object syntax : ((Map<?, ?>) Objects.requireNonNull(usage.get("options"))).keySet()) {
             String[] parts = ((String) syntax).split(" ", -1);
             options.add(parts[0]);
             if (parts.length > 1) {

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.cli.Cli;
 import io.github.yagipass.ajmx.json.Json;
 
@@ -34,22 +36,23 @@ final class Ajmx {
         @SuppressWarnings("unchecked") // Json.parse builds every JSON object with String keys
         Map<String, Object> result() {
             assertTrue(ok(), () -> "expected success but got " + stdout);
-            return (Map<String, Object>) json.get("result");
+            return map(json.get("result"));
         }
 
         @SuppressWarnings("unchecked") // Json.parse builds every JSON object with String keys
         Map<String, Object> error() {
             assertEquals(false, json.get("ok"), () -> "expected failure but got " + stdout);
-            return (Map<String, Object>) json.get("error");
+            return map(json.get("error"));
         }
 
+        @Nullable
         String errorCode() {
             return (String) error().get("code");
         }
 
         @SuppressWarnings("unchecked") // Json.parse builds every JSON object with String keys
         Map<String, Object> details() {
-            return (Map<String, Object>) error().get("details");
+            return map(error().get("details"));
         }
 
         Result assertError(String code, int exit) {
@@ -60,17 +63,17 @@ final class Ajmx {
     }
 
     @SuppressWarnings("unchecked") // callers pass parts of the JSON that Json.parse built
-    static Map<String, Object> map(Object o) {
-        return (Map<String, Object>) o;
+    static Map<String, Object> map(@Nullable Object o) {
+        return (Map<String, Object>) Objects.requireNonNull(o);
     }
 
     @SuppressWarnings("unchecked") // callers pass parts of the JSON that Json.parse built
-    static List<Object> list(Object o) {
-        return (List<Object>) o;
+    static List<Object> list(@Nullable Object o) {
+        return (List<Object>) Objects.requireNonNull(o);
     }
 
-    static long number(Object o) {
-        return ((Number) o).longValue();
+    static long number(@Nullable Object o) {
+        return ((Number) Objects.requireNonNull(o)).longValue();
     }
 
     static boolean nativeMode() {
@@ -153,7 +156,7 @@ final class Ajmx {
         Object doc = Json.parse(stdout.strip());
         assertTrue(doc instanceof Map, () -> "stdout is not a JSON object: " + stdout);
         Map<String, Object> json = (Map<String, Object>) doc;
-        assertEquals(1, ((Number) json.get("schemaVersion")).intValue(), stdout);
+        assertEquals(1, ((Number) Objects.requireNonNull(json.get("schemaVersion"))).intValue(), stdout);
         return json;
     }
 

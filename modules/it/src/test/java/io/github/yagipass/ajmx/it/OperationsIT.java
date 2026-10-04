@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -242,7 +243,7 @@ final class OperationsIT {
         assertEquals("{urn:ajmx}local", map(a.get("QualifiedName")).get("$string"));
         assertEquals(Json.parse("[[1,2],[3]]"), normalize(a.get("Grid")));
         assertEquals(Json.parse("[[1.5],[2.5,3.5]]"), normalize(a.get("Matrix")));
-        assertTrue(((String) map(a.get("JdkLambda")).get("$type")).startsWith("java.util.Map$Entry$$Lambda"), a.toString());
+        assertTrue(((String) Objects.requireNonNull(map(a.get("JdkLambda")).get("$type"))).startsWith("java.util.Map$Entry$$Lambda"), a.toString());
         List<Object> grid = list(attributes(ajmx("read", SETTINGS, "StatsGrid")).get("StatsGrid"));
         assertEquals(7L, number(map(list(grid.get(1)).get(0)).get("hits")));
     }
@@ -380,7 +381,7 @@ final class OperationsIT {
         assertEquals(Json.parse(expectedJson), normalize(readBack));
     }
 
-    private static Object normalize(Object v) {
+    private static @Nullable Object normalize(@Nullable Object v) {
         if (v instanceof Number n) {
             return new BigDecimal(n.toString());
         }

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 public final class Json {
@@ -45,19 +47,19 @@ public final class Json {
         }
     }
 
-    public static String write(Object value) {
+    public static String write(@Nullable Object value) {
         StringBuilder sb = new StringBuilder();
         writeValue(c -> sb.append(c), value);
         return sb.toString();
     }
 
-    public static long size(Object value) {
+    public static long size(@Nullable Object value) {
         Utf8Counter counter = new Utf8Counter();
         writeValue(counter, value);
         return counter.bytes;
     }
 
-    private static void writeValue(Sink sink, Object value) {
+    private static void writeValue(Sink sink, @Nullable Object value) {
         if (value == null) {
             sink.text("null");
         } else if (value instanceof String s) {
@@ -136,7 +138,7 @@ public final class Json {
         return i > 0 && Character.isHighSurrogate(s.charAt(i - 1));
     }
 
-    public static Object parse(String text) {
+    public static @Nullable Object parse(String text) {
         return new Parser(text).document();
     }
 
@@ -156,7 +158,7 @@ public final class Json {
             this.s = s;
         }
 
-        private Object document() {
+        private @Nullable Object document() {
             skipWhitespace();
             Object value = value(0);
             skipWhitespace();
@@ -166,7 +168,7 @@ public final class Json {
             return value;
         }
 
-        private Object value(int depth) {
+        private @Nullable Object value(int depth) {
             if (depth > MAX_DEPTH) {
                 throw error("Nesting too deep");
             }
@@ -327,7 +329,7 @@ public final class Json {
             }
         }
 
-        private Object literal(String word, Object value) {
+        private @Nullable Object literal(String word, @Nullable Object value) {
             if (!s.startsWith(word, pos)) {
                 throw error("Invalid literal");
             }

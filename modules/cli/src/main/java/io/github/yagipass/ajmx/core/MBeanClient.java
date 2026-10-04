@@ -19,6 +19,8 @@ import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 import javax.management.ObjectName;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.codec.ValueDecoder;
 import io.github.yagipass.ajmx.codec.ValueEncoder;
 import io.github.yagipass.ajmx.connection.JmxSession;
@@ -53,8 +55,8 @@ public final class MBeanClient {
             case Request.Search(ObjectName pattern) -> search(pattern);
             case Request.Describe(ObjectName mbean) -> describe(mbean);
             case Request.Read(ObjectName mbean, List<String> attributes) -> read(mbean, attributes);
-            case Request.Write(ObjectName mbean, String attribute, Object value) -> write(mbean, attribute, value);
-            case Request.Invoke(ObjectName mbean, String operation, List<Object> args, List<String> signature) ->
+            case Request.Write(ObjectName mbean, String attribute, @Nullable Object value) -> write(mbean, attribute, value);
+            case Request.Invoke(ObjectName mbean, String operation, List<Object> args, @Nullable List<String> signature) ->
                 invoke(mbean, operation, args, signature);
         };
     }
@@ -183,7 +185,7 @@ public final class MBeanClient {
         }
     }
 
-    private Outcome write(ObjectName name, String attribute, Object value) {
+    private Outcome write(ObjectName name, String attribute, @Nullable Object value) {
         Map<String, Object> context = context(name, "attribute", attribute);
         MBeanAttributeInfo info = Arrays.stream(info(name).getAttributes()).filter(a -> a.getName().equals(attribute))
                 .findFirst().orElseThrow(() -> new AjmxException(ErrorCode.ATTRIBUTE_NOT_FOUND, "Attribute was not found")
@@ -210,7 +212,7 @@ public final class MBeanClient {
         return outcome(result, encoder, Map.of(), Execution.EXECUTED);
     }
 
-    private Outcome invoke(ObjectName name, String operation, List<Object> args, List<String> signature) {
+    private Outcome invoke(ObjectName name, String operation, List<Object> args, @Nullable List<String> signature) {
         OperationResolver.Resolved resolved;
         try {
             resolved = OperationResolver.resolve(info(name).getOperations(), operation, args, signature);
@@ -245,7 +247,7 @@ public final class MBeanClient {
         return new ValueEncoder(limit, maxBytes);
     }
 
-    static Object encode(ValueEncoder encoder, Object value, Execution execution) {
+    static @Nullable Object encode(ValueEncoder encoder, @Nullable Object value, Execution execution) {
         try {
             return encoder.encode(value);
         } catch (AjmxException e) {
@@ -261,7 +263,7 @@ public final class MBeanClient {
         return Outcome.of(result, failuresByPath, execution);
     }
 
-    private <T> T mutate(Map<String, Object> context, JmxSession.JmxCall<T> call) {
+    private <T extends @Nullable Object> T mutate(Map<String, Object> context, JmxSession.JmxCall<T> call) {
         try {
             return session.call(context, call);
         } catch (AjmxException e) {

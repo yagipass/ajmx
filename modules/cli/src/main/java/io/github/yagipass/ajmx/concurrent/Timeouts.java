@@ -10,6 +10,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.error.AjmxException;
 
 public final class Timeouts {
@@ -27,12 +29,12 @@ public final class Timeouts {
     private Timeouts() {
     }
 
-    public static <T> T call(Callable<T> task, long timeoutMs, Supplier<AjmxException> onTimeout,
+    public static <T extends @Nullable Object> T call(Callable<T> task, long timeoutMs, Supplier<AjmxException> onTimeout,
             Function<Throwable, AjmxException> translate) {
         return start(task, timeoutMs, onTimeout, translate).get();
     }
 
-    public static <T> Supplier<T> start(Callable<T> task, long timeoutMs, Supplier<AjmxException> onTimeout,
+    public static <T extends @Nullable Object> Supplier<T> start(Callable<T> task, long timeoutMs, Supplier<AjmxException> onTimeout,
             Function<Throwable, AjmxException> translate) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         Future<T> future = EXECUTOR.submit(task);

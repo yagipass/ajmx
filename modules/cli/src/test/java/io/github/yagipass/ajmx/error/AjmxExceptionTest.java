@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ final class AjmxExceptionTest {
         assertFalse(timedOut.retryable(), "retrying could apply the change twice");
         Map<String, Object> json = timedOut.toJson();
         assertEquals(false, json.get("retryable"));
-        assertEquals("unknown", ((Map<?, ?>) json.get("details")).get("executed"));
+        assertEquals("unknown", ((Map<?, ?>) Objects.requireNonNull(json.get("details"))).get("executed"));
     }
 
     @Test

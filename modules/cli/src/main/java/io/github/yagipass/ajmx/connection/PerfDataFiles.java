@@ -36,9 +36,9 @@ final class PerfDataFiles {
                 continue;
             }
             for (Path file : list(dir, "*")) {
-                Long pid = pidOf(file);
-                if (pid != null && Files.isReadable(file)) {
-                    pids.add(pid);
+                OptionalLong pid = pidOf(file);
+                if (pid.isPresent() && Files.isReadable(file)) {
+                    pids.add(pid.getAsLong());
                 }
             }
         }
@@ -97,11 +97,11 @@ final class PerfDataFiles {
         return fields.length == 6 && fields[4].equals(inode) && fields[5].endsWith(name);
     }
 
-    private static Long pidOf(Path file) {
+    private static OptionalLong pidOf(Path file) {
         try {
-            return Long.parseLong(file.getFileName().toString());
+            return OptionalLong.of(Long.parseLong(file.getFileName().toString()));
         } catch (NumberFormatException e) {
-            return null;
+            return OptionalLong.empty();
         }
     }
 

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.concurrent.Timeouts;
@@ -11,7 +13,7 @@ import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 
 public final class LocalJvms {
-    public record Jvm(long pid, String mainClass, String displayName) {
+    public record Jvm(long pid, @Nullable String mainClass, @Nullable String displayName) {
     }
 
     private LocalJvms() {
@@ -37,7 +39,7 @@ public final class LocalJvms {
         return jvms;
     }
 
-    static String mainClass(String javaCommand) {
+    static @Nullable String mainClass(@Nullable String javaCommand) {
         if (javaCommand == null || javaCommand.isBlank()) {
             return null;
         }
@@ -46,7 +48,7 @@ public final class LocalJvms {
         return space < 0 ? command : command.substring(0, space);
     }
 
-    static String displayName(String mainClass) {
+    static @Nullable String displayName(@Nullable String mainClass) {
         if (mainClass == null) {
             return null;
         }

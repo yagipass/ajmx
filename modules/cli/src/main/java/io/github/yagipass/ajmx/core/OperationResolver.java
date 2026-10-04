@@ -10,6 +10,8 @@ import java.util.Map;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.codec.ValueDecoder;
@@ -24,10 +26,10 @@ final class OperationResolver {
     }
 
     @SuppressWarnings("ArrayRecordComponent")
-    record Resolved(Object[] params, String[] signature) {
+    record Resolved(@Nullable Object[] params, String[] signature) {
     }
 
-    static Resolved resolve(MBeanOperationInfo[] operations, String name, List<Object> args, List<String> signature) {
+    static Resolved resolve(MBeanOperationInfo[] operations, String name, List<Object> args, @Nullable List<String> signature) {
         List<MBeanOperationInfo> named = Arrays.stream(operations).filter(op -> op.getName().equals(name))
                 .sorted(BY_NAME_AND_SIGNATURE).toList();
         if (named.isEmpty()) {
@@ -79,9 +81,9 @@ final class OperationResolver {
                 .with("operation", name).with("signature", signature).with("candidates", candidates(signatures(named)));
     }
 
-    private static Object[] convert(MBeanOperationInfo op, List<Object> args) {
+    private static @Nullable Object[] convert(MBeanOperationInfo op, List<Object> args) {
         MBeanParameterInfo[] params = op.getSignature();
-        Object[] out = new Object[params.length];
+        @Nullable Object[] out = new Object[params.length];
         for (int i = 0; i < params.length; i++) {
             try {
                 out[i] = ValueDecoder.decode(args.get(i), params[i].getType());

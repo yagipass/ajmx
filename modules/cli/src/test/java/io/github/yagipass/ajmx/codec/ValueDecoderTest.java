@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import javax.management.ObjectName;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,11 +29,11 @@ import io.github.yagipass.ajmx.error.ErrorCode;
 
 final class ValueDecoderTest {
 
-    private static Object lenient(Object input, String type) {
+    private static @Nullable Object lenient(@Nullable Object input, String type) {
         return ValueDecoder.decodeParsingStrings(input, type);
     }
 
-    private static Object strict(Object input, String type) {
+    private static @Nullable Object strict(@Nullable Object input, String type) {
         return ValueDecoder.decode(input, type);
     }
 
@@ -100,7 +101,7 @@ final class ValueDecoderTest {
     void nonFiniteValuesAreAcceptedOnlyWhenWrittenAsAjmxPrintsThem() {
         assertEquals(Double.POSITIVE_INFINITY, lenient("Infinity", "double"));
         assertEquals(Float.NEGATIVE_INFINITY, lenient("-Infinity", "float"));
-        assertTrue(Double.isNaN((Double) lenient("NaN", "java.lang.Double")));
+        assertTrue(Double.isNaN((Double) Objects.requireNonNull(lenient("NaN", "java.lang.Double"))));
         assertInvalid(() -> strict("Infinity", "double"));
     }
 
@@ -156,7 +157,7 @@ final class ValueDecoderTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("arrays")
     void arraysHaveTheExactClassTheSignatureNamesOrTheTargetRejectsThem(String type, String input, Object expected) {
-        Object actual = lenient(input, type);
+        Object actual = Objects.requireNonNull(lenient(input, type));
         assertEquals(expected.getClass(), actual.getClass());
         assertTrue(Objects.deepEquals(expected, actual), () -> Arrays.deepToString(new Object[] { actual }));
     }

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.management.AttributeNotFoundException;
@@ -21,6 +22,8 @@ import javax.management.ReflectionException;
 import javax.management.RuntimeErrorException;
 import javax.management.RuntimeMBeanException;
 import javax.management.RuntimeOperationsException;
+
+import org.jspecify.annotations.Nullable;
 
 import com.google.errorprone.annotations.Var;
 
@@ -70,9 +73,9 @@ final class JmxErrors {
         if (t instanceof RuntimeOperationsException roe) {
             return thrownByMBean(roe.getTargetException(), t);
         }
-        AjmxException unsupported = findUnsupportedType(t);
-        if (unsupported != null) {
-            return unsupported;
+        Optional<AjmxException> unsupported = findUnsupportedType(t);
+        if (unsupported.isPresent()) {
+            return unsupported.get();
         }
         if (causes(t).stream().anyMatch(SecurityException.class::isInstance)) {
             return new AjmxException(ErrorCode.AUTH_FAILED, "Access denied by the JMX server", t);
@@ -93,24 +96,25 @@ final class JmxErrors {
                 .with("exceptionMessage", cause.getMessage());
     }
 
-    private static AjmxException findUnsupportedType(Throwable t) {
+    private static Optional<AjmxException> findUnsupportedType(Throwable t) {
         @Var boolean serializationFailed = false;
         for (Throwable c : causes(t)) {
             if (c instanceof ClassNotFoundException) {
-                return unsupported(UNAVAILABLE, className(c.getMessage()), t);
+                return Optional.of(unsupported(UNAVAILABLE, className(c.getMessage()), t));
             }
             if (c instanceof InvalidClassException ice) {
-                return unsupported(UNAVAILABLE, ice.classname, t);
+                return Optional.of(unsupported(UNAVAILABLE, ice.classname, t));
             }
             if (c instanceof NotSerializableException) {
-                return unsupported(NOT_SERIALIZABLE, c.getMessage(), t);
+                return Optional.of(unsupported(NOT_SERIALIZABLE, c.getMessage(), t));
             }
             if (c.getClass().getName().startsWith("org.graalvm.nativeimage.Missing")) {
-                return unsupported("A value or exception has a type that the native binary cannot handle", null, t);
+                return Optional.of(unsupported("A value or exception has a type that the native binary cannot handle", null, t));
             }
             serializationFailed |= c instanceof ObjectStreamException;
         }
-        return serializationFailed ? unsupported("A value or exception could not be serialized", null, t) : null;
+        return serializationFailed ? Optional.of(unsupported("A value or exception could not be serialized", null, t))
+                : Optional.empty();
     }
 
     private static List<Throwable> causes(Throwable t) {
@@ -122,11 +126,11 @@ final class JmxErrors {
         return chain;
     }
 
-    private static AjmxException unsupported(String message, String className, Throwable t) {
+    private static AjmxException unsupported(String message, @Nullable String className, Throwable t) {
         return new AjmxException(ErrorCode.UNSUPPORTED_TYPE, message, t).with("class", className);
     }
 
-    private static String className(String message) {
+    private static @Nullable String className(@Nullable String message) {
         if (message == null) {
             return null;
         }

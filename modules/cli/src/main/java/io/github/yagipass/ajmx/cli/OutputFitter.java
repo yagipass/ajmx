@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import com.google.errorprone.annotations.Var;
 
@@ -38,13 +40,13 @@ final class OutputFitter {
             return new Output(Envelope.encode(envelope), outcome.partial() ? ErrorCode.PARTIAL_EXIT_CODE : 0);
         }
 
-        byte[] shrunk = switch (outcome.shape()) {
-            case ITEMS -> dropTrailingItems((List<?>) outcome.result().get("items"));
-            case BATCH -> shrinkBatch((List<?>) outcome.result().get("items"));
-            case PLAIN -> null;
+        Optional<byte[]> shrunk = switch (outcome.shape()) {
+            case ITEMS -> dropTrailingItems((List<?>) Objects.requireNonNull(outcome.result().get("items")));
+            case BATCH -> shrinkBatch((List<?>) Objects.requireNonNull(outcome.result().get("items")));
+            case PLAIN -> Optional.empty();
         };
-        if (shrunk != null) {
-            return new Output(shrunk, ErrorCode.PARTIAL_EXIT_CODE);
+        if (shrunk.isPresent()) {
+            return new Output(shrunk.get(), ErrorCode.PARTIAL_EXIT_CODE);
         }
         return failure(new AjmxException(ErrorCode.OUTPUT_TRUNCATED, "Output exceeds --max-bytes")
                 .with("maxBytes", maxBytes).with("outputBytes", size).withExecution(outcome.execution()));
@@ -75,16 +77,16 @@ final class OutputFitter {
             if (size <= maxBytes || largest == null) {
                 return Envelope.encode(Envelope.failure(shrunk, durationMs));
             }
-            String kept = details.get(largest) instanceof String s ? shorten(s, size - maxBytes) : null;
-            if (kept != null) {
-                details.put(largest, kept);
+            Optional<String> kept = details.get(largest) instanceof String s ? shorten(s, size - maxBytes) : Optional.empty();
+            if (kept.isPresent()) {
+                details.put(largest, kept.get());
             } else {
                 details.remove(largest);
             }
         }
     }
 
-    private static String shorten(String s, long excess) {
+    private static Optional<String> shorten(String s, long excess) {
         @Var long removed = 0;
         @Var int end = s.length();
         while (end > 0 && removed < excess + ELLIPSIS_BYTES) {
@@ -92,14 +94,14 @@ final class OutputFitter {
             removed += escapedSize(s.substring(start, end));
             end = start;
         }
-        return end >= MIN_KEPT_CHARS ? s.substring(0, end) + ELLIPSIS : null;
+        return end >= MIN_KEPT_CHARS ? Optional.of(s.substring(0, end) + ELLIPSIS) : Optional.empty();
     }
 
     private static long escapedSize(String s) {
         return Json.size(s) - 2;
     }
 
-    private byte[] dropTrailingItems(List<?> items) {
+    private Optional<byte[]> dropTrailingItems(List<?> items) {
         @Var Map<String, Object> best = null;
         @Var int lo = 0;
         @Var int hi = items.size() - 1;
@@ -113,10 +115,10 @@ final class OutputFitter {
                 hi = k - 1;
             }
         }
-        return best != null ? Envelope.encode(Envelope.success(best, durationMs)) : null;
+        return Optional.ofNullable(best).map(b -> Envelope.encode(Envelope.success(b, durationMs)));
     }
 
-    private byte[] shrinkBatch(List<?> original) {
+    private Optional<byte[]> shrinkBatch(List<?> original) {
         List<Object> items = new ArrayList<>(original);
         int n = items.size();
         long[] sizes = new long[n];
@@ -146,6 +148,7 @@ final class OutputFitter {
             items.remove(last);
             total -= sizes[last] + (last > 0 ? 1 : 0);
         }
-        return total <= maxBytes ? Envelope.encode(Envelope.success(Batch.truncatedResult(items), durationMs)) : null;
+        return total <= maxBytes ? Optional.of(Envelope.encode(Envelope.success(Batch.truncatedResult(items), durationMs)))
+                : Optional.empty();
     }
 }

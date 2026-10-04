@@ -9,7 +9,7 @@ enum Option implements Token {
 
     URL("<jmx-service-url>", "Remote JVM (JSR-160); credentials from JMX_USERNAME/JMX_PASSWORD"),
 
-    CREDENTIALS_STDIN(null, "Read {\"username\", \"password\"} from stdin (with --url)"),
+    CREDENTIALS_STDIN("", "Read {\"username\", \"password\"} from stdin (with --url)"),
 
     TIMEOUT("<duration>", "Attach, connect and per-operation timeout (default " + Options.DEFAULT_TIMEOUT + ")"),
 
@@ -21,11 +21,11 @@ enum Option implements Token {
 
     SIGNATURE("<type,...>", "invoke parameter types, to pick an overload"),
 
-    DEBUG(null, "Print stack traces to stderr"),
+    DEBUG("", "Print stack traces to stderr"),
 
-    HELP(null, "Print this usage"),
+    HELP("", "Print this usage"),
 
-    VERSION(null, "Print the ajmx version");
+    VERSION("", "Print the ajmx version");
 
     private static final String PREFIX = "--";
 
@@ -46,7 +46,7 @@ enum Option implements Token {
     }
 
     boolean takesValue() {
-        return valueSyntax != null;
+        return !valueSyntax.isEmpty();
     }
 
     String usage() {

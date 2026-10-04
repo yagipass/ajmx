@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 public final class AjmxException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
@@ -16,7 +18,7 @@ public final class AjmxException extends RuntimeException {
         this(code, message, null);
     }
 
-    public AjmxException(ErrorCode code, String message, Throwable cause) {
+    public AjmxException(ErrorCode code, String message, @Nullable Throwable cause) {
         super(message, cause);
         this.code = code;
     }
@@ -67,7 +69,7 @@ public final class AjmxException extends RuntimeException {
         return Collections.unmodifiableMap(details);
     }
 
-    public AjmxException with(String key, Object value) {
+    public AjmxException with(String key, @Nullable Object value) {
         if (value != null) {
             details.put(key, value);
         }
@@ -84,10 +86,7 @@ public final class AjmxException extends RuntimeException {
 
     public Map<String, Object> toJson() {
         Map<String, Object> json = new LinkedHashMap<>(details);
-        Object executed = execution.toJson();
-        if (executed != null) {
-            json.put("executed", executed);
-        }
+        execution.toJson().ifPresent(executed -> json.put("executed", executed));
         Map<String, Object> error = new LinkedHashMap<>();
         error.put("code", code.name());
         error.put("message", getMessage());

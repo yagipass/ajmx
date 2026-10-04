@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,7 @@ final class MBeanClientTest {
     }
 
     private static Map<?, ?> details(AjmxException e) {
-        return (Map<?, ?>) e.toJson().get("details");
+        return (Map<?, ?>) Objects.requireNonNull(e.toJson().get("details"));
     }
 
     private static Object throwingOnToString(Error error) {
