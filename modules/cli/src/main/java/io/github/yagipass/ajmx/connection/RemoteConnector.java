@@ -8,6 +8,8 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.concurrent.Timeouts;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
@@ -17,7 +19,7 @@ final class RemoteConnector {
     }
 
     @SuppressWarnings("BanJNDI")
-    static JMXConnector connect(String url, Credentials credentials, long timeoutMs) {
+    static JMXConnector connect(String url, @Nullable Credentials credentials, long timeoutMs) {
         Map<String, Object> context = Map.of("url", url);
         JMXServiceURL serviceUrl;
         try {

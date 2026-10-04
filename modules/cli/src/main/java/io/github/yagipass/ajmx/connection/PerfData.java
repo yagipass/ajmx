@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalLong;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 final class PerfData {
@@ -21,10 +23,12 @@ final class PerfData {
         this.entries = entries;
     }
 
+    @Nullable
     String javaCommand() {
         return entries.get("sun.rt.javaCommand") instanceof String s ? s : null;
     }
 
+    @Nullable
     String connectorAddress() {
         return entries.get("sun.management.JMXConnectorServer.address") instanceof String s && !s.isEmpty() ? s : null;
     }

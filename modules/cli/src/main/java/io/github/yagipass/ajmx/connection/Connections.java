@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.management.remote.JMXConnector;
 
+import org.jspecify.annotations.Nullable;
+
 public final class Connections {
     private Connections() {
     }
@@ -12,7 +14,7 @@ public final class Connections {
     public static JmxSession open(Target target, long timeoutMs) {
         JMXConnector connector = switch (target) {
             case Target.Local(long pid) -> LocalConnector.connect(pid, timeoutMs);
-            case Target.Remote(String url, Credentials credentials) -> RemoteConnector.connect(url, credentials, timeoutMs);
+            case Target.Remote(String url, @Nullable Credentials credentials) -> RemoteConnector.connect(url, credentials, timeoutMs);
         };
         try {
             return new JmxSession(connector, timeoutMs);

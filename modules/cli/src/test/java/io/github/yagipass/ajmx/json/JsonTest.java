@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -57,8 +58,8 @@ final class JsonTest {
 
     @Test
     void parsesNestedDocuments() {
-        Map<?, ?> doc = (Map<?, ?>) Json.parse(" {\"requests\": [{\"id\": \"a\", \"n\": null, \"u\": \"\\u00e9\"}]} ");
-        Map<?, ?> first = (Map<?, ?>) ((List<?>) doc.get("requests")).getFirst();
+        Map<?, ?> doc = (Map<?, ?>) Objects.requireNonNull(Json.parse(" {\"requests\": [{\"id\": \"a\", \"n\": null, \"u\": \"\\u00e9\"}]} "));
+        Map<?, ?> first = (Map<?, ?>) ((List<?>) Objects.requireNonNull(doc.get("requests"))).getFirst();
         assertEquals("a", first.get("id"));
         assertTrue(first.containsKey("n"));
         assertNull(first.get("n"));

@@ -7,14 +7,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.core.Token;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 
-record Options(Command command, List<String> args, Long pid, String url, long timeoutMs, int limit,
-        long maxBytes, String argsJson, List<String> signature, boolean credentialsStdin, boolean debug, boolean help,
+record Options(@Nullable Command command, List<String> args, @Nullable Long pid, @Nullable String url, long timeoutMs, int limit,
+        long maxBytes, @Nullable String argsJson, @Nullable List<String> signature, boolean credentialsStdin, boolean debug, boolean help,
         boolean version) {
 
     static final String DEFAULT_TIMEOUT = "10s";
@@ -74,20 +76,21 @@ record Options(Command command, List<String> args, Long pid, String url, long ti
     private static final class Parser {
         private final Set<Option> seen = EnumSet.noneOf(Option.class);
         private final List<String> args = new ArrayList<>();
-        private Command command;
-        private Long pid;
-        private String url;
+        private @Nullable Command command;
+        private @Nullable Long pid;
+        private @Nullable String url;
         private long timeoutMs = duration(DEFAULT_TIMEOUT);
         private int limit = DEFAULT_LIMIT;
         private long maxBytes = DEFAULT_MAX_BYTES;
-        private String argsJson;
-        private List<String> signature;
+        private @Nullable String argsJson;
+        private @Nullable List<String> signature;
         private boolean credentialsStdin;
         private boolean debug;
         private boolean help;
         private boolean version;
 
-        private void set(Option option, String value) {
+        @SuppressWarnings("NullAway") // parse() passes a non-null value for every option that takesValue()
+        private void set(Option option, @Nullable String value) {
             String name = option.flag();
             if (option.takesValue() && option != Option.SIGNATURE && !seen.add(option)) {
                 throw invalid("Option given more than once", name);

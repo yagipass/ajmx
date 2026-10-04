@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -36,7 +37,7 @@ final class OperationResolverTest {
             op("clear"),
     };
 
-    private static OperationResolver.Resolved resolve(String name, List<Object> args, List<String> signature) {
+    private static OperationResolver.Resolved resolve(String name, List<Object> args, @Nullable List<String> signature) {
         return OperationResolver.resolve(OPS, name, args, signature);
     }
 

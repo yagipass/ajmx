@@ -22,6 +22,8 @@ import javax.management.RuntimeErrorException;
 import javax.management.RuntimeMBeanException;
 import javax.management.RuntimeOperationsException;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -93,7 +95,7 @@ final class JmxErrors {
                 .with("exceptionMessage", cause.getMessage());
     }
 
-    private static AjmxException findUnsupportedType(Throwable t) {
+    private static @Nullable AjmxException findUnsupportedType(Throwable t) {
         @Var boolean serializationFailed = false;
         for (Throwable c : causes(t)) {
             if (c instanceof ClassNotFoundException) {
@@ -122,11 +124,11 @@ final class JmxErrors {
         return chain;
     }
 
-    private static AjmxException unsupported(String message, String className, Throwable t) {
+    private static AjmxException unsupported(String message, @Nullable String className, Throwable t) {
         return new AjmxException(ErrorCode.UNSUPPORTED_TYPE, message, t).with("class", className);
     }
 
-    private static String className(String message) {
+    private static @Nullable String className(@Nullable String message) {
         if (message == null) {
             return null;
         }

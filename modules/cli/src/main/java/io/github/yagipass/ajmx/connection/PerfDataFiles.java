@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 final class PerfDataFiles {
     private static final String DIR_PREFIX = "hsperfdata_";
     private static final int MAX_SIZE = 1 << 20;
@@ -97,7 +99,7 @@ final class PerfDataFiles {
         return fields.length == 6 && fields[4].equals(inode) && fields[5].endsWith(name);
     }
 
-    private static Long pidOf(Path file) {
+    private static @Nullable Long pidOf(Path file) {
         try {
             return Long.parseLong(file.getFileName().toString());
         } catch (NumberFormatException e) {

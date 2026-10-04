@@ -2,6 +2,8 @@ package io.github.yagipass.ajmx.cli;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.core.Op;
 import io.github.yagipass.ajmx.core.Request;
 import io.github.yagipass.ajmx.core.Token;
@@ -30,13 +32,13 @@ enum Command implements Token {
 
     VERSION(null, 0, 0, "", "Print the ajmx version");
 
-    private final Op op;
+    private final @Nullable Op op;
     private final int minArguments;
     private final int maxArguments;
     private final String argumentSyntax;
     private final String description;
 
-    Command(Op op, int minArguments, int maxArguments, String argumentSyntax, String description) {
+    Command(@Nullable Op op, int minArguments, int maxArguments, String argumentSyntax, String description) {
         this.op = op;
         this.minArguments = minArguments;
         this.maxArguments = maxArguments;
@@ -44,6 +46,7 @@ enum Command implements Token {
         this.description = description;
     }
 
+    @Nullable
     Op op() {
         return op;
     }

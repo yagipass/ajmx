@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 public final class AjmxException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
@@ -16,7 +18,7 @@ public final class AjmxException extends RuntimeException {
         this(code, message, null);
     }
 
-    public AjmxException(ErrorCode code, String message, Throwable cause) {
+    public AjmxException(ErrorCode code, String message, @Nullable Throwable cause) {
         super(message, cause);
         this.code = code;
     }
@@ -67,7 +69,7 @@ public final class AjmxException extends RuntimeException {
         return Collections.unmodifiableMap(details);
     }
 
-    public AjmxException with(String key, Object value) {
+    public AjmxException with(String key, @Nullable Object value) {
         if (value != null) {
             details.put(key, value);
         }

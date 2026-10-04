@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import javax.management.ObjectName;
@@ -36,7 +37,7 @@ final class BatchTest {
 
         assertEquals(List.of("a", "npe", "soe", "b"), executed);
         assertTrue(outcome.partial());
-        List<?> items = (List<?>) outcome.result().get("items");
+        List<?> items = (List<?>) Objects.requireNonNull(outcome.result().get("items"));
         assertEquals(Map.of("done", "a"), item(items, 0).get("result"));
         assertEquals("java.lang.NullPointerException", details(item(items, 1)).get("exceptionClass"));
         assertEquals("java.lang.StackOverflowError", details(item(items, 2)).get("exceptionClass"));
@@ -72,9 +73,9 @@ final class BatchTest {
         });
 
         assertEquals(List.of("lookup", "w1", "slow", "r"), executed);
-        Map<?, ?> skipped = (Map<?, ?>) item((List<?>) outcome.result().get("items"), 3).get("error");
+        Map<?, ?> skipped = (Map<?, ?>) Objects.requireNonNull(item((List<?>) Objects.requireNonNull(outcome.result().get("items")), 3).get("error"));
         assertEquals("SKIPPED", skipped.get("code"));
-        assertEquals(2, ((Map<?, ?>) skipped.get("details")).get("stillRunningIndex"));
+        assertEquals(2, ((Map<?, ?>) Objects.requireNonNull(skipped.get("details"))).get("stillRunningIndex"));
     }
 
     @Test
@@ -214,8 +215,8 @@ final class BatchTest {
     }
 
     private static Map<?, ?> details(Map<?, ?> item) {
-        Map<?, ?> error = (Map<?, ?>) item.get("error");
+        Map<?, ?> error = (Map<?, ?>) Objects.requireNonNull(item.get("error"));
         assertEquals("INTERNAL_ERROR", error.get("code"));
-        return (Map<?, ?>) error.get("details");
+        return (Map<?, ?>) Objects.requireNonNull(error.get("details"));
     }
 }

@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.concurrent.Timeouts;
 import io.github.yagipass.ajmx.connection.Credentials;
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -31,7 +33,7 @@ final class Inputs {
         return AjmxException.wrap(t);
     }
 
-    static Object parseJson(String text, String source) {
+    static @Nullable Object parseJson(String text, String source) {
         try {
             return Json.parse(text);
         } catch (Json.ParseException e) {
@@ -52,7 +54,7 @@ final class Inputs {
                 "Credentials on stdin must be {\"username\": \"...\", \"password\": \"...\"}");
     }
 
-    static Credentials readCredentialsFromEnv(Map<String, String> env) {
+    static @Nullable Credentials readCredentialsFromEnv(Map<String, String> env) {
         String username = env.get("JMX_USERNAME");
         if (username == null || username.isEmpty()) {
             return null;

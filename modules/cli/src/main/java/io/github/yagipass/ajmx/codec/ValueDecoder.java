@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -63,15 +65,15 @@ public final class ValueDecoder {
     private ValueDecoder() {
     }
 
-    public static Object decodeParsingStrings(Object input, String type) {
+    public static @Nullable Object decodeParsingStrings(@Nullable Object input, String type) {
         return decode(input, type, true);
     }
 
-    public static Object decode(Object input, String type) {
+    public static @Nullable Object decode(@Nullable Object input, String type) {
         return decode(input, type, false);
     }
 
-    private static Object decode(Object input, String type, boolean parseStrings) {
+    private static @Nullable Object decode(@Nullable Object input, String type, boolean parseStrings) {
         TargetType element = ARRAYS.get(type);
         if (element != null) {
             return array(input, type, element, parseStrings);
@@ -98,7 +100,7 @@ public final class ValueDecoder {
         return out;
     }
 
-    private static Object scalar(Object in, Kind kind, boolean parseStrings) throws MalformedObjectNameException {
+    private static @Nullable Object scalar(Object in, Kind kind, boolean parseStrings) throws MalformedObjectNameException {
         if (kind == Kind.OBJECT) {
             return object(in);
         }
@@ -111,7 +113,7 @@ public final class ValueDecoder {
         return in instanceof Boolean && kind == Kind.BOOLEAN ? in : null;
     }
 
-    private static Object fromNumber(BigDecimal n, Kind kind) {
+    private static @Nullable Object fromNumber(BigDecimal n, Kind kind) {
         return switch (kind) {
             case BYTE -> n.byteValueExact();
             case SHORT -> n.shortValueExact();
@@ -125,7 +127,7 @@ public final class ValueDecoder {
         };
     }
 
-    private static Object fromString(String s, Kind kind, boolean parseStrings) throws MalformedObjectNameException {
+    private static @Nullable Object fromString(String s, Kind kind, boolean parseStrings) throws MalformedObjectNameException {
         return switch (kind) {
             case STRING, OBJECT -> s;
             case CHAR -> s.length() == 1 ? s.charAt(0) : null;
@@ -134,7 +136,7 @@ public final class ValueDecoder {
         };
     }
 
-    private static Object parse(String s, Kind kind) {
+    private static @Nullable Object parse(String s, Kind kind) {
         return switch (kind) {
             case BOOLEAN -> switch (s.toLowerCase(Locale.ROOT)) {
                 case "true" -> true;
@@ -153,15 +155,15 @@ public final class ValueDecoder {
         };
     }
 
-    private static Float finite(float f) {
+    private static @Nullable Float finite(float f) {
         return Float.isFinite(f) ? f : null;
     }
 
-    private static Double finite(double d) {
+    private static @Nullable Double finite(double d) {
         return Double.isFinite(d) ? d : null;
     }
 
-    private static Object object(Object in) {
+    private static @Nullable Object object(Object in) {
         if (in instanceof String || in instanceof Boolean) {
             return in;
         }
@@ -174,7 +176,7 @@ public final class ValueDecoder {
             return d.doubleValue();
         }
         if (in instanceof List<?> list) {
-            Object[] out = new Object[list.size()];
+            @Nullable Object[] out = new Object[list.size()];
             for (int i = 0; i < out.length; i++) {
                 Object element = list.get(i);
                 if (element == null) {
@@ -202,7 +204,7 @@ public final class ValueDecoder {
         return n instanceof BigDecimal d ? d : new BigDecimal(n.toString());
     }
 
-    private static Object array(Object input, String type, TargetType element, boolean parseStrings) {
+    private static @Nullable Object array(@Nullable Object input, String type, TargetType element, boolean parseStrings) {
         if (input == null) {
             return null;
         }
@@ -221,7 +223,7 @@ public final class ValueDecoder {
         return array;
     }
 
-    private static List<?> jsonArray(String s) {
+    private static @Nullable List<?> jsonArray(String s) {
         try {
             return Json.parse(s) instanceof List<?> l ? l : null;
         } catch (Json.ParseException e) {
@@ -229,7 +231,7 @@ public final class ValueDecoder {
         }
     }
 
-    private static AjmxException failed(String type, Object input) {
+    private static AjmxException failed(String type, @Nullable Object input) {
         return new AjmxException(ErrorCode.TYPE_CONVERSION_FAILED, "Failed to convert input value")
                 .with("expected", type)
                 .with("input", input instanceof String s ? s : Json.write(input));

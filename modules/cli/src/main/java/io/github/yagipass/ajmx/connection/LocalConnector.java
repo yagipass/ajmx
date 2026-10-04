@@ -14,6 +14,8 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AttachOperationFailedException;
@@ -138,7 +140,7 @@ final class LocalConnector {
         return waited - 1;
     }
 
-    private static AjmxException timedOut(long timeoutMs, Exception cause) {
+    private static AjmxException timedOut(long timeoutMs, @Nullable Exception cause) {
         return new AjmxException(ErrorCode.CONNECTION_TIMEOUT, "Timed out connecting to the local JVM", cause)
                 .with("timeoutMs", timeoutMs);
     }
@@ -149,7 +151,7 @@ final class LocalConnector {
         return e instanceof AttachOperationFailedException ? unavailable.disableRetry() : unavailable;
     }
 
-    private static AjmxException notResponding(long timeoutMs, Exception cause, boolean hasPerfData) {
+    private static AjmxException notResponding(long timeoutMs, @Nullable Exception cause, boolean hasPerfData) {
         return hasPerfData ? timedOut(timeoutMs, cause)
                 : new AjmxException(ErrorCode.ATTACH_NOT_SUPPORTED,
                         "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)", cause)

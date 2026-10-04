@@ -21,6 +21,8 @@
     <graalvm.sdk.version>25.4.4.1.1</graalvm.sdk.version>
     <junit.version>6.1.3</junit.version>
     <errorprone.version>2.50.0</errorprone.version>
+    <nullaway.version>0.14.2</nullaway.version>
+    <jspecify.version>1.0.0</jspecify.version>
     <errorprone.flags></errorprone.flags>
   </properties>
 
@@ -30,6 +32,11 @@
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
         <version>${errorprone.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jspecify</groupId>
+        <artifactId>jspecify</artifactId>
+        <version>${jspecify.version}</version>
       </dependency>
       <dependency>
         <groupId>io.github.yagipass</groupId>
@@ -69,14 +76,18 @@
               <arg>-Werror</arg>
               <arg>-XDcompilePolicy=simple</arg>
               <arg>--should-stop=ifError=FLOW</arg>
-              <arg>-Xplugin:ErrorProne -Xep:DefaultLocale:ERROR -Xep:InconsistentOverloads:ERROR -Xep:SuppressWarningsWithoutExplanation:ERROR -Xep:UngroupedOverloads:ERROR -Xep:UnusedException:ERROR -Xep:Var:ERROR -Xep:YodaCondition:ERROR ${errorprone.flags}</arg>
-              <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+              <arg>-Xplugin:ErrorProne -Xep:DefaultLocale:ERROR -Xep:InconsistentOverloads:ERROR -Xep:SuppressWarningsWithoutExplanation:ERROR -Xep:UngroupedOverloads:ERROR -Xep:UnusedException:ERROR -Xep:Var:ERROR -Xep:YodaCondition:ERROR -Xep:NullAway:ERROR -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:JSpecifyMode=true ${errorprone.flags}</arg>
             </compilerArgs>
             <annotationProcessorPaths>
               <path>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_core</artifactId>
                 <version>${errorprone.version}</version>
+              </path>
+              <path>
+                <groupId>com.uber.nullaway</groupId>
+                <artifactId>nullaway</artifactId>
+                <version>${nullaway.version}</version>
               </path>
             </annotationProcessorPaths>
           </configuration>

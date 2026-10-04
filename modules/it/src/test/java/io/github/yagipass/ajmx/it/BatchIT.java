@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -283,7 +284,7 @@ final class BatchIT {
         assertEquals(List.of(), empty.result().get("items"));
     }
 
-    private static String code(Object item) {
+    private static @Nullable String code(Object item) {
         assertEquals(false, map(item).get("ok"), () -> "expected failure but got " + item);
         return (String) map(map(item).get("error")).get("code");
     }

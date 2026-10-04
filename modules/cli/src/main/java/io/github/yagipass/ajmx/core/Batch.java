@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+
+import org.jspecify.annotations.Nullable;
 
 import com.google.errorprone.annotations.Var;
 
@@ -14,7 +17,7 @@ import io.github.yagipass.ajmx.error.Execution;
 import io.github.yagipass.ajmx.json.Json;
 
 public final class Batch {
-    record Entry(Object id, Request request) {
+    record Entry(@Nullable Object id, Request request) {
     }
 
     private final List<Entry> entries;
@@ -112,7 +115,7 @@ public final class Batch {
         if (original.get("error") instanceof Map<?, ?> error) {
             Map<String, Object> reduced = new LinkedHashMap<>((Map<String, Object>) error);
             Map<String, Object> details = new LinkedHashMap<>();
-            Object executed = ((Map<?, ?>) error.get("details")).get("executed");
+            Object executed = ((Map<?, ?>) Objects.requireNonNull(error.get("details"))).get("executed");
             if (executed != null) {
                 details.put("executed", executed);
             }

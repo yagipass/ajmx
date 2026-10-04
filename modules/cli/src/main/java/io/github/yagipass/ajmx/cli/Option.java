@@ -2,6 +2,8 @@ package io.github.yagipass.ajmx.cli;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import io.github.yagipass.ajmx.core.Token;
 
 enum Option implements Token {
@@ -29,10 +31,10 @@ enum Option implements Token {
 
     private static final String PREFIX = "--";
 
-    private final String valueSyntax;
+    private final @Nullable String valueSyntax;
     private final String description;
 
-    Option(String valueSyntax, String description) {
+    Option(@Nullable String valueSyntax, String description) {
         this.valueSyntax = valueSyntax;
         this.description = description;
     }

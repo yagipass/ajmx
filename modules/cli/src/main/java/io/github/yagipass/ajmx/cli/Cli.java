@@ -8,7 +8,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+
+import org.jspecify.annotations.Nullable;
 
 import com.google.errorprone.annotations.Var;
 
@@ -56,16 +59,16 @@ public final class Cli {
             return Outcome.of(Version.json());
         }
         options.validate();
-        Command command = options.command();
+        Command command = Objects.requireNonNull(options.command());
         command.requireArgumentCount(options.args().size());
         return switch (command) {
             case PS -> Outcome.items(LocalJvms.list(options.timeoutMs()).stream().map(Cli::jvmJson).toList(), options.limit());
             case PING, SEARCH, DESCRIBE, READ, WRITE, INVOKE -> {
-                Request request = request(options);
-                yield withClient(options, target(options, in, env), client -> client.run(request));
+                Request request = request(options, command);
+                yield withClient(options, target(options, command, in, env), client -> client.run(request));
             }
             case BATCH -> {
-                Target target = target(options, in, env);
+                Target target = target(options, command, in, env);
                 Batch batch = Batch.parse(Inputs.readStdin(in, options.timeoutMs()));
                 yield withClient(options, target, client -> batch.run(client::run));
             }
@@ -74,9 +77,9 @@ public final class Cli {
         };
     }
 
-    private static Request request(Options options) {
+    private static Request request(Options options, Command command) {
         List<String> args = options.args();
-        return switch (options.command().op()) {
+        return switch (Objects.requireNonNull(command.op())) {
             case PING -> new Request.Ping();
             case SEARCH -> Request.search(args.isEmpty() ? null : args.getFirst());
             case DESCRIBE -> Request.describe(args.getFirst());
@@ -95,7 +98,7 @@ public final class Cli {
         return Request.write(mbean, assignment.substring(0, eq), assignment.substring(eq + 1));
     }
 
-    private static List<Object> parseInvokeArgs(String text) {
+    private static List<Object> parseInvokeArgs(@Nullable String text) {
         if (text == null) {
             return List.of();
         }
@@ -105,7 +108,7 @@ public final class Cli {
         throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--args must be a JSON array");
     }
 
-    private static Target target(Options options, InputStream in, Map<String, String> env) {
+    private static Target target(Options options, Command command, InputStream in, Map<String, String> env) {
         if (options.pid() != null) {
             return new Target.Local(options.pid());
         }
@@ -116,7 +119,7 @@ public final class Cli {
             return new Target.Remote(options.url(), credentials);
         }
         throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--pid or --url is required")
-                .with("command", options.command().token());
+                .with("command", command.token());
     }
 
     private static Outcome withClient(Options options, Target target, Function<MBeanClient, Outcome> body) {
@@ -133,23 +136,23 @@ public final class Cli {
         return item;
     }
 
-    private static void printStackTraces(PrintStream err, Outcome outcome, AjmxException error) {
+    private static void printStackTraces(PrintStream err, @Nullable Outcome outcome, @Nullable AjmxException error) {
         if (error != null) {
             error.printStackTrace(err);
             return;
         }
-        outcome.failuresByPath().forEach((path, e) -> {
+        Objects.requireNonNull(outcome).failuresByPath().forEach((path, e) -> {
             err.println("ajmx: .result" + path);
             e.printStackTrace(err);
         });
     }
 
-    private static OutputFitter.Output render(Outcome outcome, AjmxException error, long durationMs, long maxBytes) {
+    private static OutputFitter.Output render(@Nullable Outcome outcome, @Nullable AjmxException error, long durationMs, long maxBytes) {
         OutputFitter fitter = new OutputFitter(durationMs, maxBytes);
         try {
-            return error != null ? fitter.failure(error) : fitter.success(outcome);
+            return error != null ? fitter.failure(error) : fitter.success(Objects.requireNonNull(outcome));
         } catch (RuntimeException | Error e) {
-            Execution execution = error != null ? error.execution() : outcome.execution();
+            Execution execution = error != null ? error.execution() : Objects.requireNonNull(outcome).execution();
             return fitter.unfittedFailure(AjmxException.encodingFailed(e, maxBytes).withExecution(execution));
         }
     }

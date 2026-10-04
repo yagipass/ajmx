@@ -5,6 +5,9 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
 
 import com.google.errorprone.annotations.Var;
 
@@ -39,8 +42,8 @@ final class OutputFitter {
         }
 
         byte[] shrunk = switch (outcome.shape()) {
-            case ITEMS -> dropTrailingItems((List<?>) outcome.result().get("items"));
-            case BATCH -> shrinkBatch((List<?>) outcome.result().get("items"));
+            case ITEMS -> dropTrailingItems((List<?>) Objects.requireNonNull(outcome.result().get("items")));
+            case BATCH -> shrinkBatch((List<?>) Objects.requireNonNull(outcome.result().get("items")));
             case PLAIN -> null;
         };
         if (shrunk != null) {
@@ -84,7 +87,7 @@ final class OutputFitter {
         }
     }
 
-    private static String shorten(String s, long excess) {
+    private static @Nullable String shorten(String s, long excess) {
         @Var long removed = 0;
         @Var int end = s.length();
         while (end > 0 && removed < excess + ELLIPSIS_BYTES) {
@@ -99,7 +102,7 @@ final class OutputFitter {
         return Json.size(s) - 2;
     }
 
-    private byte[] dropTrailingItems(List<?> items) {
+    private byte @Nullable [] dropTrailingItems(List<?> items) {
         @Var Map<String, Object> best = null;
         @Var int lo = 0;
         @Var int hi = items.size() - 1;
@@ -116,7 +119,7 @@ final class OutputFitter {
         return best != null ? Envelope.encode(Envelope.success(best, durationMs)) : null;
     }
 
-    private byte[] shrinkBatch(List<?> original) {
+    private byte @Nullable [] shrinkBatch(List<?> original) {
         List<Object> items = new ArrayList<>(original);
         int n = items.size();
         long[] sizes = new long[n];

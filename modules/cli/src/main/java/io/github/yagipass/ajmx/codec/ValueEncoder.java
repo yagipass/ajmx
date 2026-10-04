@@ -26,6 +26,8 @@ import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.errorprone.annotations.Var;
 
 import io.github.yagipass.ajmx.error.AjmxException;
@@ -34,7 +36,7 @@ import io.github.yagipass.ajmx.json.Json;
 public final class ValueEncoder {
     private static final int MAX_DEPTH = 32;
 
-    private record Keyed(String key, Object value, long count) {
+    private record Keyed(String key, @Nullable Object value, long count) {
     }
 
     private static final Comparator<Keyed> BY_KEY = Comparator.comparing(Keyed::key);
@@ -54,7 +56,7 @@ public final class ValueEncoder {
         return truncated;
     }
 
-    public Object encode(Object v) {
+    public @Nullable Object encode(@Nullable Object v) {
         try {
             return encode(v, 0);
         } catch (RuntimeException | Error e) {
@@ -62,7 +64,7 @@ public final class ValueEncoder {
         }
     }
 
-    private Object encode(Object v, int depth) {
+    private @Nullable Object encode(@Nullable Object v, int depth) {
         count++;
         if (v == null || v instanceof String || v instanceof Boolean) {
             return v;
@@ -213,7 +215,7 @@ public final class ValueEncoder {
         return m;
     }
 
-    private static List<?> arrayElements(Object v) {
+    private static @Nullable List<?> arrayElements(Object v) {
         if (v instanceof Object[] a) {
             return Arrays.asList(a);
         }
