@@ -86,10 +86,7 @@ public final class AjmxException extends RuntimeException {
 
     public Map<String, Object> toJson() {
         Map<String, Object> json = new LinkedHashMap<>(details);
-        Object executed = execution.toJson();
-        if (executed != null) {
-            json.put("executed", executed);
-        }
+        execution.toJson().ifPresent(executed -> json.put("executed", executed));
         Map<String, Object> error = new LinkedHashMap<>();
         error.put("code", code.name());
         error.put("message", getMessage());

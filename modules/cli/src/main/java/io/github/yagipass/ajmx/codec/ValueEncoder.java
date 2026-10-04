@@ -117,9 +117,8 @@ public final class ValueEncoder {
         if (v instanceof Map<?, ?> m) {
             return map(m, depth);
         }
-        List<?> array = arrayElements(v);
-        if (array != null) {
-            return list(array, depth);
+        if (v.getClass().isArray()) {
+            return list(arrayElements(v), depth);
         }
         return fallback(v);
     }
@@ -215,12 +214,9 @@ public final class ValueEncoder {
         return m;
     }
 
-    private static @Nullable List<?> arrayElements(Object v) {
+    private static List<?> arrayElements(Object v) {
         if (v instanceof Object[] a) {
             return Arrays.asList(a);
-        }
-        if (!v.getClass().isArray()) {
-            return null;
         }
         return new AbstractList<>() {
             @Override

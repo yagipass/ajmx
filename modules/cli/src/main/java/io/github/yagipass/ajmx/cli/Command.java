@@ -2,53 +2,43 @@ package io.github.yagipass.ajmx.cli;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
-import io.github.yagipass.ajmx.core.Op;
 import io.github.yagipass.ajmx.core.Request;
 import io.github.yagipass.ajmx.core.Token;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 
 enum Command implements Token {
-    PS(null, 0, 0, "", "List local JVMs (pid, mainClass, displayName)"),
+    PS(0, 0, "", "List local JVMs (pid, mainClass, displayName)"),
 
-    PING(Op.PING, 0, 0, "", "Check the JMX connection"),
+    PING(0, 0, "", "Check the JMX connection"),
 
-    SEARCH(Op.SEARCH, 0, 1, "[pattern]",
+    SEARCH(0, 1, "[pattern]",
             "List MBean ObjectNames matching a pattern (default " + Request.DEFAULT_SEARCH_PATTERN + ")"),
 
-    DESCRIBE(Op.DESCRIBE, 1, 1, "<mbean>", "Show attributes and operations of an MBean"),
+    DESCRIBE(1, 1, "<mbean>", "Show attributes and operations of an MBean"),
 
-    READ(Op.READ, 2, Integer.MAX_VALUE, "<mbean> <attribute>...", "Read one or more attributes"),
+    READ(2, Integer.MAX_VALUE, "<mbean> <attribute>...", "Read one or more attributes"),
 
-    WRITE(Op.WRITE, 2, 2, "<mbean> <attribute>=<value>", "Write an attribute"),
+    WRITE(2, 2, "<mbean> <attribute>=<value>", "Write an attribute"),
 
-    INVOKE(Op.INVOKE, 2, 2, "<mbean> <operation>", "Invoke an operation"),
+    INVOKE(2, 2, "<mbean> <operation>", "Invoke an operation"),
 
-    BATCH(null, 0, 0, "", "Run requests from stdin, one {\"id\", \"op\", ...} per line, over one connection"),
+    BATCH(0, 0, "", "Run requests from stdin, one {\"id\", \"op\", ...} per line, over one connection"),
 
-    HELP(null, 0, Integer.MAX_VALUE, "", "Print this usage"),
+    HELP(0, Integer.MAX_VALUE, "", "Print this usage"),
 
-    VERSION(null, 0, 0, "", "Print the ajmx version");
+    VERSION(0, 0, "", "Print the ajmx version");
 
-    private final @Nullable Op op;
     private final int minArguments;
     private final int maxArguments;
     private final String argumentSyntax;
     private final String description;
 
-    Command(@Nullable Op op, int minArguments, int maxArguments, String argumentSyntax, String description) {
-        this.op = op;
+    Command(int minArguments, int maxArguments, String argumentSyntax, String description) {
         this.minArguments = minArguments;
         this.maxArguments = maxArguments;
         this.argumentSyntax = argumentSyntax;
         this.description = description;
-    }
-
-    @Nullable
-    Op op() {
-        return op;
     }
 
     String description() {
