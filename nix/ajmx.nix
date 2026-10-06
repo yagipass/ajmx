@@ -1,6 +1,7 @@
 {
   lib,
-  maven,
+  stdenv,
+  gradle_9,
   graalvmPackages,
   buildGraalvmNativeImage,
 }:
@@ -8,29 +9,35 @@
 let
   version = "0.1.0";
   graalvm = graalvmPackages.graalvm-ce;
+  gradle = gradle_9.override { java = graalvm; };
   fs = lib.fileset;
 
-  jar = maven.buildMavenPackage {
+  jar = stdenv.mkDerivation (finalAttrs: {
     pname = "ajmx-cli";
     inherit version;
-    mvnJdk = graalvm;
     src = fs.toSource {
       root = ../.;
       fileset = fs.unions [
-        ../pom.xml
-        ../.mvn
-        ../modules/cli/pom.xml
+        ../settings.gradle.kts
+        ../build.gradle.kts
+        ../gradle.properties
+        ../gradle/libs.versions.toml
+        ../modules/cli/build.gradle.kts
         ../modules/cli/src/main
-        ../modules/it/pom.xml
+        ../modules/it/build.gradle.kts
       ];
     };
-    mvnHash = "sha256-uGggMmtFybdEO/EA/rCL2Qaa5ZuyrdgI1wfM5uyD1gs=";
-    mvnParameters = "-pl modules/cli -am";
-    doCheck = false;
+    nativeBuildInputs = [ gradle ];
+    mitmCache = gradle.fetchDeps {
+      pkg = finalAttrs.finalPackage;
+      data = ./deps.json;
+    };
+    __darwinAllowLocalNetworking = true;
+    gradleBuildTask = ":cli:jar";
     installPhase = ''
-      install -Dm644 modules/cli/target/ajmx-cli-${version}.jar $out/ajmx-cli.jar
+      install -Dm644 modules/cli/build/libs/cli-${version}.jar $out/ajmx-cli.jar
     '';
-  };
+  });
 in
 buildGraalvmNativeImage {
   pname = "ajmx";
@@ -47,7 +54,7 @@ buildGraalvmNativeImage {
   '';
 
   passthru = {
-    inherit (jar) fetchedMavenDeps;
+    inherit (jar) mitmCache;
   };
 
   meta = {
