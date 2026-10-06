@@ -42,7 +42,6 @@
         { config, pkgs, ... }:
         let
           graalvm = pkgs.graalvmPackages.graalvm-ce;
-          maven = pkgs.maven.override { jdk_headless = graalvm; };
         in
         {
           packages = rec {
@@ -115,7 +114,6 @@
           devShells.default = pkgs.mkShell {
             packages = [
               graalvm
-              maven
               pkgs.git
             ]
             ++ config.pre-commit.settings.enabledPackages;

@@ -27,7 +27,7 @@ final class TargetJvm implements AutoCloseable {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable());
         command.addAll(List.of(jvmArgs));
-        command.addAll(List.of("-cp", classpath().toString(), "ajmxtest.TestTarget"));
+        command.addAll(List.of("-cp", classpath(), "ajmxtest.TestTarget"));
         Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
         BufferedReader out = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
         CompletableFuture<String> ready = CompletableFuture.supplyAsync(() -> {
@@ -86,11 +86,11 @@ final class TargetJvm implements AutoCloseable {
         return java != null && !java.isBlank() ? java : Paths.get(System.getProperty("java.home"), "bin", "java").toString();
     }
 
-    private static Path classpath() {
-        Path classes = Paths.get("target/classes").toAbsolutePath();
-        if (!Files.isDirectory(classes)) {
-            throw new IllegalStateException(classes + " not found; compile the it module first");
+    private static String classpath() {
+        String classpath = System.getProperty("ajmx.test.classpath");
+        if (classpath == null || classpath.isBlank()) {
+            throw new IllegalStateException("ajmx.test.classpath is not set; run the integration tests with Gradle");
         }
-        return classes;
+        return classpath;
     }
 }

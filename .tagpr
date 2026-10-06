@@ -1,6 +1,6 @@
 [tagpr]
 	vPrefix = true
 	releaseBranch = main
-	versionFile = pom.xml,modules/cli/pom.xml,modules/it/pom.xml,nix/ajmx.nix
+	versionFile = gradle.properties,nix/ajmx.nix
 	changelog = false
 	release = false

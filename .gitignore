@@ -3,7 +3,8 @@
 result
 result-*
 
-target/
+build/
+.gradle/
 
 hs_err_pid*.log
 replay_pid*.log

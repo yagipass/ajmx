@@ -2,31 +2,30 @@
 
 ## Setup
 
-Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and Maven and installs the git hooks.
+Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and installs the git hooks. `./gradlew` downloads Gradle.
 
 ## Build and test
 
 | Command | Purpose |
 |---|---|
-| `mvn verify` | unit tests and in-process integration tests |
-| `mvn -Pnative verify` | build `modules/cli/target/ajmx` and run the integration tests against it |
-| `mvn -Pnative verify -DskipNativeBuild -Dajmx.test.java=/path/to/jdk8/bin/java` | run the integration tests of the built `modules/cli/target/ajmx` against another target JDK |
-| `mvn spotless:apply` | format Java |
+| `./gradlew check` | unit tests and in-process integration tests |
+| `./gradlew :cli:check` | unit tests only |
+| `./gradlew -Pnative check` | build `modules/cli/build/native/nativeCompile/ajmx` and run the integration tests against it |
+| `./gradlew -Pnative :it:test -Pajmx.test.java=/path/to/jdk8/bin/java` | run the integration tests of the native binary against another target JDK |
+| `./gradlew spotlessApply` | format Java |
 | `nix fmt` | format Nix |
 | `nix build` | build the Nix package into `result/bin/ajmx` |
 | `nix flake check` | build the Nix package and run the git hooks over every tracked file, as CI does |
 
-The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (compiled for Java 8). `-Dajmx.test.java` selects the JDK that runs it.
-
-Inside `modules/cli`, `mvn verify` runs only the unit tests. Inside `modules/it`, it tests the `ajmx-cli` installed last. That needs the parent POM in the local repository, which `mvn install` inside `modules/cli` does not install: run `mvn -N install` at the root once.
+The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (compiled for Java 8). `-Pajmx.test.java` selects the JDK that runs it.
 
 ## Rules
 
-- `mvn verify` fails on unformatted code and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
+- `./gradlew check` fails on unformatted code and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
 - When the CLI's behavior changes, update `README.md` and `skills/ajmx/SKILL.md` with it.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
-- After changing a dependency or plugin in a POM, set `mvnHash` in `nix/ajmx.nix` to the hash that `nix build` reports as `got:`. On Dependabot pull requests, `mvn-hash.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
+- After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
 
 ## Release
 
