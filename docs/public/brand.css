@@ -1,0 +1,186 @@
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ajmx-color-output-bg: #0b1116;
+  --octc-color-warning: #f5c76a;
+  --octc-color-code-frame-border: var(--octc-color-border);
+  --octc-color-code-title-bg: #1e2933;
+  --octc-color-code-title-text: var(--octc-color-text);
+  --octc-color-code-title-border: var(--octc-color-border);
+  --octc-color-code-line-number: var(--octc-color-text-muted);
+  --octc-surface-glass: #1e2933;
+  --octc-surface-line: var(--octc-color-border);
+  --octc-syntax-background: var(--octc-color-code-bg);
+  --octc-syntax-foreground: #c8d2d9;
+  --octc-syntax-token-string: #f9fbfc;
+  --octc-syntax-token-string-expression: #f9fbfc;
+  --octc-syntax-token-function: #f9fbfc;
+  --octc-syntax-token-constant: var(--octc-color-primary);
+  --octc-syntax-token-keyword: var(--octc-color-primary);
+  --octc-syntax-token-punctuation: var(--octc-color-text-muted);
+  --octc-syntax-token-comment: var(--octc-color-text-muted);
+}
+
+body {
+  background-image: none;
+}
+
+.theme-toggle,
+[data-mobile-theme] {
+  display: none;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 3px;
+  background: var(--octc-color-primary);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  pointer-events: none;
+}
+
+.header .header-title {
+  gap: 0.75rem;
+  margin-right: 1.5rem;
+}
+
+.header .header-logo {
+  width: auto;
+  height: 28px;
+}
+
+.nav-link.active,
+.nav-link.active:hover {
+  background: var(--octc-color-primary);
+  color: var(--octc-color-on-primary);
+}
+
+.content h1,
+.content h2,
+.content h3 {
+  font-family: var(--octc-font-display);
+}
+
+.content h1 {
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.content h2 {
+  position: relative;
+  padding-bottom: 0.6rem;
+  border-bottom: 0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.content h2::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  bottom: 0;
+  width: 2.75rem;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--octc-color-primary);
+  transform: skewX(-28deg);
+}
+
+.content .ox-container--terminal {
+  margin: 1.5rem 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--octc-color-border);
+  border-radius: 4px;
+  background: var(--octc-color-code-bg);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+}
+
+@media (max-width: 768px) {
+  .content .ox-container--terminal {
+    border-radius: 8px;
+  }
+}
+
+.content .ox-container--terminal .ox-container-title {
+  display: none;
+}
+
+.content .ox-container--terminal .ox-code {
+  margin: 0;
+}
+
+.content .ox-container--terminal pre {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.content .ox-code {
+  --ox-copy-control-size: 2.25rem;
+  --ox-copy-icon-size: 1.125rem;
+}
+
+.content .ox-code > .ox-copy {
+  opacity: 1;
+  pointer-events: auto;
+  color: color-mix(in srgb, var(--octc-color-code-text) 70%, transparent);
+  background: var(--octc-color-code-bg);
+  box-shadow: calc(var(--ox-copy-inset, 0.5rem) - 2px) 0 0 var(--octc-color-code-bg);
+}
+
+.content .ox-code > .ox-copy:hover,
+.content .ox-code > .ox-copy:focus-visible {
+  color: var(--octc-color-code-text);
+}
+
+.content .ox-code:not(:has(.line ~ .line ~ .line)) > .ox-copy {
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+.content .ox-container--terminal .ox-code:first-of-type pre[data-language="sh"] code:not([data-prompts])::before,
+.content .ox-container--terminal .ox-code:first-of-type .line.ajmx-prompt::before {
+  content: "$ ";
+  color: var(--octc-color-primary);
+}
+
+.content .ox-container--terminal .ox-code:first-of-type code[data-prompts] .line:not(:empty) {
+  padding-left: 2ch;
+}
+
+.content .ox-container--terminal .ox-code:first-of-type code[data-prompts] .line.ajmx-prompt::before {
+  margin-left: -2ch;
+}
+
+.content .ox-container--terminal .ox-code + .ox-code {
+  border-top: 1px solid var(--octc-color-border);
+  --octc-syntax-foreground: var(--octc-color-text-muted);
+  --octc-syntax-token-string: var(--octc-color-text-muted);
+}
+
+.content .ox-container--terminal .ox-code + .ox-code pre {
+  background: var(--ajmx-color-output-bg) !important;
+}
+
+.content .ox-container--terminal .ox-code + .ox-code .ox-copy {
+  display: none;
+}
+
+.content th {
+  background: var(--octc-color-bg);
+}
+
+.content td {
+  background: var(--octc-color-bg-alt);
+}
+
+.content .ox-steps__item::before {
+  border-radius: 2px;
+  transform: skewX(-12deg);
+  font-family: var(--octc-font-display);
+  font-weight: 800;
+}

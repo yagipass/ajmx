@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#171f27" />
+    <title>A JMX CLI for AI agents - ajmx</title>
+    <meta name="description" content="ajmx is a JMX CLI for AI agents. It lists local JVMs and searches, describes, reads, writes and invokes MBeans on local and remote JVMs, and prints every result as one JSON document." />
+    <link rel="canonical" href="https://ajmx-docs.yagipass.com/" />
+    <meta property="og:url" content="https://ajmx-docs.yagipass.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="A JMX CLI for AI agents - ajmx" />
+    <meta property="og:description" content="ajmx is a JMX CLI for AI agents. It lists local JVMs and searches, describes, reads, writes and invokes MBeans on local and remote JVMs, and prints every result as one JSON document." />
+    <meta property="og:image" content="https://ajmx-docs.yagipass.com/brand/banner.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="A JMX CLI for AI agents - ajmx" />
+    <meta name="twitter:description" content="ajmx is a JMX CLI for AI agents. It lists local JVMs and searches, describes, reads, writes and invokes MBeans on local and remote JVMs, and prints every result as one JSON document." />
+    <meta name="twitter:image" content="https://ajmx-docs.yagipass.com/brand/banner.png" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"ajmx","url":"https://ajmx-docs.yagipass.com","@id":"https://ajmx-docs.yagipass.com#website"},{"@type":"WebPage","name":"A JMX CLI for AI agents","description":"ajmx is a JMX CLI for AI agents. It lists local JVMs and searches, describes, reads, writes and invokes MBeans on local and remote JVMs, and prints every result as one JSON document.","url":"https://ajmx-docs.yagipass.com/","@id":"https://ajmx-docs.yagipass.com/#webpage","isPartOf":{"@id":"https://ajmx-docs.yagipass.com#website"}}]}</script>
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="stylesheet" href="/__ox_fonts__/fonts.css" />
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <section class="hero" aria-labelledby="title">
+      <div class="diag" aria-hidden="true">
+        <span class="band-a"></span>
+        <span class="band-b"></span>
+        <span class="band-c"></span>
+        <span class="slash-a"></span>
+        <span class="slash-b"></span>
+      </div>
+      <div class="wrap">
+        <header class="topbar">
+          <a class="brand" href="/"><img src="/brand/logo.svg" alt="ajmx" width="2067" height="944"></a>
+          <nav class="top-links" aria-label="Site">
+            <a href="/overview/">Docs</a>
+            <a href="https://github.com/yagipass/ajmx">GitHub</a>
+          </nav>
+        </header>
+        <div class="hero-body">
+          <div class="lockup">
+            <img src="/brand/logo.svg" alt="ajmx logo" width="2067" height="944" fetchpriority="high">
+            <div class="lockup-text">
+              <h1 id="title"><span>A JMX CLI</span> <span class="lime">for AI agents.</span></h1>
+              <p class="hero-sub">Inspect and control a running JVM.</p>
+            </div>
+          </div>
+          <div class="swoosh" aria-hidden="true"><span class="w"></span><span class="l"></span></div>
+          <div class="install">
+            <div class="tabs" role="tablist" aria-label="Install with">
+              <button type="button" role="tab" id="in-script" aria-selected="true" aria-controls="in-script-panel">Install script</button>
+              <button type="button" role="tab" id="in-brew" aria-selected="false" aria-controls="in-brew-panel" tabindex="-1">Homebrew</button>
+              <button type="button" role="tab" id="in-nix" aria-selected="false" aria-controls="in-nix-panel" tabindex="-1">Nix</button>
+            </div>
+            <div class="cta-row">
+              <div class="panel" role="tabpanel" id="in-script-panel" aria-labelledby="in-script"><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>curl -fsSL https://github.com/yagipass/ajmx/releases/latest/download/install.sh | sh -s -- -b ~/.local/bin</code><button type="button" class="copy">Copy</button></div></div>
+              <div class="panel" role="tabpanel" id="in-brew-panel" aria-labelledby="in-brew" hidden><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>brew install yagipass/tap/ajmx</code><button type="button" class="copy">Copy</button></div></div>
+              <div class="panel" role="tabpanel" id="in-nix-panel" aria-labelledby="in-nix" hidden><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>nix profile install github:yagipass/ajmx</code><button type="button" class="copy">Copy</button></div></div>
+              <a class="go" href="/quick-start/"><span>Get started</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement st-right deep" aria-labelledby="agent">
+      <span class="slash" aria-hidden="true"></span>
+      <div class="wrap">
+        <h2 id="agent" class="st-title">Just ask<span class="dot">.</span></h2>
+        <div class="st-row">
+          <div class="st-note ask-note">
+            <p>Add the ajmx skill and ask about a running JVM in your own words. The agent finds the JVM and its MBeans, reads them, and changes the JVM only when you ask.</p>
+            <div>
+              <div class="tabs" role="tablist" aria-label="Add the skill with">
+                <button type="button" role="tab" id="sk-gh" aria-selected="true" aria-controls="sk-gh-panel">GitHub CLI</button>
+                <button type="button" role="tab" id="sk-npx" aria-selected="false" aria-controls="sk-npx-panel" tabindex="-1">npx</button>
+                <button type="button" role="tab" id="sk-apm" aria-selected="false" aria-controls="sk-apm-panel" tabindex="-1">apm</button>
+              </div>
+              <div class="panel" role="tabpanel" id="sk-gh-panel" aria-labelledby="sk-gh"><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>gh skill install yagipass/ajmx ajmx</code><button type="button" class="copy">Copy</button></div></div>
+              <div class="panel" role="tabpanel" id="sk-npx-panel" aria-labelledby="sk-npx" hidden><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>npx skills add yagipass/ajmx --skill ajmx</code><button type="button" class="copy">Copy</button></div></div>
+              <div class="panel" role="tabpanel" id="sk-apm-panel" aria-labelledby="sk-apm" hidden><div class="cmd"><span class="cmd-dollar" aria-hidden="true">$</span><code>apm install yagipass/ajmx/skills/ajmx</code><button type="button" class="copy">Copy</button></div></div>
+            </div>
+          </div>
+          <ul class="asks" aria-label="Questions to ask">
+            <li><p>Why does the heap of OrderService keep growing?</p></li>
+            <li><p>Are there deadlocked threads in the JVM listening on port 9010?</p></li>
+            <li><p>Is the connection pool of the local Spring Boot app running out?</p></li>
+            <li><p>Turn on a heap dump on OutOfMemoryError in the running app.</p></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement st-left" aria-labelledby="st-setup">
+      <span class="slash" aria-hidden="true"></span>
+      <div class="wrap">
+        <h2 id="st-setup" class="st-title">Zero setup<span class="dot">.</span></h2>
+        <div class="st-row">
+          <div class="proof">
+            <pre class="proof-cmd">ajmx --pid 12345 ping</pre>
+            <pre class="proof-out json">{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":13}</pre>
+          </div>
+          <p class="st-note"><code>--pid</code> attaches to a local HotSpot JVM even without remote JMX enabled. No JVM flags and no restart, so you can look at a problem while it is still happening.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement st-right deep" aria-labelledby="st-json">
+      <span class="slash" aria-hidden="true"></span>
+      <div class="wrap">
+        <h2 id="st-json" class="st-title">Only JSON<span class="dot">.</span></h2>
+        <div class="st-row">
+          <p class="st-note">Every result is one JSON document. A failure is one too, with <code>error.code</code> to switch on and <code>retryable</code> to say whether to try again. The agent knows what happened and what to do next, with no text or stack trace to interpret.</p>
+          <div class="proof">
+            <pre class="proof-cmd">ajmx --pid 12345 read java.lang:type=Memory HeapMemoryUsage</pre>
+            <pre class="proof-out json">{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":268435456,"init":268435456,"max":268435456,"used":41491160}}},"durationMs":19}</pre>
+            <pre class="proof-cmd">ajmx --pid 12345 describe com.example:type=Nope</pre>
+            <pre class="proof-out json">{"schemaVersion":1,"ok":false,"error":{"code":"MBEAN_NOT_FOUND","message":"MBean was not found","retryable":false,"details":{"mbean":"com.example:type=Nope"}},"durationMs":3}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement st-left" aria-labelledby="st-bounded">
+      <span class="slash" aria-hidden="true"></span>
+      <div class="wrap">
+        <h2 id="st-bounded" class="st-title">Always bounded<span class="dot">.</span></h2>
+        <div class="st-row">
+          <div class="proof">
+            <pre class="proof-cmd">ajmx --pid 12345 read java.lang:type=Runtime SystemProperties --limit 2 | jq -c .result</pre>
+            <pre class="proof-out json">{"mbean":"java.lang:type=Runtime","attributes":{"SystemProperties":{"$truncated":true,"$total":55,"$items":[{"key":"apple.awt.application.name","value":"OrderService"},{"key":"file.encoding","value":"UTF-8"}]}},"truncated":true}</pre>
+          </div>
+          <p class="st-note"><code>--limit</code> caps every list at 100 items and <code>--max-bytes</code> caps stdout at 262144 bytes by default, so no command fills the agent's context with more than you allow. A cut is marked, so the agent can tell part of the data from all of it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement st-right deep" aria-labelledby="verbs">
+      <span class="slash" aria-hidden="true"></span>
+      <div class="wrap">
+        <h2 id="verbs" class="st-title">Find<span class="dot">.</span> Read<span class="dot">.</span> Change<span class="dot">.</span></h2>
+        <div class="st-row">
+          <p class="st-note">An agent needs no MBean names up front, so it can work on any JVM, even one running an application it has never seen. Each command prints what the next one takes, and <code>batch</code> sends several over one connection.</p>
+          <div class="proof steps">
+            <p class="steps-head">Find<span class="dot">.</span></p>
+            <dl>
+              <div><dt>ps</dt><dd>Lists the JVMs on this machine.</dd></div>
+              <div><dt>search</dt><dd>Finds MBeans by an ObjectName pattern.</dd></div>
+              <div><dt>describe</dt><dd>Lists an MBean's attributes and operations.</dd></div>
+            </dl>
+            <p class="steps-head">Read<span class="dot">.</span></p>
+            <dl>
+              <div><dt>read</dt><dd>Reads attributes, and reports the ones that failed.</dd></div>
+            </dl>
+            <p class="steps-head">Change<span class="dot">.</span></p>
+            <dl>
+              <div><dt>write</dt><dd>Sets an attribute, converted to its type.</dd></div>
+              <div><dt>invoke</dt><dd>Calls an operation with the overload its arguments fit.</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="signoff" aria-label="ajmx">
+      <div class="diag" aria-hidden="true">
+        <span class="band-a"></span>
+        <span class="band-c"></span>
+        <span class="slash-b"></span>
+      </div>
+      <div class="wrap signoff-in">
+        <img src="/brand/logo.svg" alt="" width="2067" height="944" loading="lazy">
+        <p class="signoff-line">Inspect and control <span class="lime">a running JVM.</span></p>
+        <nav class="signoff-links" aria-label="Docs">
+          <a href="/quick-start/">Quick start</a>
+          <a href="/use-cases/">Use cases</a>
+          <a href="/commands/">Commands</a>
+          <a href="/agent-skill/">Agent skill</a>
+          <a href="https://github.com/yagipass/ajmx">GitHub</a>
+        </nav>
+      </div>
+      <div class="swoosh" aria-hidden="true"><span class="w"></span><span class="l"></span></div>
+    </section>
+
+    <footer class="foot">
+      <div class="wrap foot-in">
+        <span>Released under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.</span>
+        <span>Copyright 2026 yagipass.</span>
+      </div>
+    </footer>
+
+    <script>
+    (() => {
+      const token = /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
+      const escape = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+      for (const el of document.querySelectorAll(".json")) {
+        el.innerHTML = escape(el.textContent).replace(token, (m, str, colon, word) => {
+          if (str) return colon ? `<span class="j-key">${str}</span>${colon}` : `<span class="j-str">${str}</span>`;
+          if (word) return `<span class="j-bool">${word}</span>`;
+          return `<span class="j-num">${m}</span>`;
+        });
+      }
+
+      function select(tab) {
+        for (const t of tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')) {
+          const on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          t.tabIndex = on ? 0 : -1;
+          document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+        }
+      }
+      for (const list of document.querySelectorAll('[role="tablist"]')) {
+        list.addEventListener("click", (e) => {
+          const tab = e.target.closest('[role="tab"]');
+          if (tab) select(tab);
+        });
+        list.addEventListener("keydown", (e) => {
+          if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+          const tabs = [...list.querySelectorAll('[role="tab"]')];
+          const i = tabs.indexOf(document.activeElement);
+          if (i < 0) return;
+          const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+          select(next);
+          next.focus();
+          e.preventDefault();
+        });
+      }
+
+      for (const button of document.querySelectorAll(".copy")) {
+        button.addEventListener("click", () => {
+          const code = button.parentElement.querySelector("code");
+          const done = () => {
+            button.textContent = "Copied";
+            button.setAttribute("data-done", "");
+            setTimeout(() => {
+              button.textContent = "Copy";
+              button.removeAttribute("data-done");
+            }, 1600);
+          };
+          const selectText = () => {
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            getSelection().removeAllRanges();
+            getSelection().addRange(range);
+          };
+          try {
+            navigator.clipboard.writeText(code.textContent).then(done, selectText);
+          } catch {
+            selectText();
+          }
+        });
+      }
+    })();
+    </script>
+  </body>
+</html>
