@@ -18,3 +18,13 @@ updates:
     commit-message:
       prefix: build
       include: scope
+
+  - package-ecosystem: npm
+    directory: /docs
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
