@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { oxContent, defineTheme, defaultTheme } from "@ox-content/vite-plugin";
 
-const siteUrl = "https://ajmx-docs.yagipass.com";
+const siteUrl = "https://ajmx.yagipass.com";
 const brandColors = {
   primary: "#ccfa42",
   primaryHover: "#ddff80",
