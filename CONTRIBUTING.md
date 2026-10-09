@@ -23,9 +23,19 @@ The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (
 
 - `./gradlew check` fails on unformatted code and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
-- When the CLI's behavior changes, update `README.md` and `skills/ajmx/SKILL.md` with it.
+- When the CLI's behavior changes, update `README.md`, `skills/ajmx/SKILL.md` and `docs/content` with it.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
 - After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
+
+## Docs
+
+The docs site in `docs/` is built with [ox-content](https://github.com/ubugeeei-prod/ox-content). `nix develop .#docs` (or `direnv allow` in `docs/`) provides Node.js and pnpm. Run these in `docs/`:
+
+| Command | Purpose |
+|---|---|
+| `pnpm install` | install the dependencies |
+| `pnpm dev` | serve the site and reload on changes |
+| `pnpm build` | build the site into `docs/dist` |
 
 ## Release
 

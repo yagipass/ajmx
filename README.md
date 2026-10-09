@@ -1,5 +1,7 @@
 # ajmx
 
+![ajmx — A JMX CLI for AI agents](docs/public/brand/banner.png)
+
 A JMX CLI for AI agents. It lists local JVMs and searches, describes, reads, writes and invokes MBeans on local and remote JVMs.
 
 ## Why

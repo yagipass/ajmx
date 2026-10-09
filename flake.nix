@@ -123,6 +123,17 @@
 
             shellHook = config.pre-commit.installationScript;
           };
+
+          devShells.docs = pkgs.mkShell {
+            packages = [
+              pkgs.nodejs_24
+              pkgs.pnpm
+              pkgs.git
+            ]
+            ++ config.pre-commit.settings.enabledPackages;
+
+            shellHook = config.pre-commit.installationScript;
+          };
         };
     };
 }
