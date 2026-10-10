@@ -3,32 +3,33 @@ package io.github.yagipass.ajmx.core;
 import java.util.List;
 
 public enum Op implements Token {
-    PING(false),
+  PING(false),
 
-    SEARCH(false, "pattern"),
+  SEARCH(false, "pattern"),
 
-    DESCRIBE(false, "mbean"),
+  DESCRIBE(false, "mbean"),
 
-    READ(false, "mbean", "attributes"),
+  READ(false, "mbean", "attributes"),
 
-    WRITE(true, "mbean", "attribute", "value"),
+  WRITE(true, "mbean", "attribute", "value"),
 
-    INVOKE(true, "mbean", "operation", "args", "signature");
+  INVOKE(true, "mbean", "operation", "args", "signature");
 
-    private final boolean mutating;
-    @SuppressWarnings("ImmutableEnumChecker")
-    private final List<String> fields;
+  private final boolean mutating;
 
-    Op(boolean mutating, String... fields) {
-        this.mutating = mutating;
-        this.fields = List.of(fields);
-    }
+  @SuppressWarnings("ImmutableEnumChecker")
+  private final List<String> fields;
 
-    public boolean mutating() {
-        return mutating;
-    }
+  Op(boolean mutating, String... fields) {
+    this.mutating = mutating;
+    this.fields = List.of(fields);
+  }
 
-    List<String> fields() {
-        return fields;
-    }
+  public boolean mutating() {
+    return mutating;
+  }
+
+  List<String> fields() {
+    return fields;
+  }
 }
