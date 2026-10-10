@@ -52,8 +52,7 @@ subprojects {
 
     configure<SpotlessExtension> {
         java {
-            eclipse().configFile(rootProject.file("eclipse-formatter.xml"))
-            importOrder("\\#", "java", "javax", "org", "com")
+            googleJavaFormat().reorderImports(true)
             removeUnusedImports()
             trimTrailingWhitespace()
             endWithNewline()
