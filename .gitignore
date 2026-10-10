@@ -19,6 +19,7 @@ replay_pid*.log
 notes/
 
 .idea/
+.vscode/
 *.iml
 .classpath
 .project
