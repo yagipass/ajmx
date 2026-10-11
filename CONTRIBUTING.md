@@ -2,7 +2,7 @@
 
 ## Setup
 
-Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and installs the git hooks. `./gradlew` downloads Gradle.
+Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and [hyperfine](https://github.com/sharkdp/hyperfine), and installs the git hooks. `./gradlew` downloads Gradle.
 
 ## Build and test
 
