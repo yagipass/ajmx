@@ -115,6 +115,7 @@
             packages = [
               graalvm
               pkgs.git
+              pkgs.hyperfine
             ]
             ++ config.pre-commit.settings.enabledPackages;
 
