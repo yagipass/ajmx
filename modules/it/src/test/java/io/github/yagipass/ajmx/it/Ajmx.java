@@ -114,8 +114,12 @@ final class Ajmx {
 
   record Footprint(Result result, long peakRssBytes) {}
 
+  static boolean macOs() {
+    return System.getProperty("os.name").startsWith("Mac");
+  }
+
   static Footprint runWithPeakRss(String... args) throws Exception {
-    boolean macOs = System.getProperty("os.name").startsWith("Mac");
+    boolean macOs = macOs();
     Path usage = Files.createTempFile("ajmx-usage", ".txt");
     try {
       List<String> command =
