@@ -1,5 +1,12 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
+import io.github.yagipass.memberorder.MemberOrderStep
 import net.ltgt.gradle.errorprone.errorprone
+
+buildscript {
+    dependencies {
+        classpath(libs.spotless.member.order)
+    }
+}
 
 plugins {
     alias(libs.plugins.errorprone) apply false
@@ -52,6 +59,11 @@ subprojects {
 
     configure<SpotlessExtension> {
         java {
+            addStep(
+                MemberOrderStep.builder()
+                    .order("T,SF,F,C,@BeforeSuite,@BeforeAll,@BeforeClass,@BeforeParameterizedClassInvocation,@BeforeEach,@Before,@AfterEach,@After,@AfterParameterizedClassInvocation,@AfterAll,@AfterClass,@AfterSuite,SM:B,M:B,SM:R,M:R,SM:D,M:D,SM:V,M:V")
+                    .build()
+            )
             googleJavaFormat().reorderImports(true)
             removeUnusedImports()
             trimTrailingWhitespace()

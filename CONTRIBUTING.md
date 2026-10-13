@@ -13,7 +13,7 @@ Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and [hyperfine]
 | `./gradlew -Pnative check` | build `modules/cli/build/native/nativeCompile/ajmx` and run the integration tests against it |
 | `./gradlew -Pnative :it:test -Pajmx.test.java=/path/to/jdk8/bin/java` | run the integration tests of the native binary against another target JDK |
 | `./gradlew -Pnative :it:perfTest` | check the native binary's memory, batch scaling and startup time against fixed limits, as CI does. Needs `/usr/bin/time` (GNU time on Linux) |
-| `./gradlew spotlessApply` | format Java |
+| `./gradlew spotlessApply` | format Java and order the members of each type |
 | `nix fmt` | format Nix |
 | `nix build` | build the Nix package into `result/bin/ajmx` |
 | `nix flake check` | build the Nix package and run the git hooks over every tracked file, as CI does |
@@ -22,7 +22,8 @@ The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (
 
 ## Rules
 
-- `./gradlew check` fails on unformatted code and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
+- `./gradlew check` fails on unformatted code, including members out of the order set in `build.gradle.kts`, and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
+- `./gradlew spotlessApply` moves overloads with different visibilities apart, which Error Prone's `UngroupedOverloads` rejects. Give them different names.
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
 - When the CLI's behavior changes, update `README.md`, `skills/ajmx/SKILL.md` and `docs/content` with it.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.

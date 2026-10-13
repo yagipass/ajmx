@@ -16,14 +16,6 @@ import org.junit.jupiter.api.Test;
 
 final class OperationResolverTest {
 
-  private static MBeanOperationInfo op(String name, String... types) {
-    MBeanParameterInfo[] params = new MBeanParameterInfo[types.length];
-    for (int i = 0; i < types.length; i++) {
-      params[i] = new MBeanParameterInfo("p" + i, types[i], "");
-    }
-    return new MBeanOperationInfo(name, "", params, "void", MBeanOperationInfo.ACTION);
-  }
-
   private static final MBeanOperationInfo[] OPS = {
     op("invalidate", "java.lang.String"),
     op("invalidate", "java.lang.Object"),
@@ -33,11 +25,6 @@ final class OperationResolverTest {
     op("resize", "java.lang.String"),
     op("clear"),
   };
-
-  private static OperationResolver.Resolved resolve(
-      String name, List<Object> args, @Nullable List<String> signature) {
-    return OperationResolver.resolve(OPS, name, args, signature);
-  }
 
   @Test
   void jsonTypeSelectsTheOnlyFittingOverload() {
@@ -115,5 +102,18 @@ final class OperationResolverTest {
     AjmxException e =
         assertThrows(AjmxException.class, () -> resolve("put", List.of("k", "v"), null));
     assertEquals(ErrorCode.TYPE_CONVERSION_FAILED, e.code());
+  }
+
+  private static MBeanOperationInfo op(String name, String... types) {
+    MBeanParameterInfo[] params = new MBeanParameterInfo[types.length];
+    for (int i = 0; i < types.length; i++) {
+      params[i] = new MBeanParameterInfo("p" + i, types[i], "");
+    }
+    return new MBeanOperationInfo(name, "", params, "void", MBeanOperationInfo.ACTION);
+  }
+
+  private static OperationResolver.Resolved resolve(
+      String name, List<Object> args, @Nullable List<String> signature) {
+    return OperationResolver.resolve(OPS, name, args, signature);
   }
 }

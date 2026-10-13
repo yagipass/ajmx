@@ -23,6 +23,31 @@ final class StartupPerfIT {
     assumeTrue(Ajmx.nativeMode(), "times the native binary; run :it:perfTest with -Pnative");
   }
 
+  @Test
+  void psIsFastEnoughToRunBeforeEveryCommand() throws Exception {
+    assertUnder(Duration.ofMillis(50), medianAfterWarmup("ps", "ps"), "ps");
+  }
+
+  @Test
+  void laterCommandsReuseTheAgentOfTheFirstAndStayFast() throws Exception {
+    try (TargetJvm target = TargetJvm.start()) {
+      timed("--pid", target.pidArg(), "ping");
+      Duration median = medianAfterWarmup("later --pid ping", "--pid", target.pidArg(), "ping");
+      assertUnder(Duration.ofMillis(100), median, "--pid ping with the agent running");
+    }
+  }
+
+  @Test
+  void attachingToAJvmForTheFirstTimeTakesUnderASecond() throws Exception {
+    List<Duration> times = new ArrayList<>();
+    for (int i = 0; i < NEW_JVMS; i++) {
+      try (TargetJvm target = TargetJvm.start()) {
+        times.add(timed("--pid", target.pidArg(), "ping"));
+      }
+    }
+    assertUnder(Duration.ofSeconds(1), median("first --pid ping", times), "first --pid ping");
+  }
+
   private static Duration timed(String... args) throws Exception {
     Ajmx.Timed t = Ajmx.runTimed("", args);
     assertEquals(0, t.result().exitCode(), t.result().stdout());
@@ -56,30 +81,5 @@ final class StartupPerfIT {
     assertTrue(
         median.compareTo(limit) < 0,
         () -> what + " took " + median.toMillis() + " ms, limit " + limit.toMillis() + " ms");
-  }
-
-  @Test
-  void psIsFastEnoughToRunBeforeEveryCommand() throws Exception {
-    assertUnder(Duration.ofMillis(50), medianAfterWarmup("ps", "ps"), "ps");
-  }
-
-  @Test
-  void laterCommandsReuseTheAgentOfTheFirstAndStayFast() throws Exception {
-    try (TargetJvm target = TargetJvm.start()) {
-      timed("--pid", target.pidArg(), "ping");
-      Duration median = medianAfterWarmup("later --pid ping", "--pid", target.pidArg(), "ping");
-      assertUnder(Duration.ofMillis(100), median, "--pid ping with the agent running");
-    }
-  }
-
-  @Test
-  void attachingToAJvmForTheFirstTimeTakesUnderASecond() throws Exception {
-    List<Duration> times = new ArrayList<>();
-    for (int i = 0; i < NEW_JVMS; i++) {
-      try (TargetJvm target = TargetJvm.start()) {
-        times.add(timed("--pid", target.pidArg(), "ping"));
-      }
-    }
-    assertUnder(Duration.ofSeconds(1), median("first --pid ping", times), "first --pid ping");
   }
 }

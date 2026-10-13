@@ -22,6 +22,20 @@ import javax.management.remote.JMXServiceURL;
 import org.jspecify.annotations.Nullable;
 
 final class LocalConnector {
+  record Handshake(Thread thread, boolean hasPerfData, CompletableFuture<AjmxException> outcome) {
+    void end() {
+      long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_END_TIMEOUT_MS);
+      while (!outcome.isDone() && deadline - System.nanoTime() > 0) {
+        thread.interrupt();
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_INTERRUPT_STEP_MS));
+      }
+    }
+
+    boolean answered() {
+      return outcome.isDone() && outcome.join() == null;
+    }
+  }
+
   private static final long DETACH_TIMEOUT_MS = 1000;
   private static final long ATTACH_POLL_STEP_MS = 100;
   private static final long ATTACH_MARGIN_MS = 100;
@@ -42,20 +56,6 @@ final class LocalConnector {
         e -> JmxErrors.translate(e, context));
   }
 
-  record Handshake(Thread thread, boolean hasPerfData, CompletableFuture<AjmxException> outcome) {
-    void end() {
-      long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_END_TIMEOUT_MS);
-      while (!outcome.isDone() && deadline - System.nanoTime() > 0) {
-        thread.interrupt();
-        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(HANDSHAKE_INTERRUPT_STEP_MS));
-      }
-    }
-
-    boolean answered() {
-      return outcome.isDone() && outcome.join() == null;
-    }
-  }
-
   static AjmxException timedOutDuring(Handshake handshake, long timeoutMs) {
     if (handshake == null) {
       return timedOut(timeoutMs, null);
@@ -68,6 +68,57 @@ final class LocalConnector {
     return handshake.answered()
         ? timedOut(timeoutMs, null)
         : notResponding(timeoutMs, null, handshake.hasPerfData());
+  }
+
+  static boolean isJavaLauncher(String command) {
+    String path =
+        command.endsWith(DELETED)
+            ? command.substring(0, command.length() - DELETED.length())
+            : command;
+    Path name = Path.of(path).getFileName();
+    return name != null && name.toString().equals("java");
+  }
+
+  static long attachTimeout(long budgetMs) {
+    @Var long waited = ATTACH_POLL_STEP_MS;
+    for (long delay = 2 * ATTACH_POLL_STEP_MS;
+        waited + delay <= budgetMs;
+        delay += ATTACH_POLL_STEP_MS) {
+      waited += delay;
+    }
+    return waited - 1;
+  }
+
+  static AjmxException agentUnavailable(IOException e) {
+    AjmxException unavailable =
+        new AjmxException(
+                ErrorCode.LOCAL_JMX_UNAVAILABLE,
+                "Unable to start the local JMX agent in the JVM",
+                e)
+            .with("reason", e.getMessage());
+    return e instanceof AttachOperationFailedException ? unavailable.disableRetry() : unavailable;
+  }
+
+  static AjmxException classifyAttachFailure(long timeoutMs, Exception e, boolean hasPerfData) {
+    String m = String.valueOf(e.getMessage()).toLowerCase(Locale.ROOT);
+    if (m.contains("doesn't respond within")) {
+      return notResponding(timeoutMs, e, hasPerfData);
+    }
+    ErrorCode code;
+    String message;
+    if (m.contains("not secure")
+        || m.contains("permission denied")
+        || m.contains("operation not permitted")) {
+      code = ErrorCode.ATTACH_PERMISSION_DENIED;
+      message = "Not permitted to attach to the process";
+    } else if (m.contains("non existent") || m.contains("no such process")) {
+      code = ErrorCode.PROCESS_NOT_FOUND;
+      message = "Process was not found";
+    } else {
+      code = ErrorCode.ATTACH_NOT_SUPPORTED;
+      message = "The process does not accept attach (not a HotSpot JVM, or attach is unavailable)";
+    }
+    return new AjmxException(code, message, e);
   }
 
   @SuppressWarnings("BanJNDI")
@@ -108,15 +159,6 @@ final class LocalConnector {
     }
   }
 
-  static boolean isJavaLauncher(String command) {
-    String path =
-        command.endsWith(DELETED)
-            ? command.substring(0, command.length() - DELETED.length())
-            : command;
-    Path name = Path.of(path).getFileName();
-    return name != null && name.toString().equals("java");
-  }
-
   private static String startLocalAgent(
       long pid,
       long timeoutMs,
@@ -149,30 +191,10 @@ final class LocalConnector {
     }
   }
 
-  static long attachTimeout(long budgetMs) {
-    @Var long waited = ATTACH_POLL_STEP_MS;
-    for (long delay = 2 * ATTACH_POLL_STEP_MS;
-        waited + delay <= budgetMs;
-        delay += ATTACH_POLL_STEP_MS) {
-      waited += delay;
-    }
-    return waited - 1;
-  }
-
   private static AjmxException timedOut(long timeoutMs, @Nullable Exception cause) {
     return new AjmxException(
             ErrorCode.CONNECTION_TIMEOUT, "Timed out connecting to the local JVM", cause)
         .with("timeoutMs", timeoutMs);
-  }
-
-  static AjmxException agentUnavailable(IOException e) {
-    AjmxException unavailable =
-        new AjmxException(
-                ErrorCode.LOCAL_JMX_UNAVAILABLE,
-                "Unable to start the local JMX agent in the JVM",
-                e)
-            .with("reason", e.getMessage());
-    return e instanceof AttachOperationFailedException ? unavailable.disableRetry() : unavailable;
   }
 
   private static AjmxException notResponding(
@@ -184,27 +206,5 @@ final class LocalConnector {
                 "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)",
                 cause)
             .with("timeoutMs", timeoutMs);
-  }
-
-  static AjmxException classifyAttachFailure(long timeoutMs, Exception e, boolean hasPerfData) {
-    String m = String.valueOf(e.getMessage()).toLowerCase(Locale.ROOT);
-    if (m.contains("doesn't respond within")) {
-      return notResponding(timeoutMs, e, hasPerfData);
-    }
-    ErrorCode code;
-    String message;
-    if (m.contains("not secure")
-        || m.contains("permission denied")
-        || m.contains("operation not permitted")) {
-      code = ErrorCode.ATTACH_PERMISSION_DENIED;
-      message = "Not permitted to attach to the process";
-    } else if (m.contains("non existent") || m.contains("no such process")) {
-      code = ErrorCode.PROCESS_NOT_FOUND;
-      message = "Process was not found";
-    } else {
-      code = ErrorCode.ATTACH_NOT_SUPPORTED;
-      message = "The process does not accept attach (not a HotSpot JVM, or attach is unavailable)";
-    }
-    return new AjmxException(code, message, e);
   }
 }

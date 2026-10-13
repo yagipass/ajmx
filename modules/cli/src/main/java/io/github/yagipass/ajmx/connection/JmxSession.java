@@ -11,12 +11,12 @@ import javax.management.remote.JMXConnector;
 import org.jspecify.annotations.Nullable;
 
 public final class JmxSession implements AutoCloseable {
-  private static final long CLOSE_TIMEOUT_MS = 1000;
-
   @FunctionalInterface
   public interface JmxCall<T extends @Nullable Object> {
     T run(MBeanServerConnection connection) throws Exception;
   }
+
+  private static final long CLOSE_TIMEOUT_MS = 1000;
 
   private final JMXConnector connector;
   private final MBeanServerConnection connection;

@@ -27,12 +27,13 @@ import javax.management.ObjectName;
 import org.jspecify.annotations.Nullable;
 
 public final class MBeanClient {
+  private record Fetched(Map<String, Object> values, Map<String, AjmxException> failures) {}
+
   private static final Set<ErrorCode> NOT_ATTRIBUTE_SPECIFIC =
       EnumSet.of(ErrorCode.MBEAN_NOT_FOUND, ErrorCode.CONNECTION_TIMEOUT, ErrorCode.AUTH_FAILED);
+
   private static final Set<ErrorCode> UNREADABLE_REPLY =
       EnumSet.of(ErrorCode.UNSUPPORTED_TYPE, ErrorCode.INTERNAL_ERROR);
-
-  private record Fetched(Map<String, Object> values, Map<String, AjmxException> failures) {}
 
   private final JmxSession session;
   private final int limit;
@@ -60,6 +61,75 @@ public final class MBeanClient {
               @Nullable List<String> signature) ->
           invoke(mbean, operation, args, signature);
     };
+  }
+
+  static @Nullable Object encode(
+      ValueEncoder encoder, @Nullable Object value, Execution execution) {
+    try {
+      return encoder.encode(value);
+    } catch (AjmxException e) {
+      throw e.withExecution(execution);
+    }
+  }
+
+  private static Map<String, Object> attributeJson(MBeanAttributeInfo attribute) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    m.put("name", attribute.getName());
+    m.put("type", attribute.getType());
+    m.put("readable", attribute.isReadable());
+    m.put("writable", attribute.isWritable());
+    return m;
+  }
+
+  private static Map<String, Object> operationJson(MBeanOperationInfo operation) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    m.put("name", operation.getName());
+    m.put("returnType", operation.getReturnType());
+    m.put(
+        "signature",
+        Arrays.stream(operation.getSignature()).map(MBeanClient::parameterJson).toList());
+    return m;
+  }
+
+  private static Map<String, Object> parameterJson(MBeanParameterInfo parameter) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    m.put("name", parameter.getName());
+    m.put("type", parameter.getType());
+    return m;
+  }
+
+  private static void throwIfNothingWasRead(
+      List<String> attributes, Map<String, AjmxException> failures) {
+    if (attributes.size() == 1 && !failures.isEmpty()) {
+      throw failures.get(attributes.getFirst());
+    }
+    if (failures.size() == attributes.size()
+        && failures.values().stream().allMatch(e -> e.code() == ErrorCode.CONNECTION_FAILED)) {
+      throw failures.get(attributes.getFirst());
+    }
+  }
+
+  private static Outcome outcome(
+      Map<String, Object> result,
+      ValueEncoder encoder,
+      Map<String, AjmxException> failuresByPath,
+      Execution execution) {
+    if (encoder.truncated()) {
+      result.put("truncated", true);
+    }
+    return Outcome.plain(result, failuresByPath, execution);
+  }
+
+  private static Map<String, Object> context(ObjectName name) {
+    Map<String, Object> context = new LinkedHashMap<>();
+    context.put("mbean", name.toString());
+    return context;
+  }
+
+  private static Map<String, Object> context(ObjectName name, String key, String value) {
+    Map<String, Object> context = context(name);
+    context.put(key, value);
+    return context;
   }
 
   private Outcome ping() {
@@ -93,32 +163,6 @@ public final class MBeanClient {
             .map(MBeanClient::operationJson)
             .toList());
     return Outcome.of(result);
-  }
-
-  private static Map<String, Object> attributeJson(MBeanAttributeInfo attribute) {
-    Map<String, Object> m = new LinkedHashMap<>();
-    m.put("name", attribute.getName());
-    m.put("type", attribute.getType());
-    m.put("readable", attribute.isReadable());
-    m.put("writable", attribute.isWritable());
-    return m;
-  }
-
-  private static Map<String, Object> operationJson(MBeanOperationInfo operation) {
-    Map<String, Object> m = new LinkedHashMap<>();
-    m.put("name", operation.getName());
-    m.put("returnType", operation.getReturnType());
-    m.put(
-        "signature",
-        Arrays.stream(operation.getSignature()).map(MBeanClient::parameterJson).toList());
-    return m;
-  }
-
-  private static Map<String, Object> parameterJson(MBeanParameterInfo parameter) {
-    Map<String, Object> m = new LinkedHashMap<>();
-    m.put("name", parameter.getName());
-    m.put("type", parameter.getType());
-    return m;
   }
 
   private Outcome read(ObjectName name, List<String> attributes) {
@@ -198,17 +242,6 @@ public final class MBeanClient {
     return new Fetched(values, failures);
   }
 
-  private static void throwIfNothingWasRead(
-      List<String> attributes, Map<String, AjmxException> failures) {
-    if (attributes.size() == 1 && !failures.isEmpty()) {
-      throw failures.get(attributes.getFirst());
-    }
-    if (failures.size() == attributes.size()
-        && failures.values().stream().allMatch(e -> e.code() == ErrorCode.CONNECTION_FAILED)) {
-      throw failures.get(attributes.getFirst());
-    }
-  }
-
   private Outcome write(ObjectName name, String attribute, @Nullable Object value) {
     Map<String, Object> context = context(name, "attribute", attribute);
     MBeanAttributeInfo info =
@@ -283,26 +316,6 @@ public final class MBeanClient {
     return new ValueEncoder(limit, maxBytes);
   }
 
-  static @Nullable Object encode(
-      ValueEncoder encoder, @Nullable Object value, Execution execution) {
-    try {
-      return encoder.encode(value);
-    } catch (AjmxException e) {
-      throw e.withExecution(execution);
-    }
-  }
-
-  private static Outcome outcome(
-      Map<String, Object> result,
-      ValueEncoder encoder,
-      Map<String, AjmxException> failuresByPath,
-      Execution execution) {
-    if (encoder.truncated()) {
-      result.put("truncated", true);
-    }
-    return Outcome.of(result, failuresByPath, execution);
-  }
-
   private <T extends @Nullable Object> T mutate(
       Map<String, Object> context, JmxSession.JmxCall<T> call) {
     try {
@@ -313,17 +326,5 @@ public final class MBeanClient {
       }
       throw e;
     }
-  }
-
-  private static Map<String, Object> context(ObjectName name) {
-    Map<String, Object> context = new LinkedHashMap<>();
-    context.put("mbean", name.toString());
-    return context;
-  }
-
-  private static Map<String, Object> context(ObjectName name, String key, String value) {
-    Map<String, Object> context = context(name);
-    context.put(key, value);
-    return context;
   }
 }

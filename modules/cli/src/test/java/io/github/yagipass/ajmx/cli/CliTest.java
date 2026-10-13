@@ -31,21 +31,6 @@ final class CliTest {
     }
   }
 
-  private static Run run(String... args) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    int exit =
-        Cli.run(
-            args,
-            new ByteArrayInputStream(new byte[0]),
-            out,
-            new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8),
-            Map.of());
-    return new Run(
-        exit,
-        (Map<?, ?>) Objects.requireNonNull(Json.parse(out.toString(StandardCharsets.UTF_8))),
-        out.size());
-  }
-
   @Test
   void usageErrorsExitWithTwo() {
     for (String[] args :
@@ -163,5 +148,20 @@ final class CliTest {
       }
     }
     assertEquals(Arrays.stream(Option.values()).map(Option::flag).toList(), options);
+  }
+
+  private static Run run(String... args) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    int exit =
+        Cli.run(
+            args,
+            new ByteArrayInputStream(new byte[0]),
+            out,
+            new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8),
+            Map.of());
+    return new Run(
+        exit,
+        (Map<?, ?>) Objects.requireNonNull(Json.parse(out.toString(StandardCharsets.UTF_8))),
+        out.size());
   }
 }

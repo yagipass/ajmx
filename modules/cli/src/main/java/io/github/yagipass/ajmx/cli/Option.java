@@ -38,6 +38,12 @@ enum Option implements Token {
     this.description = description;
   }
 
+  static Optional<Option> find(String flag) {
+    return flag.startsWith(PREFIX)
+        ? Token.find(values(), flag.substring(PREFIX.length()))
+        : Optional.empty();
+  }
+
   String description() {
     return description;
   }
@@ -52,11 +58,5 @@ enum Option implements Token {
 
   String usage() {
     return takesValue() ? flag() + " " + valueSyntax : flag();
-  }
-
-  static Optional<Option> find(String flag) {
-    return flag.startsWith(PREFIX)
-        ? Token.find(values(), flag.substring(PREFIX.length()))
-        : Optional.empty();
   }
 }

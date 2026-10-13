@@ -22,16 +22,6 @@ final class Inputs {
         Inputs::stdinFailure);
   }
 
-  private static AjmxException stdinFailure(Throwable t) {
-    if (t instanceof AjmxException e) {
-      return e;
-    }
-    if (t instanceof Exception) {
-      return new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unable to read stdin", t);
-    }
-    return AjmxException.wrap(t);
-  }
-
   static @Nullable Object parseJson(String text, String source) {
     try {
       return Json.parse(text);
@@ -61,5 +51,15 @@ final class Inputs {
       return null;
     }
     return new Credentials(username, env.getOrDefault("JMX_PASSWORD", ""));
+  }
+
+  private static AjmxException stdinFailure(Throwable t) {
+    if (t instanceof AjmxException e) {
+      return e;
+    }
+    if (t instanceof Exception) {
+      return new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unable to read stdin", t);
+    }
+    return AjmxException.wrap(t);
   }
 }

@@ -23,6 +23,25 @@ final class TargetJvm implements AutoCloseable {
     this.pid = pid;
   }
 
+  @Override
+  public void close() {
+    process.destroy();
+    try {
+      if (!process.waitFor(10, TimeUnit.SECONDS)) {
+        process.destroyForcibly().waitFor(10, TimeUnit.SECONDS);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    Path socket = Paths.get(System.getProperty("java.io.tmpdir"), ".java_pid" + pid);
+    if (Files.exists(socket)) {
+      throw new IllegalStateException(
+          "Target JVM left its attach socket "
+              + socket
+              + ", which breaks attach to a later process with its PID");
+    }
+  }
+
   static TargetJvm start(String... jvmArgs) throws Exception {
     List<String> command = new ArrayList<>();
     command.add(javaExecutable());
@@ -60,38 +79,19 @@ final class TargetJvm implements AutoCloseable {
     return new TargetJvm(process, Long.parseLong(pid));
   }
 
+  static String javaExecutable() {
+    String java = System.getProperty("ajmx.test.java");
+    return java != null && !java.isBlank()
+        ? java
+        : Paths.get(System.getProperty("java.home"), "bin", "java").toString();
+  }
+
   long pid() {
     return pid;
   }
 
   String pidArg() {
     return Long.toString(pid);
-  }
-
-  @Override
-  public void close() {
-    process.destroy();
-    try {
-      if (!process.waitFor(10, TimeUnit.SECONDS)) {
-        process.destroyForcibly().waitFor(10, TimeUnit.SECONDS);
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    Path socket = Paths.get(System.getProperty("java.io.tmpdir"), ".java_pid" + pid);
-    if (Files.exists(socket)) {
-      throw new IllegalStateException(
-          "Target JVM left its attach socket "
-              + socket
-              + ", which breaks attach to a later process with its PID");
-    }
-  }
-
-  static String javaExecutable() {
-    String java = System.getProperty("ajmx.test.java");
-    return java != null && !java.isBlank()
-        ? java
-        : Paths.get(System.getProperty("java.home"), "bin", "java").toString();
   }
 
   private static String classpath() {

@@ -20,6 +20,31 @@ import org.junit.jupiter.api.Test;
 
 final class LocalAttachIT {
 
+  private record SigquitTrap(Process process) implements AutoCloseable {
+    @Override
+    public void close() {
+      process.descendants().forEach(ProcessHandle::destroyForcibly);
+      process.destroyForcibly();
+    }
+
+    static SigquitTrap start() throws IOException {
+      return new SigquitTrap(
+          new ProcessBuilder("bash", "-c", "trap 'exit 42' QUIT; sleep 120 & wait").start());
+    }
+
+    long pid() {
+      return process.pid();
+    }
+
+    String pidArg() {
+      return Long.toString(process.pid());
+    }
+
+    void assertNotSignaled() throws InterruptedException {
+      assertFalse(process.waitFor(1, TimeUnit.SECONDS), "the process must not receive SIGQUIT");
+    }
+  }
+
   @Test
   void psListsJvmsSortedByPidWithMainClassAndDisplayName() throws Exception {
     try (TargetJvm a = TargetJvm.start();
@@ -149,33 +174,6 @@ final class LocalAttachIT {
     }
   }
 
-  private static void awaitHandshake(TargetJvm t, Process ajmx) throws InterruptedException {
-    long start = System.nanoTime();
-    while (attachFiles(t.pid()).isEmpty()) {
-      assertTrue(
-          ajmx.isAlive() && elapsedMs(start) < 10_000, "ajmx must start the attach handshake");
-      Thread.sleep(1);
-    }
-  }
-
-  private static void signal(String name, TargetJvm t) throws Exception {
-    signal(name, t.pidArg());
-  }
-
-  private static void signal(String name, String pid) throws Exception {
-    assertEquals(0, new ProcessBuilder("kill", "-" + name, pid).start().waitFor());
-  }
-
-  private static List<Path> attachFiles(long pid) {
-    String name = ".attach_pid" + pid;
-    return Stream.of(
-            Path.of(name),
-            Path.of(System.getProperty("java.io.tmpdir"), name),
-            Path.of("/tmp", name))
-        .filter(Files::exists)
-        .toList();
-  }
-
   @Test
   void nonJvmProcessThatHandlesSigquitIsNotSignaled() throws Exception {
     try (SigquitTrap daemon = SigquitTrap.start()) {
@@ -207,54 +205,6 @@ final class LocalAttachIT {
     }
   }
 
-  private static void assertCopyIsNotEvidence(Path perfData, SigquitTrap daemon) throws Exception {
-    Path leftOver = Files.copy(perfData, perfData.resolveSibling(daemon.pidArg()));
-    try {
-      Ajmx.run("--pid", daemon.pidArg(), "ping").assertError("ATTACH_NOT_SUPPORTED", 3);
-      daemon.assertNotSignaled();
-      assertTrue(
-          list(Ajmx.run("ps").result().get("items")).stream()
-              .noneMatch(i -> number(map(i).get("pid")) == daemon.pid()));
-    } finally {
-      Files.deleteIfExists(leftOver);
-    }
-  }
-
-  private static Path perfDataOf(long pid) throws IOException {
-    try (Stream<Path> dirs = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
-      return dirs.filter(d -> d.getFileName().toString().startsWith("hsperfdata_"))
-          .map(d -> d.resolve(Long.toString(pid)))
-          .filter(Files::isRegularFile)
-          .findFirst()
-          .orElseThrow();
-    }
-  }
-
-  private record SigquitTrap(Process process) implements AutoCloseable {
-    static SigquitTrap start() throws IOException {
-      return new SigquitTrap(
-          new ProcessBuilder("bash", "-c", "trap 'exit 42' QUIT; sleep 120 & wait").start());
-    }
-
-    long pid() {
-      return process.pid();
-    }
-
-    String pidArg() {
-      return Long.toString(process.pid());
-    }
-
-    void assertNotSignaled() throws InterruptedException {
-      assertFalse(process.waitFor(1, TimeUnit.SECONDS), "the process must not receive SIGQUIT");
-    }
-
-    @Override
-    public void close() {
-      process.descendants().forEach(ProcessHandle::destroyForcibly);
-      process.destroyForcibly();
-    }
-  }
-
   @Test
   void processOfAnotherUserIsPermissionDenied() throws Exception {
     String self = System.getProperty("user.name");
@@ -277,6 +227,56 @@ final class LocalAttachIT {
   @Test
   void commandsThatNeedATargetSaySo() throws Exception {
     Ajmx.run("ping").assertError("INVALID_ARGUMENT", 2);
+  }
+
+  private static void awaitHandshake(TargetJvm t, Process ajmx) throws InterruptedException {
+    long start = System.nanoTime();
+    while (attachFiles(t.pid()).isEmpty()) {
+      assertTrue(
+          ajmx.isAlive() && elapsedMs(start) < 10_000, "ajmx must start the attach handshake");
+      Thread.sleep(1);
+    }
+  }
+
+  private static void signal(String name, TargetJvm t) throws Exception {
+    signal(name, t.pidArg());
+  }
+
+  private static void signal(String name, String pid) throws Exception {
+    assertEquals(0, new ProcessBuilder("kill", "-" + name, pid).start().waitFor());
+  }
+
+  private static List<Path> attachFiles(long pid) {
+    String name = ".attach_pid" + pid;
+    return Stream.of(
+            Path.of(name),
+            Path.of(System.getProperty("java.io.tmpdir"), name),
+            Path.of("/tmp", name))
+        .filter(Files::exists)
+        .toList();
+  }
+
+  private static void assertCopyIsNotEvidence(Path perfData, SigquitTrap daemon) throws Exception {
+    Path leftOver = Files.copy(perfData, perfData.resolveSibling(daemon.pidArg()));
+    try {
+      Ajmx.run("--pid", daemon.pidArg(), "ping").assertError("ATTACH_NOT_SUPPORTED", 3);
+      daemon.assertNotSignaled();
+      assertTrue(
+          list(Ajmx.run("ps").result().get("items")).stream()
+              .noneMatch(i -> number(map(i).get("pid")) == daemon.pid()));
+    } finally {
+      Files.deleteIfExists(leftOver);
+    }
+  }
+
+  private static Path perfDataOf(long pid) throws IOException {
+    try (Stream<Path> dirs = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
+      return dirs.filter(d -> d.getFileName().toString().startsWith("hsperfdata_"))
+          .map(d -> d.resolve(Long.toString(pid)))
+          .filter(Files::isRegularFile)
+          .findFirst()
+          .orElseThrow();
+    }
   }
 
   private static long elapsedMs(long start) {

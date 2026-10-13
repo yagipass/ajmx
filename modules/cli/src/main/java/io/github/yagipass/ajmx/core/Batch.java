@@ -56,6 +56,36 @@ public final class Batch {
     return new Batch(entries);
   }
 
+  public static Map<String, Object> truncatedResult(List<Object> items) {
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("items", items);
+    result.put("truncated", true);
+    return result;
+  }
+
+  @SuppressWarnings(
+      "unchecked") // run() builds each item, and AjmxException.toJson() its error, with String keys
+  public static Map<String, Object> truncatedItem(Object item) {
+    Map<String, Object> original = (Map<String, Object>) item;
+    Map<String, Object> truncated = new LinkedHashMap<>();
+    truncated.put("id", original.get("id"));
+    truncated.put("ok", original.get("ok"));
+    if (original.get("error") instanceof Map<?, ?> error) {
+      Map<String, Object> reduced = new LinkedHashMap<>((Map<String, Object>) error);
+      Map<String, Object> details = new LinkedHashMap<>();
+      Object executed = ((Map<?, ?>) Objects.requireNonNull(error.get("details"))).get("executed");
+      if (executed != null) {
+        details.put("executed", executed);
+      }
+      details.put("truncated", true);
+      reduced.put("details", details);
+      truncated.put("error", reduced);
+    } else {
+      truncated.put("truncated", true);
+    }
+    return truncated;
+  }
+
   public Outcome run(Function<Request, Outcome> executor) {
     List<Object> items = new ArrayList<>();
     Map<String, AjmxException> failuresByPath = new LinkedHashMap<>();
@@ -97,35 +127,5 @@ public final class Batch {
     result.put("items", items);
     return Outcome.batch(
         result, partial, failuresByPath, executed ? Execution.EXECUTED : Execution.NOT_EXECUTED);
-  }
-
-  public static Map<String, Object> truncatedResult(List<Object> items) {
-    Map<String, Object> result = new LinkedHashMap<>();
-    result.put("items", items);
-    result.put("truncated", true);
-    return result;
-  }
-
-  @SuppressWarnings(
-      "unchecked") // run() builds each item, and AjmxException.toJson() its error, with String keys
-  public static Map<String, Object> truncatedItem(Object item) {
-    Map<String, Object> original = (Map<String, Object>) item;
-    Map<String, Object> truncated = new LinkedHashMap<>();
-    truncated.put("id", original.get("id"));
-    truncated.put("ok", original.get("ok"));
-    if (original.get("error") instanceof Map<?, ?> error) {
-      Map<String, Object> reduced = new LinkedHashMap<>((Map<String, Object>) error);
-      Map<String, Object> details = new LinkedHashMap<>();
-      Object executed = ((Map<?, ?>) Objects.requireNonNull(error.get("details"))).get("executed");
-      if (executed != null) {
-        details.put("executed", executed);
-      }
-      details.put("truncated", true);
-      reduced.put("details", details);
-      truncated.put("error", reduced);
-    } else {
-      truncated.put("truncated", true);
-    }
-    return truncated;
   }
 }

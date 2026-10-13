@@ -47,16 +47,6 @@ final class OperationsIT {
     target.close();
   }
 
-  private static Ajmx.Result ajmx(String... args) throws Exception {
-    List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
-    all.addAll(List.of(args));
-    return Ajmx.run(all.toArray(String[]::new));
-  }
-
-  private static Map<String, Object> attributes(Ajmx.Result r) {
-    return map(r.result().get("attributes"));
-  }
-
   @Test
   void searchFindsMBeansSortedSoRepeatedCallsAgree() throws Exception {
     Ajmx.Result r = ajmx("search", "ajmxtest:*");
@@ -131,14 +121,6 @@ final class OperationsIT {
   @Test
   void describeOfUnknownMBeanIsNotFound() throws Exception {
     ajmx("describe", "ajmxtest:type=Nope").assertError("MBEAN_NOT_FOUND", 4);
-  }
-
-  private static Map<String, Object> attribute(Map<String, Object> describe, String name) {
-    return list(describe.get("attributes")).stream()
-        .map(Ajmx::map)
-        .filter(a -> name.equals(a.get("name")))
-        .findFirst()
-        .orElseThrow();
   }
 
   @Test
@@ -438,16 +420,6 @@ final class OperationsIT {
     assertEquals(Json.parse(expectedJson), normalize(readBack));
   }
 
-  private static @Nullable Object normalize(@Nullable Object v) {
-    if (v instanceof Number n) {
-      return new BigDecimal(n.toString());
-    }
-    if (v instanceof List<?> l) {
-      return l.stream().map(OperationsIT::normalize).toList();
-    }
-    return v;
-  }
-
   @Test
   void writeWhoseEchoedValueIsCutByLimitSaysSoLikeReadAndInvoke() throws Exception {
     Ajmx.Result r = ajmx("--limit", "1", "write", CACHE, "Tags=[\"x\",\"y\"]");
@@ -636,10 +608,6 @@ final class OperationsIT {
     assertEquals(before + 1, clearCount());
   }
 
-  private static long clearCount() throws Exception {
-    return number(attributes(ajmx("read", CACHE, "ClearCount")).get("ClearCount"));
-  }
-
   @Test
   void timedOutInvokeIsNotRetryableBecauseItMayStillBeRunning() throws Exception {
     long start = System.nanoTime();
@@ -680,6 +648,38 @@ final class OperationsIT {
             .toList();
     assertFalse(frames.isEmpty(), "--debug must print the trace to stderr: " + r.stderr());
     assertTrue(strings(r.json()).noneMatch(s -> frames.stream().anyMatch(s::contains)), r.stdout());
+  }
+
+  private static Ajmx.Result ajmx(String... args) throws Exception {
+    List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
+    all.addAll(List.of(args));
+    return Ajmx.run(all.toArray(String[]::new));
+  }
+
+  private static Map<String, Object> attributes(Ajmx.Result r) {
+    return map(r.result().get("attributes"));
+  }
+
+  private static Map<String, Object> attribute(Map<String, Object> describe, String name) {
+    return list(describe.get("attributes")).stream()
+        .map(Ajmx::map)
+        .filter(a -> name.equals(a.get("name")))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  private static @Nullable Object normalize(@Nullable Object v) {
+    if (v instanceof Number n) {
+      return new BigDecimal(n.toString());
+    }
+    if (v instanceof List<?> l) {
+      return l.stream().map(OperationsIT::normalize).toList();
+    }
+    return v;
+  }
+
+  private static long clearCount() throws Exception {
+    return number(attributes(ajmx("read", CACHE, "ClearCount")).get("ClearCount"));
   }
 
   private static Stream<String> strings(Object json) {

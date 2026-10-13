@@ -36,25 +36,6 @@ final class BatchPerfIT {
     target.close();
   }
 
-  private static String requests(int n) {
-    return IntStream.rangeClosed(1, n)
-        .mapToObj(
-            i ->
-                "{\"id\": \"r"
-                    + i
-                    + "\", \"op\": \"read\", \"mbean\": \"java.lang:type=Memory\","
-                    + " \"attributes\": [\"HeapMemoryUsage\"]}")
-        .collect(Collectors.joining("\n", "", "\n"));
-  }
-
-  private static Duration batch(int n) throws Exception {
-    Ajmx.Timed t =
-        Ajmx.runTimed(requests(n), "--pid", target.pidArg(), "--max-bytes", "10000000", "batch");
-    assertEquals(0, t.result().exitCode(), t.result().stderr());
-    assertEquals(n, list(t.result().result().get("items")).size());
-    return t.elapsed();
-  }
-
   @Test
   void eachRequestOfALargeBatchCostsAboutAsMuchAsInASmallOne() throws Exception {
     assumeTrue(Ajmx.nativeMode(), "times the native binary; run :it:perfTest with -Pnative");
@@ -91,5 +72,24 @@ final class BatchPerfIT {
             LARGE);
     System.out.println(summary);
     assertTrue(later <= MAX_SLOWDOWN_PER_REQUEST * earlier, summary);
+  }
+
+  private static String requests(int n) {
+    return IntStream.rangeClosed(1, n)
+        .mapToObj(
+            i ->
+                "{\"id\": \"r"
+                    + i
+                    + "\", \"op\": \"read\", \"mbean\": \"java.lang:type=Memory\","
+                    + " \"attributes\": [\"HeapMemoryUsage\"]}")
+        .collect(Collectors.joining("\n", "", "\n"));
+  }
+
+  private static Duration batch(int n) throws Exception {
+    Ajmx.Timed t =
+        Ajmx.runTimed(requests(n), "--pid", target.pidArg(), "--max-bytes", "10000000", "batch");
+    assertEquals(0, t.result().exitCode(), t.result().stderr());
+    assertEquals(n, list(t.result().result().get("items")).size());
+    return t.elapsed();
   }
 }

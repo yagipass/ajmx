@@ -9,10 +9,6 @@ import javax.management.ObjectName;
 import org.jspecify.annotations.Nullable;
 
 public sealed interface Request {
-  String DEFAULT_SEARCH_PATTERN = "*:*";
-
-  Op op();
-
   record Ping() implements Request {
     @Override
     public Op op() {
@@ -57,6 +53,8 @@ public sealed interface Request {
     }
   }
 
+  String DEFAULT_SEARCH_PATTERN = "*:*";
+
   static Search search(@Nullable String pattern) {
     return new Search(objectName(pattern != null ? pattern : DEFAULT_SEARCH_PATTERN, "pattern"));
   }
@@ -83,6 +81,8 @@ public sealed interface Request {
       String mbean, String operation, List<Object> args, @Nullable List<String> signature) {
     return new Invoke(mbean(mbean), operation, args, signature);
   }
+
+  Op op();
 
   private static ObjectName mbean(String text) {
     ObjectName name = objectName(text, "mbean");

@@ -21,10 +21,6 @@ final class LocalConnectorTest {
   private static final String NO_RESPONSE =
       "Unable to open socket file /tmp/.java_pid1: target process 1 doesn't respond within 4500ms or HotSpot VM not loaded";
 
-  private static ErrorCode classify(Exception e) {
-    return LocalConnector.classifyAttachFailure(5000, e, true).code();
-  }
-
   @Test
   void linuxOtherUserIsPermissionDenied() {
     assertEquals(
@@ -151,5 +147,9 @@ final class LocalConnectorTest {
   void everyFailureToConnectNamesThePidSoACallerHandlingSeveralJvmsKnowsWhichOneFailed() {
     AjmxException e = assertThrows(AjmxException.class, () -> LocalConnector.connect(1, 5000));
     assertEquals(1L, e.details().get("pid"), e.details().toString());
+  }
+
+  private static ErrorCode classify(Exception e) {
+    return LocalConnector.classifyAttachFailure(5000, e, true).code();
   }
 }

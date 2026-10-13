@@ -26,10 +26,6 @@ import org.junit.jupiter.api.Test;
 
 final class JmxErrorsTest {
 
-  private static AjmxException map(Throwable t) {
-    return JmxErrors.translate(t, Map.of("mbean", "d:k=v"));
-  }
-
   @Test
   void notFoundFailures() {
     assertEquals(ErrorCode.MBEAN_NOT_FOUND, map(new InstanceNotFoundException("d:k=v")).code());
@@ -166,5 +162,9 @@ final class JmxErrorsTest {
     assertEquals(ErrorCode.INTERNAL_ERROR, e.code());
     assertEquals(false, e.retryable());
     assertEquals("u", e.details().get("url"));
+  }
+
+  private static AjmxException map(Throwable t) {
+    return JmxErrors.translate(t, Map.of("mbean", "d:k=v"));
   }
 }
