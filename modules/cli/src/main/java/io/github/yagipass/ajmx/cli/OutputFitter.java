@@ -15,12 +15,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 final class OutputFitter {
+  @SuppressWarnings("ArrayRecordComponent")
+  record Output(byte[] bytes, int exitCode) {}
+
   private static final int MIN_KEPT_CHARS = 16;
   private static final String ELLIPSIS = "…";
   private static final long ELLIPSIS_BYTES = escapedSize(ELLIPSIS);
-
-  @SuppressWarnings("ArrayRecordComponent")
-  record Output(byte[] bytes, int exitCode) {}
 
   private final long durationMs;
   private final long maxBytes;
@@ -65,6 +65,21 @@ final class OutputFitter {
         Envelope.encode(Envelope.failure(error.toJson(), durationMs)), error.code().exitCode());
   }
 
+  private static Optional<String> shorten(String s, long excess) {
+    @Var long removed = 0;
+    @Var int end = s.length();
+    while (end > 0 && removed < excess + ELLIPSIS_BYTES) {
+      int start = s.offsetByCodePoints(end, -1);
+      removed += escapedSize(s.substring(start, end));
+      end = start;
+    }
+    return end >= MIN_KEPT_CHARS ? Optional.of(s.substring(0, end) + ELLIPSIS) : Optional.empty();
+  }
+
+  private static long escapedSize(String s) {
+    return Json.size(s) - 2;
+  }
+
   @SuppressWarnings("unchecked") // AjmxException.toJson() builds details with String keys
   private byte[] fitFailure(Map<String, Object> error) {
     Map<String, Object> envelope = Envelope.failure(error, durationMs);
@@ -93,21 +108,6 @@ final class OutputFitter {
         details.remove(largest);
       }
     }
-  }
-
-  private static Optional<String> shorten(String s, long excess) {
-    @Var long removed = 0;
-    @Var int end = s.length();
-    while (end > 0 && removed < excess + ELLIPSIS_BYTES) {
-      int start = s.offsetByCodePoints(end, -1);
-      removed += escapedSize(s.substring(start, end));
-      end = start;
-    }
-    return end >= MIN_KEPT_CHARS ? Optional.of(s.substring(0, end) + ELLIPSIS) : Optional.empty();
-  }
-
-  private static long escapedSize(String s) {
-    return Json.size(s) - 2;
   }
 
   private Optional<byte[]> dropTrailingItems(List<?> items) {

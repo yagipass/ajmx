@@ -26,12 +26,32 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 final class ValueDecoderTest {
 
-  private static @Nullable Object lenient(@Nullable Object input, String type) {
-    return ValueDecoder.decodeParsingStrings(input, type);
-  }
-
-  private static @Nullable Object strict(@Nullable Object input, String type) {
-    return ValueDecoder.decode(input, type);
+  static Stream<Arguments> arrays() throws Exception {
+    return Stream.of(
+        Arguments.of("[Z", "[true]", new boolean[] {true}),
+        Arguments.of("[B", "[1]", new byte[] {1}),
+        Arguments.of("[S", "[1]", new short[] {1}),
+        Arguments.of("[I", "[1]", new int[] {1}),
+        Arguments.of("[J", "[1]", new long[] {1}),
+        Arguments.of("[F", "[1]", new float[] {1}),
+        Arguments.of("[D", "[1]", new double[] {1}),
+        Arguments.of("[C", "[\"c\"]", new char[] {'c'}),
+        Arguments.of("[Ljava.lang.Boolean;", "[true]", new Boolean[] {true}),
+        Arguments.of("[Ljava.lang.Byte;", "[1]", new Byte[] {1}),
+        Arguments.of("[Ljava.lang.Short;", "[1]", new Short[] {1}),
+        Arguments.of("[Ljava.lang.Integer;", "[1]", new Integer[] {1}),
+        Arguments.of("[Ljava.lang.Long;", "[1]", new Long[] {1L}),
+        Arguments.of("[Ljava.lang.Float;", "[1]", new Float[] {1f}),
+        Arguments.of("[Ljava.lang.Double;", "[1]", new Double[] {1d}),
+        Arguments.of("[Ljava.lang.Character;", "[\"c\"]", new Character[] {'c'}),
+        Arguments.of("[Ljava.lang.String;", "[\"s\"]", new String[] {"s"}),
+        Arguments.of(
+            "[Ljavax.management.ObjectName;",
+            "[\"d:k=v\"]",
+            new ObjectName[] {new ObjectName("d:k=v")}),
+        Arguments.of("[Ljava.math.BigInteger;", "[1]", new BigInteger[] {BigInteger.ONE}),
+        Arguments.of("[Ljava.math.BigDecimal;", "[1]", new BigDecimal[] {BigDecimal.ONE}),
+        Arguments.of("[Ljava.lang.Object;", "[1]", new Object[] {1L}));
   }
 
   @Test
@@ -175,32 +195,12 @@ final class ValueDecoderTest {
         Objects.deepEquals(expected, actual), () -> Arrays.deepToString(new Object[] {actual}));
   }
 
-  static Stream<Arguments> arrays() throws Exception {
-    return Stream.of(
-        Arguments.of("[Z", "[true]", new boolean[] {true}),
-        Arguments.of("[B", "[1]", new byte[] {1}),
-        Arguments.of("[S", "[1]", new short[] {1}),
-        Arguments.of("[I", "[1]", new int[] {1}),
-        Arguments.of("[J", "[1]", new long[] {1}),
-        Arguments.of("[F", "[1]", new float[] {1}),
-        Arguments.of("[D", "[1]", new double[] {1}),
-        Arguments.of("[C", "[\"c\"]", new char[] {'c'}),
-        Arguments.of("[Ljava.lang.Boolean;", "[true]", new Boolean[] {true}),
-        Arguments.of("[Ljava.lang.Byte;", "[1]", new Byte[] {1}),
-        Arguments.of("[Ljava.lang.Short;", "[1]", new Short[] {1}),
-        Arguments.of("[Ljava.lang.Integer;", "[1]", new Integer[] {1}),
-        Arguments.of("[Ljava.lang.Long;", "[1]", new Long[] {1L}),
-        Arguments.of("[Ljava.lang.Float;", "[1]", new Float[] {1f}),
-        Arguments.of("[Ljava.lang.Double;", "[1]", new Double[] {1d}),
-        Arguments.of("[Ljava.lang.Character;", "[\"c\"]", new Character[] {'c'}),
-        Arguments.of("[Ljava.lang.String;", "[\"s\"]", new String[] {"s"}),
-        Arguments.of(
-            "[Ljavax.management.ObjectName;",
-            "[\"d:k=v\"]",
-            new ObjectName[] {new ObjectName("d:k=v")}),
-        Arguments.of("[Ljava.math.BigInteger;", "[1]", new BigInteger[] {BigInteger.ONE}),
-        Arguments.of("[Ljava.math.BigDecimal;", "[1]", new BigDecimal[] {BigDecimal.ONE}),
-        Arguments.of("[Ljava.lang.Object;", "[1]", new Object[] {1L}));
+  private static @Nullable Object lenient(@Nullable Object input, String type) {
+    return ValueDecoder.decodeParsingStrings(input, type);
+  }
+
+  private static @Nullable Object strict(@Nullable Object input, String type) {
+    return ValueDecoder.decode(input, type);
   }
 
   private static AjmxException assertInvalid(Runnable r) {

@@ -33,10 +33,6 @@ import org.junit.jupiter.api.Timeout;
 
 final class ValueEncoderTest {
 
-  private static String json(Object value) {
-    return Json.write(new ValueEncoder(100, Long.MAX_VALUE).encode(value));
-  }
-
   private static final CompositeType ROW;
 
   static {
@@ -51,10 +47,6 @@ final class ValueEncoderTest {
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
-  }
-
-  private static CompositeData row(String key, int value) throws Exception {
-    return new CompositeDataSupport(ROW, Map.of("key", key, "value", value));
   }
 
   @Test
@@ -234,19 +226,27 @@ final class ValueEncoderTest {
         Json.write(new ValueEncoder(2, 18).encode(List.of(set, List.of(3)))));
   }
 
-  private static Object chain(int leaf, int levels) {
-    @Var Object v = leaf;
-    for (int i = 0; i < levels; i++) {
-      v = List.of(leaf, v);
-    }
-    return v;
-  }
-
   @Test
   void valueSharedWithoutACycleIsShownWhereverItAppears() {
     List<Object> shared = List.of(1);
     ValueEncoder encoder = new ValueEncoder(100, 5);
     assertEquals("[[1],[1]]", Json.write(encoder.encode(List.of(shared, shared))));
     assertFalse(encoder.truncated());
+  }
+
+  private static String json(Object value) {
+    return Json.write(new ValueEncoder(100, Long.MAX_VALUE).encode(value));
+  }
+
+  private static CompositeData row(String key, int value) throws Exception {
+    return new CompositeDataSupport(ROW, Map.of("key", key, "value", value));
+  }
+
+  private static Object chain(int leaf, int levels) {
+    @Var Object v = leaf;
+    for (int i = 0; i < levels; i++) {
+      v = List.of(leaf, v);
+    }
+    return v;
   }
 }

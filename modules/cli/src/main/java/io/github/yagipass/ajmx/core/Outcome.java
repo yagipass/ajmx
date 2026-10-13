@@ -38,13 +38,6 @@ public final class Outcome {
     return new Outcome(result, Shape.PLAIN, false, Map.of(), Execution.NOT_EXECUTED);
   }
 
-  static Outcome of(
-      Map<String, Object> result, Map<String, AjmxException> failuresByPath, Execution execution) {
-    boolean truncated = Objects.equals(result.get("truncated"), true);
-    return new Outcome(
-        result, Shape.PLAIN, truncated || !failuresByPath.isEmpty(), failuresByPath, execution);
-  }
-
   public static Outcome items(List<?> all, int limit) {
     boolean truncated = all.size() > limit;
     return new Outcome(
@@ -61,14 +54,6 @@ public final class Outcome {
     result.put("returned", items.size());
     result.put("truncated", truncated);
     return result;
-  }
-
-  static Outcome batch(
-      Map<String, Object> result,
-      boolean partial,
-      Map<String, AjmxException> failuresByPath,
-      Execution execution) {
-    return new Outcome(result, Shape.BATCH, partial, failuresByPath, execution);
   }
 
   public Map<String, Object> result() {
@@ -89,5 +74,20 @@ public final class Outcome {
 
   public Execution execution() {
     return execution;
+  }
+
+  static Outcome plain(
+      Map<String, Object> result, Map<String, AjmxException> failuresByPath, Execution execution) {
+    boolean truncated = Objects.equals(result.get("truncated"), true);
+    return new Outcome(
+        result, Shape.PLAIN, truncated || !failuresByPath.isEmpty(), failuresByPath, execution);
+  }
+
+  static Outcome batch(
+      Map<String, Object> result,
+      boolean partial,
+      Map<String, AjmxException> failuresByPath,
+      Execution execution) {
+    return new Outcome(result, Shape.BATCH, partial, failuresByPath, execution);
   }
 }

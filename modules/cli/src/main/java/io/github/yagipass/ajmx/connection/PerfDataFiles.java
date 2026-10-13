@@ -71,6 +71,11 @@ final class PerfDataFiles {
     }
   }
 
+  static boolean isMappingOf(String mapsLine, String inode, String name) {
+    String[] fields = mapsLine.strip().split("\\s+", 6);
+    return fields.length == 6 && fields[4].equals(inode) && fields[5].endsWith(name);
+  }
+
   private static boolean belongsTo(PerfData perf, ProcessHandle process, Path file) {
     return mappedBy(process, file).orElseGet(() -> createdSinceStartOf(perf, process));
   }
@@ -97,11 +102,6 @@ final class PerfDataFiles {
     } catch (IOException | UncheckedIOException | UnsupportedOperationException e) {
       return Optional.empty();
     }
-  }
-
-  static boolean isMappingOf(String mapsLine, String inode, String name) {
-    String[] fields = mapsLine.strip().split("\\s+", 6);
-    return fields.length == 6 && fields[4].equals(inode) && fields[5].endsWith(name);
   }
 
   private static OptionalLong pidOf(Path file) {

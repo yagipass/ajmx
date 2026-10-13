@@ -55,7 +55,7 @@ final class BatchTest {
                 r ->
                     switch (id(r)) {
                       case "a" ->
-                          Outcome.of(
+                          Outcome.plain(
                               Map.of(),
                               Map.of(".errors[\"X\"]", attribute),
                               Execution.NOT_EXECUTED);
@@ -120,20 +120,6 @@ final class BatchTest {
     assertEquals(List.of("first", "w", "r"), requestsRunAfter(unreadable));
   }
 
-  private static List<Object> requestsRunAfter(AjmxException failure) {
-    List<Object> executed = new ArrayList<>();
-    batch(entry("first", Op.INVOKE), entry("w", Op.WRITE), entry("r", Op.READ))
-        .run(
-            r -> {
-              executed.add(id(r));
-              if (id(r).equals("first")) {
-                throw failure;
-              }
-              return Outcome.of(Map.of());
-            });
-    return executed;
-  }
-
   @Test
   void aBatchReportsAChangeToTheTargetOnlyIfAWriteOrInvokeMadeOne() {
     Function<Request, Outcome> executor =
@@ -148,7 +134,7 @@ final class BatchTest {
                   throw new AjmxException(ErrorCode.TIMEOUT, "timed out")
                       .withExecution(Execution.UNKNOWN);
               default ->
-                  Outcome.of(
+                  Outcome.plain(
                       Map.of(),
                       Map.of(),
                       r.op().mutating() ? Execution.EXECUTED : Execution.NOT_EXECUTED);
@@ -254,6 +240,20 @@ final class BatchTest {
         assertThrows(AjmxException.class, () -> Batch.parse("{\"id\": \"a\",\n \"op\": \"ping\"}"));
     assertEquals("Invalid JSON", spanning.getMessage(), "a request may not span lines");
     assertEquals(1, spanning.details().get("line"));
+  }
+
+  private static List<Object> requestsRunAfter(AjmxException failure) {
+    List<Object> executed = new ArrayList<>();
+    batch(entry("first", Op.INVOKE), entry("w", Op.WRITE), entry("r", Op.READ))
+        .run(
+            r -> {
+              executed.add(id(r));
+              if (id(r).equals("first")) {
+                throw failure;
+              }
+              return Outcome.of(Map.of());
+            });
+    return executed;
   }
 
   private static String readLine(String id) {

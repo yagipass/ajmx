@@ -743,21 +743,6 @@ public final class TestTarget {
   }
 
   public static final class Sleepy implements DynamicMBean {
-    private static Object value(String attribute) {
-      if (Objects.equals(attribute, "Fast")) {
-        return 42;
-      }
-      if (!attribute.startsWith("Slow")) {
-        return null;
-      }
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      return 1;
-    }
-
     @Override
     public Object getAttribute(String attribute) throws AttributeNotFoundException {
       Object value = value(attribute);
@@ -806,25 +791,24 @@ public final class TestTarget {
       };
       return new MBeanInfo(Sleepy.class.getName(), "", attributes, null, null, null);
     }
+
+    private static Object value(String attribute) {
+      if (Objects.equals(attribute, "Fast")) {
+        return 42;
+      }
+      if (!attribute.startsWith("Slow")) {
+        return null;
+      }
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      return 1;
+    }
   }
 
   public static final class Quirky implements DynamicMBean {
-    private static Object value(String attribute) {
-      if (Objects.equals(attribute, "Size")) {
-        return 42;
-      }
-      if (Objects.equals(attribute, "Raw") || Objects.equals(attribute, "Null")) {
-        return attribute.toLowerCase(Locale.ROOT);
-      }
-      if (Objects.equals(attribute, "Pairs")) {
-        AttributeList pairs = new AttributeList();
-        pairs.add(new Attribute("a", 1));
-        pairs.add("b");
-        return pairs;
-      }
-      return null;
-    }
-
     @Override
     public Object getAttribute(String attribute) throws AttributeNotFoundException {
       Object value = value(attribute);
@@ -880,17 +864,25 @@ public final class TestTarget {
       };
       return new MBeanInfo(Quirky.class.getName(), "", attributes, null, operations, null);
     }
+
+    private static Object value(String attribute) {
+      if (Objects.equals(attribute, "Size")) {
+        return 42;
+      }
+      if (Objects.equals(attribute, "Raw") || Objects.equals(attribute, "Null")) {
+        return attribute.toLowerCase(Locale.ROOT);
+      }
+      if (Objects.equals(attribute, "Pairs")) {
+        AttributeList pairs = new AttributeList();
+        pairs.add(new Attribute("a", 1));
+        pairs.add("b");
+        return pairs;
+      }
+      return null;
+    }
   }
 
   private TestTarget() {}
-
-  private static MBeanOperationInfo operation(String name, String... types) {
-    MBeanParameterInfo[] signature = new MBeanParameterInfo[types.length];
-    for (int i = 0; i < types.length; i++) {
-      signature[i] = new MBeanParameterInfo("p" + i, types[i], "");
-    }
-    return new MBeanOperationInfo(name, "", signature, "void", MBeanOperationInfo.ACTION);
-  }
 
   public static void main(String[] args) throws Exception {
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -906,5 +898,13 @@ public final class TestTarget {
     while (true) {
       Thread.sleep(60_000);
     }
+  }
+
+  private static MBeanOperationInfo operation(String name, String... types) {
+    MBeanParameterInfo[] signature = new MBeanParameterInfo[types.length];
+    for (int i = 0; i < types.length; i++) {
+      signature[i] = new MBeanParameterInfo("p" + i, types[i], "");
+    }
+    return new MBeanOperationInfo(name, "", signature, "void", MBeanOperationInfo.ACTION);
   }
 }

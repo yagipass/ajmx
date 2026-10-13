@@ -44,6 +44,10 @@ enum Command implements Token {
     this.description = description;
   }
 
+  static List<String> tokens() {
+    return Token.tokens(values());
+  }
+
   String description() {
     return description;
   }
@@ -58,9 +62,5 @@ enum Command implements Token {
           .with("command", token())
           .with("argumentCount", count);
     }
-  }
-
-  static List<String> tokens() {
-    return Token.tokens(values());
   }
 }

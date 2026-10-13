@@ -31,13 +31,6 @@ final class BatchIT {
     target.close();
   }
 
-  private static Ajmx.Result batch(String stdin, String... options) throws Exception {
-    List<String> args = new ArrayList<>(List.of("--pid", target.pidArg()));
-    args.addAll(List.of(options));
-    args.add("batch");
-    return Ajmx.run(Map.of(), stdin, args.toArray(String[]::new));
-  }
-
   @Test
   void failedRequestsDoNotStopTheOthers() throws Exception {
     Ajmx.Result r =
@@ -129,10 +122,6 @@ final class BatchIT {
         42L, number(map(map(map(items.get(1)).get("result")).get("attributes")).get("Size")));
   }
 
-  private static long clearCount(Object item) {
-    return number(map(map(map(item).get("result")).get("attributes")).get("ClearCount"));
-  }
-
   @Test
   void writesAndInvokesInABatchChangeTheTargetSoALaterReadSeesTheChange() throws Exception {
     long connections = readCache("MaxConnections");
@@ -171,10 +160,6 @@ final class BatchIT {
     assertEquals(0, r.exitCode(), r.stdout());
     List<Object> items = list(r.result().get("items"));
     assertEquals(1, infoCalls(items.get(4)) - infoCalls(items.get(0)), r.stdout());
-  }
-
-  private static long infoCalls(Object item) {
-    return number(map(map(map(item).get("result")).get("attributes")).get("InfoCalls"));
   }
 
   @Test
@@ -330,14 +315,6 @@ final class BatchIT {
         before + 12, readCache("ClearCount"), "every request ran even if its result was omitted");
   }
 
-  private static long readCache(String attribute) throws Exception {
-    return number(
-        map(Ajmx.run("--pid", target.pidArg(), "read", "ajmxtest:type=Cache", attribute)
-                .result()
-                .get("attributes"))
-            .get(attribute));
-  }
-
   @Test
   void malformedBatchIsRejectedBeforeConnecting() throws Exception {
     for (String stdin :
@@ -356,6 +333,29 @@ final class BatchIT {
     Ajmx.Result empty = batch("");
     assertEquals(0, empty.exitCode());
     assertEquals(List.of(), empty.result().get("items"));
+  }
+
+  private static Ajmx.Result batch(String stdin, String... options) throws Exception {
+    List<String> args = new ArrayList<>(List.of("--pid", target.pidArg()));
+    args.addAll(List.of(options));
+    args.add("batch");
+    return Ajmx.run(Map.of(), stdin, args.toArray(String[]::new));
+  }
+
+  private static long clearCount(Object item) {
+    return number(map(map(map(item).get("result")).get("attributes")).get("ClearCount"));
+  }
+
+  private static long infoCalls(Object item) {
+    return number(map(map(map(item).get("result")).get("attributes")).get("InfoCalls"));
+  }
+
+  private static long readCache(String attribute) throws Exception {
+    return number(
+        map(Ajmx.run("--pid", target.pidArg(), "read", "ajmxtest:type=Cache", attribute)
+                .result()
+                .get("attributes"))
+            .get(attribute));
   }
 
   private static @Nullable String code(Object item) {

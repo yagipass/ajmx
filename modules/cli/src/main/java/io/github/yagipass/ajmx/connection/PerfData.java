@@ -21,27 +21,6 @@ final class PerfData {
     this.entries = entries;
   }
 
-  @Nullable String javaCommand() {
-    return entries.get("sun.rt.javaCommand") instanceof String s ? s : null;
-  }
-
-  @Nullable String connectorAddress() {
-    return entries.get("sun.management.JMXConnectorServer.address") instanceof String s
-            && !s.isEmpty()
-        ? s
-        : null;
-  }
-
-  boolean attachable() {
-    return !(entries.get("sun.rt.jvmCapabilities") instanceof String caps) || !caps.startsWith("0");
-  }
-
-  OptionalLong vmCreationTimeMs() {
-    return entries.get("sun.rt.createVmBeginTime") instanceof Long created && created > 0
-        ? OptionalLong.of(created)
-        : OptionalLong.empty();
-  }
-
   static PerfData parse(byte[] b) throws IOException {
     if (b.length < PROLOGUE_SIZE) {
       throw new IOException("Perf data file is too short");
@@ -76,6 +55,27 @@ final class PerfData {
       offset = end;
     }
     return new PerfData(entries);
+  }
+
+  @Nullable String javaCommand() {
+    return entries.get("sun.rt.javaCommand") instanceof String s ? s : null;
+  }
+
+  @Nullable String connectorAddress() {
+    return entries.get("sun.management.JMXConnectorServer.address") instanceof String s
+            && !s.isEmpty()
+        ? s
+        : null;
+  }
+
+  boolean attachable() {
+    return !(entries.get("sun.rt.jvmCapabilities") instanceof String caps) || !caps.startsWith("0");
+  }
+
+  OptionalLong vmCreationTimeMs() {
+    return entries.get("sun.rt.createVmBeginTime") instanceof Long created && created > 0
+        ? OptionalLong.of(created)
+        : OptionalLong.empty();
   }
 
   private static String cString(byte[] b, long from, long to) {

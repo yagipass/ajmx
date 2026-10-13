@@ -22,10 +22,6 @@ import java.util.concurrent.TimeUnit;
 import org.jspecify.annotations.Nullable;
 
 final class Ajmx {
-  static final String NOT_A_JVM = "1";
-
-  private Ajmx() {}
-
   record Result(int exitCode, String stdout, String stderr, Map<String, Object> json) {
     boolean ok() {
       return Objects.equals(json.get("ok"), true);
@@ -59,6 +55,19 @@ final class Ajmx {
     }
   }
 
+  @FunctionalInterface
+  interface WhileRunning {
+    void accept(Process ajmx) throws Exception;
+  }
+
+  record Timed(Result result, Duration elapsed) {}
+
+  record Footprint(Result result, long peakRssBytes) {}
+
+  static final String NOT_A_JVM = "1";
+
+  private Ajmx() {}
+
   @SuppressWarnings("unchecked") // callers pass parts of the JSON that Json.parse built
   static Map<String, Object> map(@Nullable Object o) {
     return (Map<String, Object>) Objects.requireNonNull(o);
@@ -91,18 +100,11 @@ final class Ajmx {
     return r;
   }
 
-  @FunctionalInterface
-  interface WhileRunning {
-    void accept(Process ajmx) throws Exception;
-  }
-
   static Result runNativeWhile(WhileRunning whileRunning, String... args) throws Exception {
     Result r = runNative(Map.of(), "", whileRunning, command(args));
     assertSingleJsonDocument(r.stdout());
     return r;
   }
-
-  record Timed(Result result, Duration elapsed) {}
 
   static Timed runTimed(String stdin, String... args) throws Exception {
     long start = System.nanoTime();
@@ -111,8 +113,6 @@ final class Ajmx {
     assertSingleJsonDocument(r.stdout());
     return new Timed(r, elapsed);
   }
-
-  record Footprint(Result result, long peakRssBytes) {}
 
   static boolean macOs() {
     return System.getProperty("os.name").startsWith("Mac");
@@ -151,20 +151,6 @@ final class Ajmx {
     return values.stream().sorted().toList().get(values.size() / 2);
   }
 
-  private static Result runInProcess(Map<String, String> env, String stdin, String... args) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-    int exit =
-        Cli.run(
-            args,
-            new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)),
-            out,
-            new PrintStream(err, true, StandardCharsets.UTF_8),
-            env);
-    String stdout = out.toString(StandardCharsets.UTF_8);
-    return new Result(exit, stdout, err.toString(StandardCharsets.UTF_8), parse(stdout));
-  }
-
   static List<String> command(String... args) {
     List<String> command = new ArrayList<>();
     if (nativeMode()) {
@@ -179,6 +165,20 @@ final class Ajmx {
     }
     command.addAll(List.of(args));
     return command;
+  }
+
+  private static Result runInProcess(Map<String, String> env, String stdin, String... args) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ByteArrayOutputStream err = new ByteArrayOutputStream();
+    int exit =
+        Cli.run(
+            args,
+            new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)),
+            out,
+            new PrintStream(err, true, StandardCharsets.UTF_8),
+            env);
+    String stdout = out.toString(StandardCharsets.UTF_8);
+    return new Result(exit, stdout, err.toString(StandardCharsets.UTF_8), parse(stdout));
   }
 
   private static Result runNative(

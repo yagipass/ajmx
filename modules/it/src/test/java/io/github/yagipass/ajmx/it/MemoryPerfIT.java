@@ -14,12 +14,12 @@ import org.junit.jupiter.api.Test;
 
 @Tag("perf")
 final class MemoryPerfIT {
+  private record Limits(double hugeTextMib, double sharedMib, double largeOutputMib) {}
+
   private static final String CACHE = "ajmxtest:type=Cache";
   private static final int RUNS = 3;
   private static final double MIB = 1024 * 1024;
   private static final int LARGE_OUTPUT_BYTES = 7_500_000;
-
-  private record Limits(double hugeTextMib, double sharedMib, double largeOutputMib) {}
 
   private static final Limits LIMITS =
       Ajmx.macOs()
@@ -36,26 +36,6 @@ final class MemoryPerfIT {
   @AfterAll
   static void stop() {
     target.close();
-  }
-
-  private static Ajmx.Footprint peakRss(String... args) throws Exception {
-    assumeTrue(Ajmx.nativeMode(), "measures the native binary; run :it:perfTest with -Pnative");
-    List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
-    all.addAll(List.of(args));
-    List<Ajmx.Footprint> runs = new ArrayList<>();
-    for (int i = 0; i < RUNS; i++) {
-      runs.add(Ajmx.runWithPeakRss(all.toArray(String[]::new)));
-    }
-    List<Long> peaks = runs.stream().map(Ajmx.Footprint::peakRssBytes).toList();
-    return runs.get(peaks.indexOf(Ajmx.median(peaks)));
-  }
-
-  private static void assertPeakUnder(double limitMib, Ajmx.Footprint f, String what) {
-    double mib = f.peakRssBytes() / MIB;
-    String summary =
-        String.format(Locale.ROOT, "%s: peak RSS %.1f MiB, limit %.1f MiB", what, mib, limitMib);
-    System.out.println(summary);
-    assertTrue(mib < limitMib, summary);
   }
 
   @Test
@@ -86,5 +66,25 @@ final class MemoryPerfIT {
     assertEquals(0, f.result().exitCode(), f.result().stderr());
     assertPeakUnder(
         LIMITS.largeOutputMib(), f, "printing " + f.result().stdout().length() + " bytes");
+  }
+
+  private static Ajmx.Footprint peakRss(String... args) throws Exception {
+    assumeTrue(Ajmx.nativeMode(), "measures the native binary; run :it:perfTest with -Pnative");
+    List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
+    all.addAll(List.of(args));
+    List<Ajmx.Footprint> runs = new ArrayList<>();
+    for (int i = 0; i < RUNS; i++) {
+      runs.add(Ajmx.runWithPeakRss(all.toArray(String[]::new)));
+    }
+    List<Long> peaks = runs.stream().map(Ajmx.Footprint::peakRssBytes).toList();
+    return runs.get(peaks.indexOf(Ajmx.median(peaks)));
+  }
+
+  private static void assertPeakUnder(double limitMib, Ajmx.Footprint f, String what) {
+    double mib = f.peakRssBytes() / MIB;
+    String summary =
+        String.format(Locale.ROOT, "%s: peak RSS %.1f MiB, limit %.1f MiB", what, mib, limitMib);
+    System.out.println(summary);
+    assertTrue(mib < limitMib, summary);
   }
 }

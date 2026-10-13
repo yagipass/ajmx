@@ -15,14 +15,14 @@ import javax.management.MBeanParameterInfo;
 import org.jspecify.annotations.Nullable;
 
 final class OperationResolver {
+  @SuppressWarnings("ArrayRecordComponent")
+  record Resolved(@Nullable Object[] params, String[] signature) {}
+
   static final Comparator<MBeanOperationInfo> BY_NAME_AND_SIGNATURE =
       Comparator.comparing(MBeanOperationInfo::getName)
           .thenComparing(op -> String.join(",", types(op)));
 
   private OperationResolver() {}
-
-  @SuppressWarnings("ArrayRecordComponent")
-  record Resolved(@Nullable Object[] params, String[] signature) {}
 
   static Resolved resolve(
       MBeanOperationInfo[] operations,

@@ -167,10 +167,6 @@ final class PerfDataTest {
             System.currentTimeMillis()));
   }
 
-  private Path own() {
-    return tmp.resolve("hsperfdata_" + USER).resolve(Long.toString(SELF.pid()));
-  }
-
   private static MappedByteBuffer map(Path file) throws IOException {
     try (FileChannel channel = FileChannel.open(file)) {
       return channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
@@ -223,5 +219,9 @@ final class PerfDataTest {
 
   private static byte[] pad(byte[] b) {
     return Arrays.copyOf(b, (b.length + 7) / 8 * 8);
+  }
+
+  private Path own() {
+    return tmp.resolve("hsperfdata_" + USER).resolve(Long.toString(SELF.pid()));
   }
 }

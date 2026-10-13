@@ -12,10 +12,6 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 public final class Json {
-  private static final int MAX_DEPTH = 512;
-
-  private Json() {}
-
   @FunctionalInterface
   private interface Sink {
     void append(char c);
@@ -44,104 +40,6 @@ public final class Json {
     }
   }
 
-  public static String write(@Nullable Object value) {
-    StringBuilder sb = new StringBuilder();
-    writeValue(c -> sb.append(c), value);
-    return sb.toString();
-  }
-
-  public static long size(@Nullable Object value) {
-    Utf8Counter counter = new Utf8Counter();
-    writeValue(counter, value);
-    return counter.bytes;
-  }
-
-  private static void writeValue(Sink sink, @Nullable Object value) {
-    if (value == null) {
-      sink.text("null");
-    } else if (value instanceof String s) {
-      writeString(sink, s);
-    } else if (value instanceof Boolean b) {
-      sink.text(b.toString());
-    } else if (value instanceof Double || value instanceof Float) {
-      double d = ((Number) value).doubleValue();
-      if (Double.isFinite(d)) {
-        sink.text(value.toString());
-      } else {
-        writeString(sink, value.toString());
-      }
-    } else if (value instanceof Integer
-        || value instanceof Long
-        || value instanceof Short
-        || value instanceof Byte
-        || value instanceof BigInteger) {
-      sink.text(value.toString());
-    } else if (value instanceof BigDecimal bd) {
-      sink.text(bd.toString());
-    } else if (value instanceof Map<?, ?> map) {
-      sink.append('{');
-      @Var boolean first = true;
-      for (Map.Entry<?, ?> e : map.entrySet()) {
-        if (!first) {
-          sink.append(',');
-        }
-        first = false;
-        writeString(sink, (String) e.getKey());
-        sink.append(':');
-        writeValue(sink, e.getValue());
-      }
-      sink.append('}');
-    } else if (value instanceof List<?> list) {
-      sink.append('[');
-      for (int i = 0; i < list.size(); i++) {
-        if (i > 0) {
-          sink.append(',');
-        }
-        writeValue(sink, list.get(i));
-      }
-      sink.append(']');
-    } else {
-      throw new IllegalArgumentException("Not a JSON model value: " + value.getClass().getName());
-    }
-  }
-
-  private static void writeString(Sink sink, String s) {
-    sink.append('"');
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      switch (c) {
-        case '"' -> sink.text("\\\"");
-        case '\\' -> sink.text("\\\\");
-        case '\n' -> sink.text("\\n");
-        case '\r' -> sink.text("\\r");
-        case '\t' -> sink.text("\\t");
-        case '\b' -> sink.text("\\b");
-        case '\f' -> sink.text("\\f");
-        default -> {
-          boolean loneSurrogate = Character.isSurrogate(c) && !isPairedSurrogate(s, i);
-          if (c < 0x20 || loneSurrogate) {
-            sink.text(String.format(Locale.ROOT, "\\u%04x", (int) c));
-          } else {
-            sink.append(c);
-          }
-        }
-      }
-    }
-    sink.append('"');
-  }
-
-  private static boolean isPairedSurrogate(String s, int i) {
-    char c = s.charAt(i);
-    if (Character.isHighSurrogate(c)) {
-      return i + 1 < s.length() && Character.isLowSurrogate(s.charAt(i + 1));
-    }
-    return i > 0 && Character.isHighSurrogate(s.charAt(i - 1));
-  }
-
-  public static @Nullable Object parse(String text) {
-    return new Parser(text).document();
-  }
-
   public static final class ParseException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
@@ -156,6 +54,10 @@ public final class Json {
 
     private Parser(String s) {
       this.s = s;
+    }
+
+    private static boolean isDigit(char c) {
+      return c >= '0' && c <= '9';
     }
 
     private @Nullable Object document() {
@@ -364,12 +266,110 @@ public final class Json {
       }
     }
 
-    private static boolean isDigit(char c) {
-      return c >= '0' && c <= '9';
-    }
-
     private ParseException error(String message) {
       return new ParseException(message + " at offset " + pos);
     }
+  }
+
+  private static final int MAX_DEPTH = 512;
+
+  private Json() {}
+
+  public static String write(@Nullable Object value) {
+    StringBuilder sb = new StringBuilder();
+    writeValue(c -> sb.append(c), value);
+    return sb.toString();
+  }
+
+  public static long size(@Nullable Object value) {
+    Utf8Counter counter = new Utf8Counter();
+    writeValue(counter, value);
+    return counter.bytes;
+  }
+
+  public static @Nullable Object parse(String text) {
+    return new Parser(text).document();
+  }
+
+  private static void writeValue(Sink sink, @Nullable Object value) {
+    if (value == null) {
+      sink.text("null");
+    } else if (value instanceof String s) {
+      writeString(sink, s);
+    } else if (value instanceof Boolean b) {
+      sink.text(b.toString());
+    } else if (value instanceof Double || value instanceof Float) {
+      double d = ((Number) value).doubleValue();
+      if (Double.isFinite(d)) {
+        sink.text(value.toString());
+      } else {
+        writeString(sink, value.toString());
+      }
+    } else if (value instanceof Integer
+        || value instanceof Long
+        || value instanceof Short
+        || value instanceof Byte
+        || value instanceof BigInteger) {
+      sink.text(value.toString());
+    } else if (value instanceof BigDecimal bd) {
+      sink.text(bd.toString());
+    } else if (value instanceof Map<?, ?> map) {
+      sink.append('{');
+      @Var boolean first = true;
+      for (Map.Entry<?, ?> e : map.entrySet()) {
+        if (!first) {
+          sink.append(',');
+        }
+        first = false;
+        writeString(sink, (String) e.getKey());
+        sink.append(':');
+        writeValue(sink, e.getValue());
+      }
+      sink.append('}');
+    } else if (value instanceof List<?> list) {
+      sink.append('[');
+      for (int i = 0; i < list.size(); i++) {
+        if (i > 0) {
+          sink.append(',');
+        }
+        writeValue(sink, list.get(i));
+      }
+      sink.append(']');
+    } else {
+      throw new IllegalArgumentException("Not a JSON model value: " + value.getClass().getName());
+    }
+  }
+
+  private static void writeString(Sink sink, String s) {
+    sink.append('"');
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      switch (c) {
+        case '"' -> sink.text("\\\"");
+        case '\\' -> sink.text("\\\\");
+        case '\n' -> sink.text("\\n");
+        case '\r' -> sink.text("\\r");
+        case '\t' -> sink.text("\\t");
+        case '\b' -> sink.text("\\b");
+        case '\f' -> sink.text("\\f");
+        default -> {
+          boolean loneSurrogate = Character.isSurrogate(c) && !isPairedSurrogate(s, i);
+          if (c < 0x20 || loneSurrogate) {
+            sink.text(String.format(Locale.ROOT, "\\u%04x", (int) c));
+          } else {
+            sink.append(c);
+          }
+        }
+      }
+    }
+    sink.append('"');
+  }
+
+  private static boolean isPairedSurrogate(String s, int i) {
+    char c = s.charAt(i);
+    if (Character.isHighSurrogate(c)) {
+      return i + 1 < s.length() && Character.isLowSurrogate(s.charAt(i + 1));
+    }
+    return i > 0 && Character.isHighSurrogate(s.charAt(i - 1));
   }
 }

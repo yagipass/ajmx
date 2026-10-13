@@ -27,63 +27,6 @@ record Options(
     boolean help,
     boolean version) {
 
-  static final String DEFAULT_TIMEOUT = "10s";
-  static final int DEFAULT_LIMIT = 100;
-  static final long DEFAULT_MAX_BYTES = 262_144;
-  private static final long MIN_MAX_BYTES = 512;
-  private static final Pattern DURATION = Pattern.compile("(\\d{1,9})(ms|s|m)?");
-
-  static Options parse(String[] argv) {
-    Parser parser = new Parser();
-    @Var boolean optionsEnded = false;
-    for (int i = 0; i < argv.length; i++) {
-      String arg = argv[i];
-      if (!optionsEnded && arg.equals("--")) {
-        optionsEnded = true;
-      } else if (!optionsEnded && arg.startsWith("--")) {
-        int eq = arg.indexOf('=');
-        String name = eq > 0 ? arg.substring(0, eq) : arg;
-        @Var String value = eq > 0 ? arg.substring(eq + 1) : null;
-        Option option = Option.find(name).orElseThrow(() -> invalid("Unknown option", name));
-        if (!option.takesValue() && value != null) {
-          throw invalid("Option takes no value", name);
-        }
-        if (option.takesValue() && value == null) {
-          if (i + 1 >= argv.length) {
-            throw invalid("Option requires a value", name);
-          }
-          value = argv[++i];
-        }
-        parser.set(option, value);
-      } else {
-        parser.positional(arg);
-      }
-    }
-    return parser.build();
-  }
-
-  void validate() {
-    if (pid != null && url != null) {
-      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--pid and --url are mutually exclusive");
-    }
-    if (command == null) {
-      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "Missing command")
-          .with("allowed", Command.tokens());
-    }
-    if ((argsJson != null || signature != null) && command != Command.INVOKE) {
-      throw new AjmxException(
-          ErrorCode.INVALID_ARGUMENT, "--args and --signature apply only to invoke");
-    }
-    if (credentialsStdin && command == Command.BATCH) {
-      throw new AjmxException(
-          ErrorCode.INVALID_ARGUMENT,
-          "batch reads requests from stdin; use JMX_USERNAME/JMX_PASSWORD for credentials");
-    }
-    if (credentialsStdin && url == null) {
-      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--credentials-stdin requires --url");
-    }
-  }
-
   private static final class Parser {
     private final Set<Option> seen = EnumSet.noneOf(Option.class);
     private final List<String> args = new ArrayList<>();
@@ -168,17 +111,39 @@ record Options(
     }
   }
 
-  private static long positiveLong(String name, String value) {
-    @Var long v;
-    try {
-      v = Long.parseLong(value);
-    } catch (NumberFormatException e) {
-      v = 0;
+  static final String DEFAULT_TIMEOUT = "10s";
+  static final int DEFAULT_LIMIT = 100;
+  static final long DEFAULT_MAX_BYTES = 262_144;
+  private static final long MIN_MAX_BYTES = 512;
+  private static final Pattern DURATION = Pattern.compile("(\\d{1,9})(ms|s|m)?");
+
+  static Options parse(String[] argv) {
+    Parser parser = new Parser();
+    @Var boolean optionsEnded = false;
+    for (int i = 0; i < argv.length; i++) {
+      String arg = argv[i];
+      if (!optionsEnded && arg.equals("--")) {
+        optionsEnded = true;
+      } else if (!optionsEnded && arg.startsWith("--")) {
+        int eq = arg.indexOf('=');
+        String name = eq > 0 ? arg.substring(0, eq) : arg;
+        @Var String value = eq > 0 ? arg.substring(eq + 1) : null;
+        Option option = Option.find(name).orElseThrow(() -> invalid("Unknown option", name));
+        if (!option.takesValue() && value != null) {
+          throw invalid("Option takes no value", name);
+        }
+        if (option.takesValue() && value == null) {
+          if (i + 1 >= argv.length) {
+            throw invalid("Option requires a value", name);
+          }
+          value = argv[++i];
+        }
+        parser.set(option, value);
+      } else {
+        parser.positional(arg);
+      }
     }
-    if (v <= 0) {
-      throw invalid("Value must be a positive integer", name).with("value", value);
-    }
-    return v;
+    return parser.build();
   }
 
   static long duration(String value) {
@@ -198,6 +163,41 @@ record Options(
     }
     throw invalid("Invalid duration (examples: 500ms, 5s, 1m)", Option.TIMEOUT.flag())
         .with("value", value);
+  }
+
+  void validate() {
+    if (pid != null && url != null) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--pid and --url are mutually exclusive");
+    }
+    if (command == null) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "Missing command")
+          .with("allowed", Command.tokens());
+    }
+    if ((argsJson != null || signature != null) && command != Command.INVOKE) {
+      throw new AjmxException(
+          ErrorCode.INVALID_ARGUMENT, "--args and --signature apply only to invoke");
+    }
+    if (credentialsStdin && command == Command.BATCH) {
+      throw new AjmxException(
+          ErrorCode.INVALID_ARGUMENT,
+          "batch reads requests from stdin; use JMX_USERNAME/JMX_PASSWORD for credentials");
+    }
+    if (credentialsStdin && url == null) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--credentials-stdin requires --url");
+    }
+  }
+
+  private static long positiveLong(String name, String value) {
+    @Var long v;
+    try {
+      v = Long.parseLong(value);
+    } catch (NumberFormatException e) {
+      v = 0;
+    }
+    if (v <= 0) {
+      throw invalid("Value must be a positive integer", name).with("value", value);
+    }
+    return v;
   }
 
   private static AjmxException invalid(String message, String option) {

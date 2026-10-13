@@ -24,20 +24,6 @@ public final class LocalJvms {
         AjmxException::wrap);
   }
 
-  private static List<Jvm> scan() {
-    List<Jvm> jvms = new ArrayList<>();
-    for (long pid : PerfDataFiles.pids()) {
-      Optional<PerfData> perf =
-          ProcessHandle.of(pid).filter(ProcessHandle::isAlive).flatMap(PerfDataFiles::load);
-      if (perf.isEmpty()) {
-        continue;
-      }
-      String mainClass = mainClass(perf.get().javaCommand());
-      jvms.add(new Jvm(pid, mainClass, displayName(mainClass)));
-    }
-    return jvms;
-  }
-
   static @Nullable String mainClass(@Nullable String javaCommand) {
     if (javaCommand == null || javaCommand.isBlank()) {
       return null;
@@ -61,5 +47,19 @@ public final class LocalJvms {
     }
     int dot = name.lastIndexOf('.');
     return dot >= 0 ? name.substring(dot + 1) : name;
+  }
+
+  private static List<Jvm> scan() {
+    List<Jvm> jvms = new ArrayList<>();
+    for (long pid : PerfDataFiles.pids()) {
+      Optional<PerfData> perf =
+          ProcessHandle.of(pid).filter(ProcessHandle::isAlive).flatMap(PerfDataFiles::load);
+      if (perf.isEmpty()) {
+        continue;
+      }
+      String mainClass = mainClass(perf.get().javaCommand());
+      jvms.add(new Jvm(pid, mainClass, displayName(mainClass)));
+    }
+    return jvms;
   }
 }
