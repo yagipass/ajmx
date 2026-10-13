@@ -58,6 +58,12 @@ jobs:
           cache-provider: basic
       - name: Build and test the native executable
         run: ./gradlew -Pnative check
+      - name: Check the memory and time of the native executable
+        run: |
+          if [ ! -x /usr/bin/time ]; then
+            sudo apt-get update && sudo apt-get install -y time
+          fi
+          ./gradlew -Pnative :it:perfTest
       - name: Check that only system libraries are linked
         run: |
           if [ "$RUNNER_OS" = macOS ]; then
