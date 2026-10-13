@@ -12,6 +12,7 @@ Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and [hyperfine]
 | `./gradlew :cli:check` | unit tests only |
 | `./gradlew -Pnative check` | build `modules/cli/build/native/nativeCompile/ajmx` and run the integration tests against it |
 | `./gradlew -Pnative :it:test -Pajmx.test.java=/path/to/jdk8/bin/java` | run the integration tests of the native binary against another target JDK |
+| `./gradlew -Pnative :it:perfTest` | check the native binary's memory, batch scaling and startup time against fixed limits, as CI does. Needs `/usr/bin/time` (GNU time on Linux) |
 | `./gradlew spotlessApply` | format Java |
 | `nix fmt` | format Nix |
 | `nix build` | build the Nix package into `result/bin/ajmx` |

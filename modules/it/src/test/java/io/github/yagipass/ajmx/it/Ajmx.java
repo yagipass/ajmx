@@ -12,6 +12,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,7 +83,10 @@ final class Ajmx {
   }
 
   static Result run(Map<String, String> env, String stdin, String... args) throws Exception {
-    Result r = nativeMode() ? runNative(env, stdin, p -> {}, args) : runInProcess(env, stdin, args);
+    Result r =
+        nativeMode()
+            ? runNative(env, stdin, p -> {}, command(args))
+            : runInProcess(env, stdin, args);
     assertSingleJsonDocument(r.stdout());
     return r;
   }
@@ -93,9 +97,58 @@ final class Ajmx {
   }
 
   static Result runNativeWhile(WhileRunning whileRunning, String... args) throws Exception {
-    Result r = runNative(Map.of(), "", whileRunning, args);
+    Result r = runNative(Map.of(), "", whileRunning, command(args));
     assertSingleJsonDocument(r.stdout());
     return r;
+  }
+
+  record Timed(Result result, Duration elapsed) {}
+
+  static Timed runTimed(String stdin, String... args) throws Exception {
+    long start = System.nanoTime();
+    Result r = runNative(Map.of(), stdin, p -> {}, command(args));
+    Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+    assertSingleJsonDocument(r.stdout());
+    return new Timed(r, elapsed);
+  }
+
+  record Footprint(Result result, long peakRssBytes) {}
+
+  static boolean macOs() {
+    return System.getProperty("os.name").startsWith("Mac");
+  }
+
+  static Footprint runWithPeakRss(String... args) throws Exception {
+    boolean macOs = macOs();
+    Path usage = Files.createTempFile("ajmx-usage", ".txt");
+    try {
+      List<String> command =
+          new ArrayList<>(
+              macOs
+                  ? List.of("/usr/bin/time", "-l", "-o", usage.toString())
+                  : List.of("/usr/bin/time", "-f", "%M", "-o", usage.toString()));
+      command.addAll(command(args));
+      Result r = runNative(Map.of(), "", p -> {}, command);
+      assertSingleJsonDocument(r.stdout());
+      List<String> lines = Files.readAllLines(usage, StandardCharsets.UTF_8);
+      long peak =
+          macOs
+              ? lines.stream()
+                  .filter(line -> line.endsWith(" maximum resident set size"))
+                  .mapToLong(
+                      line ->
+                          Long.parseLong(line.replace(" maximum resident set size", "").strip()))
+                  .findFirst()
+                  .orElseThrow(() -> new AssertionError("no maximum RSS in " + lines))
+              : Long.parseLong(lines.getLast().strip()) * 1024;
+      return new Footprint(r, peak);
+    } finally {
+      Files.deleteIfExists(usage);
+    }
+  }
+
+  static <T extends Comparable<? super T>> T median(List<T> values) {
+    return values.stream().sorted().toList().get(values.size() / 2);
   }
 
   private static Result runInProcess(Map<String, String> env, String stdin, String... args) {
@@ -129,9 +182,8 @@ final class Ajmx {
   }
 
   private static Result runNative(
-      Map<String, String> env, String stdin, WhileRunning whileRunning, String... args)
+      Map<String, String> env, String stdin, WhileRunning whileRunning, List<String> command)
       throws Exception {
-    List<String> command = command(args);
     Path out = Files.createTempFile("ajmx-out", ".json");
     Path err = Files.createTempFile("ajmx-err", ".txt");
     try {
