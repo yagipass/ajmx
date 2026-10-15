@@ -74,6 +74,8 @@
                 done
                 exit $status
               ''}";
+              args = [ ];
+              pass_filenames = true;
             };
 
             convco.enable = true;
