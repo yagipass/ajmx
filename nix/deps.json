@@ -19,23 +19,23 @@
    "module": "sha256-IFNqlfL+sr9DBRKMaq7Lb9idxFeYqchfJgK4qAnXUNs=",
    "pom": "sha256-Q1z/VXiZht7arXF/aPuo1UgklHhWLc2EsirU1lZvRAs="
   },
-  "com/diffplug/spotless#com.diffplug.spotless.gradle.plugin/8.10.3": {
-   "pom": "sha256-4HL9UfUyElSnOGDa6Sh9mgOZxM34c1ytFFPS79H8bms="
+  "com/diffplug/spotless#com.diffplug.spotless.gradle.plugin/8.10.4": {
+   "pom": "sha256-AqHuNBhS7Y2MdzeMAFL8MmUiNGguQdslNqReqnhstQk="
   },
-  "com/diffplug/spotless#spotless-lib-extra/4.10.3": {
-   "jar": "sha256-xQddldmbngOnfHt6saWSSD6kIIpVz8vVbgQl0oGBr5c=",
-   "module": "sha256-4yf8ulUb+BvAYa3n9yVQTzHs1iczKXsTW4uw8UIYP38=",
-   "pom": "sha256-5EB47jMhSIKpzp8Oc6AC2KdVt8xjV/xtrk19g7ze36A="
+  "com/diffplug/spotless#spotless-lib-extra/4.10.4": {
+   "jar": "sha256-g4Tzj28x/ZAq7K33iIdxENa0AxzVwn4GYESx5zg7Chs=",
+   "module": "sha256-6VdqrcAroD0RHkMszQ26olc1cfEEwYHPAqzSsI7lXgk=",
+   "pom": "sha256-oGe1iOL5eXSyXlsZb3mEev984twFH9aVTGdxRVVxm6w="
   },
-  "com/diffplug/spotless#spotless-lib/4.10.3": {
-   "jar": "sha256-gI7S1kMPDfciM/E0lKApFEQnoMDDZrSDQHjucGbNMck=",
-   "module": "sha256-yO61EDqrTCdBcVuWLGspu+wtc1PKO73IIKg4AUPYxMs=",
-   "pom": "sha256-L2Y9rKglQ7U1I3X/iTiU7N4QL4OvVMtZ+6lePpWSUw8="
+  "com/diffplug/spotless#spotless-lib/4.10.4": {
+   "jar": "sha256-79Qo+eT98YfcDsoK7gINY5h0zYObRY85VmvxBfYVAqo=",
+   "module": "sha256-dhZnqdIEKkcep6TuLH7O/M94dXcb/U+nT6tytY5LGXI=",
+   "pom": "sha256-dfbXLrWG4Ys0TJRf3s+QuXeTOkgYr/CiLxN9zYvzhiY="
   },
-  "com/diffplug/spotless#spotless-plugin-gradle/8.10.3": {
-   "jar": "sha256-APjuWFPG0S+J7OYgPsKwi/DhyYhUYl1MyNObh7IzAig=",
-   "module": "sha256-kKeMB5YdT79cLHNjicDWKmUN29c0YEeVtOix4+gnj5Y=",
-   "pom": "sha256-5a35jqu1bxociDIKfot02DFjm+YZkwiHiIrKCkZb4Ho="
+  "com/diffplug/spotless#spotless-plugin-gradle/8.10.4": {
+   "jar": "sha256-+rQVJxTGCH42/WdsWK0Vpb6vcdrqVXs+AhlQcjKEzNc=",
+   "module": "sha256-A9d5bq+otLpVHuI7Ot+nIM1hfxOR9zMKAlOgvBxW30k=",
+   "pom": "sha256-3mpDIdJYIIZgV01kaR+ym0Qjrv/0weE9BO+cP19HMZM="
   },
   "com/github/openjson#openjson/1.0.13": {
    "jar": "sha256-fUGEz4kfNZ7nIJWkzhy5zY88Z2Z23+cW6on6tNDm6VM=",
