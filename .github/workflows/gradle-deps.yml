@@ -15,8 +15,9 @@ permissions:
 
 jobs:
   update:
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -25,7 +26,9 @@ jobs:
       - uses: cachix/install-nix-action@v31.11.1
       - name: Let bubblewrap create user namespaces for the update script
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - run: "$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)"
+      - run: |
+          update_script=$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)
+          "$update_script"
       - run: |
           git diff --quiet && exit 0
           git config user.name 'github-actions[bot]'

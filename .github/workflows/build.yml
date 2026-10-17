@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-caller-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -23,8 +27,11 @@ jobs:
           - target: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.1
       - uses: cachix/cachix-action@v17
         with:
@@ -45,8 +52,11 @@ jobs:
           - target: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: graalvm/setup-graalvm@v1.6.7
         with:
           version: "25.3"
@@ -68,10 +78,10 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = macOS ]; then
             otool -L modules/cli/build/native/nativeCompile/ajmx
-            ! otool -L modules/cli/build/native/nativeCompile/ajmx | tail -n +2 | grep -vE '^[[:space:]]+/(usr/lib|System/Library)/'
+            if otool -L modules/cli/build/native/nativeCompile/ajmx | tail -n +2 | grep -vE '^[[:space:]]+/(usr/lib|System/Library)/'; then exit 1; fi
           else
             ldd modules/cli/build/native/nativeCompile/ajmx
-            ! ldd modules/cli/build/native/nativeCompile/ajmx | grep -vE 'linux-vdso|ld-linux|lib(c|z|m|dl|pthread|rt)\.so'
+            if ldd modules/cli/build/native/nativeCompile/ajmx | grep -vE 'linux-vdso|ld-linux|lib(c|z|m|dl|pthread|rt)\.so'; then exit 1; fi
           fi
       - name: Package
         run: |
@@ -87,8 +97,11 @@ jobs:
 
   jdk-matrix:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v6.0.1
         with:
           distribution: zulu
@@ -120,8 +133,11 @@ jobs:
 
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: cachix/install-nix-action@v31.11.1
       - uses: cachix/cachix-action@v17
         with:
@@ -133,6 +149,10 @@ jobs:
     if: github.event_name == 'push'
     needs: [checks, native, jdk-matrix, docs]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-tagpr
+      queue: max
     permissions:
       contents: write
       pull-requests: write
@@ -152,12 +172,15 @@ jobs:
     if: needs.tagpr.outputs.tag != ''
     needs: tagpr
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       id-token: write
       attestations: write
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v8.0.2
         with:
           pattern: ajmx-*
@@ -189,6 +212,7 @@ jobs:
     if: needs.tagpr.outputs.tag != ''
     needs: tagpr
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
