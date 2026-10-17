@@ -213,6 +213,7 @@ jobs:
     needs: tagpr
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: Cloudflare
     permissions:
       contents: read
     steps:
