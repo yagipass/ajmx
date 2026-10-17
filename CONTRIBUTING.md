@@ -55,3 +55,7 @@ go run github.com/Songmu/insmith/cmd/insmith@v0.0.4 \
   --workflow build.yml \
   -w
 ```
+
+## Repository settings
+
+The repository settings, labels, rulesets and Actions permissions are managed with [gh-infra](https://github.com/babarot/gh-infra) in `.github/infra.yml`. Change them by editing that file, not on GitHub. `gh infra plan .github/infra.yml` shows the difference from GitHub, and `gh infra apply .github/infra.yml` applies it, which needs admin access to this repository. Environments and secrets are not managed by it; change them on GitHub.
