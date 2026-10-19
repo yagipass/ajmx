@@ -25,6 +25,7 @@ The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (
 - `./gradlew check` fails on unformatted code, including members out of the order set in `build.gradle.kts`, and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
 - `./gradlew spotlessApply` moves overloads with different visibilities apart, which Error Prone's `UngroupedOverloads` rejects. Give them different names.
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
+- Name branches `<type>/<slug>` after the Conventional Commits type. `labeler.yml` labels the pull request by it, and the label picks its section of the release notes in `.github/release.yml`.
 - When the CLI's behavior changes, update `README.md`, `skills/ajmx/SKILL.md` and `docs/content` with it.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
 - After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
