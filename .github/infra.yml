@@ -56,10 +56,20 @@ spec:
   - name: javascript
     description: Pull requests that update javascript code
     color: "168700"
+  - name: maintenance
+    description: Build, CI, test and other internal changes
+    color: fef2c0
+  - name: performance
+    description: Faster or lighter
+    color: 5319e7
   - name: question
     description: Further information is requested
     color: d876e3
   - name: tagpr
+    color: ededed
+  - name: tagpr:major
+    color: ededed
+  - name: tagpr:minor
     color: ededed
   - name: wontfix
     description: This will not be worked on

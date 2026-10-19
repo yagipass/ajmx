@@ -1,0 +1,10 @@
+enhancement:
+  - head-branch: ['^feat/']
+bug:
+  - head-branch: ['^fix/']
+performance:
+  - head-branch: ['^perf/']
+documentation:
+  - head-branch: ['^docs/']
+maintenance:
+  - head-branch: ['^(build|ci|chore|test|refactor|style)/']

@@ -17,6 +17,8 @@ workflows:
     '.github/workflows/gradle-deps.yml':
         - 'actions/checkout@v7.0.1'
         - 'cachix/install-nix-action@v31.11.1'
+    '.github/workflows/labeler.yml':
+        - 'actions/labeler@v7.0.0'
     '.github/workflows/update-flake-lock.yml':
         - 'actions/checkout@v7.0.1'
         - 'cachix/install-nix-action@v31.11.1'
@@ -37,6 +39,11 @@ dependencies:
         commit: 'sha1-9000827ccba6bdab643e8b6fd33ac0654aef8333'
         owner_id: 44036562
         repo_id: 192626254
+    'actions/labeler@v7.0.0':
+        ref: 'v7.0.0'
+        commit: 'sha1-bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13'
+        owner_id: 44036562
+        repo_id: 177139928
     'actions/setup-java@v6.0.1':
         ref: 'v6.0.1'
         commit: 'sha1-de7274f081f381c8f8158605e0321c36c376e2e6'
