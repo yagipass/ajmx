@@ -7,21 +7,21 @@ workflows:
         - 'actions/attest@v4.2.2'
         - 'actions/checkout@v7.0.1'
         - 'actions/download-artifact@v8.0.2'
-        - 'actions/setup-java@v6.0.1'
+        - 'actions/setup-java@v6.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'cachix/cachix-action@v17'
-        - 'cachix/install-nix-action@v31.11.1'
+        - 'cachix/install-nix-action@v31.11.2'
         - 'graalvm/setup-graalvm@v1.6.7'
         - 'gradle/actions@v6.4.0'
-        - 'songmu/tagpr@v1.21.2'
+        - 'songmu/tagpr@v1.21.3'
     '.github/workflows/gradle-deps.yml':
         - 'actions/checkout@v7.0.1'
-        - 'cachix/install-nix-action@v31.11.1'
+        - 'cachix/install-nix-action@v31.11.2'
     '.github/workflows/labeler.yml':
         - 'actions/labeler@v7.0.0'
     '.github/workflows/update-flake-lock.yml':
         - 'actions/checkout@v7.0.1'
-        - 'cachix/install-nix-action@v31.11.1'
+        - 'cachix/install-nix-action@v31.11.2'
         - 'peter-evans/create-pull-request@v8.1.1'
 dependencies:
     'actions/attest@v4.2.2':
@@ -44,9 +44,9 @@ dependencies:
         commit: 'sha1-bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13'
         owner_id: 44036562
         repo_id: 177139928
-    'actions/setup-java@v6.0.1':
-        ref: 'v6.0.1'
-        commit: 'sha1-de7274f081f381c8f8158605e0321c36c376e2e6'
+    'actions/setup-java@v6.1.0':
+        ref: 'v6.1.0'
+        commit: 'sha1-b843ebf9b913146b38da2eaa7aeddf76074ae1ad'
         owner_id: 44036562
         repo_id: 196057608
     'actions/upload-artifact@v7.0.2':
@@ -59,9 +59,9 @@ dependencies:
         commit: 'sha1-38b082610b782e7e93e209c35fd730d399dee866'
         owner_id: 36824654
         repo_id: 211717886
-    'cachix/install-nix-action@v31.11.1':
-        ref: 'v31.11.1'
-        commit: 'sha1-13d8dd58da0234aa297dedd986986ccb8e7f3e24'
+    'cachix/install-nix-action@v31.11.2':
+        ref: 'v31.11.2'
+        commit: 'sha1-448cde739abec1eaf0646249e3d25bb8d9bc7702'
         owner_id: 36824654
         repo_id: 212301524
     'graalvm/setup-graalvm@v1.6.7':
@@ -79,8 +79,8 @@ dependencies:
         commit: 'sha1-5f6978faf089d4d20b00c7766989d076bb2fc7f1'
         owner_id: 18365890
         repo_id: 197176365
-    'songmu/tagpr@v1.21.2':
-        ref: 'v1.21.2'
-        commit: 'sha1-0c4eb5a3b0862693702acea436a7c68bd586530d'
+    'songmu/tagpr@v1.21.3':
+        ref: 'v1.21.3'
+        commit: 'sha1-1fcd7292d1fe8ea9a8313eef46b8d80b7a15d227'
         owner_id: 177122
         repo_id: 524603982
