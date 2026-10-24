@@ -1,6 +1,8 @@
 package io.github.yagipass.ajmx.connection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
@@ -90,6 +92,32 @@ final class JmxErrorsTest {
     AjmxException e = map(rejected);
     assertEquals(ErrorCode.UNSUPPORTED_TYPE, e.code());
     assertEquals("com.example.Arg", e.details().get("class"));
+  }
+
+  @Test
+  void valueBeyondTheDeserializationLimitsIsUnsupportedAndNamesTheLimits() {
+    AjmxException e =
+        map(
+            new UnmarshalException(
+                "error unmarshalling return",
+                new InvalidClassException("filter status: REJECTED")));
+    assertEquals(ErrorCode.UNSUPPORTED_TYPE, e.code());
+    assertEquals(false, e.retryable());
+    assertTrue(e.details().containsKey("maxDepth"), e.details().toString());
+    assertTrue(e.details().containsKey("maxArrayLength"), e.details().toString());
+  }
+
+  @Test
+  void argumentRejectedByTheTargetsOwnFilterIsNotBlamedOnTheLimitsOfAjmx() {
+    AjmxException e =
+        map(
+            new ServerException(
+                "RemoteException occurred in server thread",
+                new UnmarshalException(
+                    "error unmarshalling arguments",
+                    new InvalidClassException("filter status: REJECTED"))));
+    assertEquals(ErrorCode.UNSUPPORTED_TYPE, e.code());
+    assertFalse(e.details().containsKey("maxDepth"), e.details().toString());
   }
 
   @Test

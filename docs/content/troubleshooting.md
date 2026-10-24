@@ -401,6 +401,11 @@ ajmx --pid 12345 read com.example.shop:type=InventoryStats LastItem | jq .result
 
 :::
 
+With `maxDepth` and `maxArrayLength` in `details` instead of `class`, the value is nested too
+deeply or holds too long an array for ajmx to read. Retrying does not help. Read a smaller part of
+it, such as another attribute or an operation that returns less. See
+[Limitations](./limitations.md#values-nested-too-deeply-or-holding-long-arrays).
+
 ## TIMEOUT
 
 Each operation must finish within `--timeout`, 10 seconds by default.

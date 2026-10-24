@@ -151,6 +151,7 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 ## Limitations
 
 - Values and exceptions of classes that exist only in the target application cannot be deserialized, and values that are not serializable cannot be sent. Both fail with `UNSUPPORTED_TYPE`, as do JDK classes the native binary leaves out, such as those of `java.desktop`.
+- A value nested more than 500 levels deep, or holding an array of more than 16,777,216 elements or a collection of about that size, is not read and fails with `UNSUPPORTED_TYPE`.
 - A Standard MBean attribute of an application-defined enum can be neither read nor written. MXBean enums work as strings.
 - `write` and `invoke` accept primitives and their wrappers, `String`, `ObjectName`, `BigInteger`, `BigDecimal`, and one-dimensional arrays of these. A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64": ...}`.
 - `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
