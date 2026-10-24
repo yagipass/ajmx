@@ -11,6 +11,7 @@ import java.io.WriteAbortedException;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
 import java.rmi.ConnectException;
+import java.rmi.ConnectIOException;
 import java.rmi.ServerException;
 import java.rmi.UnmarshalException;
 import java.util.List;
@@ -21,6 +22,7 @@ import javax.management.InvalidAttributeValueException;
 import javax.management.MBeanException;
 import javax.management.ReflectionException;
 import javax.management.RuntimeMBeanException;
+import javax.net.ssl.SSLHandshakeException;
 import org.graalvm.nativeimage.MissingReflectionRegistrationError;
 import org.junit.jupiter.api.Test;
 
@@ -127,6 +129,28 @@ final class JmxErrorsTest {
     assertEquals(
         ErrorCode.AUTH_FAILED,
         map(new IOException("x", new SecurityException("Authentication failed!"))).code());
+  }
+
+  @Test
+  void tlsFailureIsNotRetryableAndNotMistakenForWrongCredentials() {
+    AjmxException untrusted =
+        map(
+            new IOException(
+                "Failed to retrieve RMIServer stub",
+                new ConnectIOException(
+                    "error during JRMP connection establishment",
+                    new SSLHandshakeException("PKIX path building failed"))));
+    assertEquals(ErrorCode.TLS_FAILED, untrusted.code());
+    assertEquals(false, untrusted.retryable());
+    assertEquals("PKIX path building failed", untrusted.details().get("reason"));
+
+    AjmxException plaintextStub =
+        map(
+            new SecurityException(
+                "Expecting a javax.rmi.ssl.SslRMIClientSocketFactory RMI client socket factory in"
+                    + " stub!"));
+    assertEquals(ErrorCode.TLS_FAILED, plaintextStub.code());
+    assertEquals(false, plaintextStub.retryable());
   }
 
   @Test

@@ -5,8 +5,17 @@ import io.github.yagipass.ajmx.connection.Credentials;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 import io.github.yagipass.ajmx.json.Json;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
@@ -51,6 +60,27 @@ final class Inputs {
       return null;
     }
     return new Credentials(username, env.getOrDefault("JMX_PASSWORD", ""));
+  }
+
+  static List<Certificate> readCertificates(String file) {
+    Collection<? extends Certificate> certificates;
+    try (InputStream in = Files.newInputStream(Path.of(file))) {
+      certificates = CertificateFactory.getInstance("X.509").generateCertificates(in);
+    } catch (IOException | InvalidPathException e) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unable to read the --tls-ca file", e)
+          .with("file", file)
+          .with("reason", e.getMessage());
+    } catch (CertificateException e) {
+      throw new AjmxException(
+              ErrorCode.INVALID_ARGUMENT, "The --tls-ca file is not PEM certificates", e)
+          .with("file", file)
+          .with("reason", e.getMessage());
+    }
+    if (certificates.isEmpty()) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "The --tls-ca file has no certificates")
+          .with("file", file);
+    }
+    return List.copyOf(certificates);
   }
 
   private static AjmxException stdinFailure(Throwable t) {

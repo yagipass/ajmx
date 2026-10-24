@@ -99,6 +99,8 @@ The whole batch is checked before any request runs, so a typo rejects it with `I
 | `--args <array>` | `[]` | `invoke` arguments |
 | `--signature <type,...>` | | `invoke` parameter types |
 | `--credentials-stdin` | | read `{"username", "password"}` from stdin (with `--url`) |
+| `--tls` | | require TLS for the registry and the connection (with `--url`) |
+| `--tls-ca <file>` | built-in CAs | PEM certificates to trust (with `--tls`) |
 | `--debug` | | print stack traces to stderr |
 | `--help` | | print the usage, like `help` |
 | `--version` | | print the version, like `version` |
@@ -138,7 +140,7 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 | 0 | success |
 | 1 | `INTERNAL_ERROR`, or stdout could not be written |
 | 2 | `INVALID_ARGUMENT`, `TYPE_CONVERSION_FAILED`, `ATTRIBUTE_NOT_WRITABLE` |
-| 3 | `CONNECTION_FAILED`, `CONNECTION_TIMEOUT`, `AUTH_FAILED`, `PROCESS_NOT_FOUND`, `ATTACH_NOT_SUPPORTED`, `ATTACH_PERMISSION_DENIED`, `LOCAL_JMX_UNAVAILABLE` |
+| 3 | `CONNECTION_FAILED`, `CONNECTION_TIMEOUT`, `AUTH_FAILED`, `TLS_FAILED`, `PROCESS_NOT_FOUND`, `ATTACH_NOT_SUPPORTED`, `ATTACH_PERMISSION_DENIED`, `LOCAL_JMX_UNAVAILABLE` |
 | 4 | `MBEAN_NOT_FOUND`, `ATTRIBUTE_NOT_FOUND`, `OPERATION_NOT_FOUND`, `AMBIGUOUS_OPERATION` |
 | 5 | `REMOTE_EXCEPTION`, `UNSUPPORTED_TYPE` |
 | 6 | `TIMEOUT`, `SKIPPED` |
@@ -153,6 +155,7 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 - `write` and `invoke` accept primitives and their wrappers, `String`, `ObjectName`, `BigInteger`, `BigDecimal`, and one-dimensional arrays of these. A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64": ...}`.
 - `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
+- `--tls` needs TLS for both the RMI registry and the connection, takes PEM certificates rather than a key store, and cannot present a client certificate.
 - `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`. `--pid` still connects to them if they run the `java` launcher.
 
 ## Development

@@ -81,7 +81,9 @@ final class OptionsTest {
           {"--pid", "1", "read", "d:k=v", "A", "--args", "[]"},
           {"--pid", "1", "read", "d:k=v", "A", "--signature", "int"},
           {"--pid", "1", "--credentials-stdin", "ping"},
-          {"--url", "service:jmx:x", "--credentials-stdin", "batch"}
+          {"--url", "service:jmx:x", "--credentials-stdin", "batch"},
+          {"--pid", "1", "--tls", "ping"},
+          {"--url", "service:jmx:x", "--tls-ca", "ca.pem", "ping"}
         }) {
       Options o = Options.parse(args);
       assertInvalid(o::validate);
@@ -97,6 +99,8 @@ final class OptionsTest {
               "--args",
               "[]"
             })
+        .validate();
+    Options.parse(new String[] {"--url", "service:jmx:x", "--tls", "--tls-ca", "ca.pem", "batch"})
         .validate();
   }
 

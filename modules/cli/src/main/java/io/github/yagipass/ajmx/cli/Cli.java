@@ -6,6 +6,7 @@ import io.github.yagipass.ajmx.connection.Credentials;
 import io.github.yagipass.ajmx.connection.JmxSession;
 import io.github.yagipass.ajmx.connection.LocalJvms;
 import io.github.yagipass.ajmx.connection.Target;
+import io.github.yagipass.ajmx.connection.Tls;
 import io.github.yagipass.ajmx.core.Batch;
 import io.github.yagipass.ajmx.core.MBeanClient;
 import io.github.yagipass.ajmx.core.Outcome;
@@ -137,7 +138,11 @@ public final class Cli {
           options.credentialsStdin()
               ? Inputs.readCredentialsFromStdin(in, options.timeoutMs())
               : Inputs.readCredentialsFromEnv(env);
-      return new Target.Remote(options.url(), credentials);
+      Tls tls =
+          options.tls()
+              ? new Tls(options.tlsCa() == null ? null : Inputs.readCertificates(options.tlsCa()))
+              : null;
+      return new Target.Remote(options.url(), credentials, tls);
     }
     throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--pid or --url is required")
         .with("command", command.token());

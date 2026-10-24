@@ -24,6 +24,7 @@ import javax.management.ReflectionException;
 import javax.management.RuntimeErrorException;
 import javax.management.RuntimeMBeanException;
 import javax.management.RuntimeOperationsException;
+import javax.net.ssl.SSLException;
 import org.jspecify.annotations.Nullable;
 
 final class JmxErrors {
@@ -31,6 +32,7 @@ final class JmxErrors {
       "A value or exception has a type that is not available to ajmx";
   private static final String NOT_SERIALIZABLE =
       "A value or exception is not serializable, so the JVM cannot send it";
+  private static final String STUB_CHECK_FAILURE = "Expecting a ";
 
   private JmxErrors() {}
 
@@ -75,6 +77,10 @@ final class JmxErrors {
     if (unsupported.isPresent()) {
       return unsupported.get();
     }
+    Optional<AjmxException> tls = findTlsFailure(t);
+    if (tls.isPresent()) {
+      return tls.get();
+    }
     if (causes(t).stream().anyMatch(SecurityException.class::isInstance)) {
       return new AjmxException(ErrorCode.AUTH_FAILED, "Access denied by the JMX server", t);
     }
@@ -116,6 +122,24 @@ final class JmxErrors {
     return serializationFailed
         ? Optional.of(unsupported("A value or exception could not be serialized", null, t))
         : Optional.empty();
+  }
+
+  private static Optional<AjmxException> findTlsFailure(Throwable t) {
+    for (Throwable c : causes(t)) {
+      if (c instanceof SSLException) {
+        return Optional.of(
+            new AjmxException(ErrorCode.TLS_FAILED, "TLS with the JMX server failed", t)
+                .with("reason", c.getMessage()));
+      }
+      if (c instanceof SecurityException
+          && String.valueOf(c.getMessage()).startsWith(STUB_CHECK_FAILURE)) {
+        return Optional.of(
+            new AjmxException(
+                    ErrorCode.TLS_FAILED, "The JMX server does not use TLS for the connection", t)
+                .with("reason", c.getMessage()));
+      }
+    }
+    return Optional.empty();
   }
 
   private static List<Throwable> causes(Throwable t) {

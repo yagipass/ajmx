@@ -10,6 +10,10 @@ enum Option implements Token {
 
   CREDENTIALS_STDIN("", "Read {\"username\", \"password\"} from stdin (with --url)"),
 
+  TLS("", "Require TLS for the registry and the connection (with --url)"),
+
+  TLS_CA("<pem-file>", "Trust these certificates instead of the built-in CAs (with --tls)"),
+
   TIMEOUT(
       "<duration>",
       "Attach, connect and per-operation timeout (default " + Options.DEFAULT_TIMEOUT + ")"),

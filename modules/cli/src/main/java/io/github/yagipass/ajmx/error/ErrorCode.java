@@ -8,6 +8,7 @@ public enum ErrorCode {
   CONNECTION_FAILED(3, true),
   CONNECTION_TIMEOUT(3, true),
   AUTH_FAILED(3, false),
+  TLS_FAILED(3, false),
   PROCESS_NOT_FOUND(3, false),
   ATTACH_NOT_SUPPORTED(3, false),
   ATTACH_PERMISSION_DENIED(3, false),
