@@ -180,6 +180,8 @@ public final class TestTarget {
 
     byte[] bytes(int length);
 
+    Object nested(int depth);
+
     void sleep(long millis) throws InterruptedException;
 
     void fail() throws CustomException;
@@ -516,6 +518,15 @@ public final class TestTarget {
         b[i] = (byte) (i + 1);
       }
       return b;
+    }
+
+    @Override
+    public Object nested(int depth) {
+      @Var Object value = "leaf";
+      for (int i = 1; i < depth; i++) {
+        value = new Object[] {value};
+      }
+      return new Object[] {value};
     }
 
     @Override

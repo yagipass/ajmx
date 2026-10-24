@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.NotSerializableException;
 import java.io.ObjectStreamException;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.management.AttributeNotFoundException;
@@ -33,6 +35,7 @@ final class JmxErrors {
   private static final String NOT_SERIALIZABLE =
       "A value or exception is not serializable, so the JVM cannot send it";
   private static final String STUB_CHECK_FAILURE = "Expecting a ";
+  private static final String FILTER_REJECTED = "filter status: REJECTED";
 
   private JmxErrors() {}
 
@@ -102,7 +105,19 @@ final class JmxErrors {
 
   private static Optional<AjmxException> findUnsupportedType(Throwable t) {
     @Var boolean serializationFailed = false;
+    boolean rejectedByTarget = causes(t).stream().anyMatch(ServerException.class::isInstance);
     for (Throwable c : causes(t)) {
+      if (c instanceof InvalidClassException
+          && Objects.equals(c.getMessage(), FILTER_REJECTED)
+          && !rejectedByTarget) {
+        return Optional.of(
+            new AjmxException(
+                    ErrorCode.UNSUPPORTED_TYPE,
+                    "A value is nested more deeply or holds a longer array than ajmx reads",
+                    t)
+                .with("maxDepth", DeserializationLimits.MAX_DEPTH)
+                .with("maxArrayLength", DeserializationLimits.MAX_ARRAY_LENGTH));
+      }
       if (c instanceof ClassNotFoundException) {
         return Optional.of(unsupported(UNAVAILABLE, className(c.getMessage()), t));
       }
