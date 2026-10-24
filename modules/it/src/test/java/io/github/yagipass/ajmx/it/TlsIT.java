@@ -3,6 +3,7 @@ package io.github.yagipass.ajmx.it;
 import static io.github.yagipass.ajmx.it.Ajmx.map;
 import static io.github.yagipass.ajmx.it.Ajmx.number;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -33,9 +34,11 @@ final class TlsIT {
   private static TargetJvm tls;
   private static TargetJvm plaintextRegistry;
   private static TargetJvm plaintextConnection;
+  private static TargetJvm unnamedConnectionHost;
   private static int tlsPort;
   private static int plaintextRegistryPort;
   private static int plaintextConnectionPort;
+  private static int unnamedConnectionHostPort;
 
   @BeforeAll
   static void start() throws Exception {
@@ -86,12 +89,18 @@ final class TlsIT {
     access = secret(dir.resolve("jmx.access"), "agent readwrite\n");
 
     tlsPort = freePort();
-    tls = TargetJvm.start(serverArgs(tlsPort, tlsPort, true, true));
+    tls = TargetJvm.start(serverArgs(tlsPort, tlsPort, "127.0.0.1", true, true));
     plaintextRegistryPort = freePort();
-    plaintextRegistry = TargetJvm.start(serverArgs(plaintextRegistryPort, freePort(), true, false));
+    plaintextRegistry =
+        TargetJvm.start(serverArgs(plaintextRegistryPort, freePort(), "127.0.0.1", true, false));
     plaintextConnectionPort = freePort();
     plaintextConnection =
-        TargetJvm.start(serverArgs(plaintextConnectionPort, freePort(), false, true));
+        TargetJvm.start(serverArgs(plaintextConnectionPort, freePort(), "127.0.0.1", false, true));
+    unnamedConnectionHostPort = freePort();
+    unnamedConnectionHost =
+        TargetJvm.start(
+            serverArgs(
+                unnamedConnectionHostPort, unnamedConnectionHostPort, "localhost", true, true));
   }
 
   @AfterAll
@@ -99,6 +108,7 @@ final class TlsIT {
     tls.close();
     plaintextRegistry.close();
     plaintextConnection.close();
+    unnamedConnectionHost.close();
   }
 
   @Test
@@ -158,7 +168,7 @@ final class TlsIT {
   }
 
   @Test
-  void trustedCertificateForAnotherHostIsRefused() throws Exception {
+  void trustedCertificateThatDoesNotNameTheRegistryHostIsRefused() throws Exception {
     Ajmx.Result r =
         Ajmx.runInOwnProcess(
                 AGENT,
@@ -172,8 +182,30 @@ final class TlsIT {
     assertEquals(false, r.error().get("retryable"));
   }
 
+  @Test
+  void trustedCertificateThatDoesNotNameTheConnectionHostIsRefused() throws Exception {
+    Ajmx.Result r =
+        Ajmx.runInOwnProcess(
+                AGENT,
+                "--url",
+                url("127.0.0.1", unnamedConnectionHostPort),
+                "--tls",
+                "--tls-ca",
+                ca.toString(),
+                "ping")
+            .assertError("TLS_FAILED", 3);
+    assertEquals(false, r.error().get("retryable"));
+    assertTrue(
+        String.valueOf(r.details().get("reason")).contains("localhost"),
+        () -> "expected the connection to localhost to be refused: " + r.stdout());
+  }
+
   private static String[] serverArgs(
-      int registryPort, int connectionPort, boolean tlsConnection, boolean tlsRegistry) {
+      int registryPort,
+      int connectionPort,
+      String connectionHost,
+      boolean tlsConnection,
+      boolean tlsRegistry) {
     return new String[] {
       "-Dcom.sun.management.jmxremote.port=" + registryPort,
       "-Dcom.sun.management.jmxremote.rmi.port=" + connectionPort,
@@ -183,7 +215,7 @@ final class TlsIT {
       "-Dcom.sun.management.jmxremote.authenticate=true",
       "-Dcom.sun.management.jmxremote.password.file=" + password,
       "-Dcom.sun.management.jmxremote.access.file=" + access,
-      "-Djava.rmi.server.hostname=127.0.0.1"
+      "-Djava.rmi.server.hostname=" + connectionHost
     };
   }
 
