@@ -39,11 +39,16 @@ A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64":
 
 See [Local JVMs](./connect/local.md).
 
-## No TLS settings for --url
+## TLS for --url
 
-ajmx has no TLS settings, such as a trust store or a client certificate. It is tested against
-JVMs started with `com.sun.management.jmxremote.ssl=false`. See
-[Remote JVMs](./connect/remote.md#turn-on-remote-jmx).
+- `--tls` needs TLS for both the registry and the connection, as
+  `com.sun.management.jmxremote.registry.ssl=true` and `com.sun.management.jmxremote.ssl=true`.
+- `--tls` takes only a `service:jmx:rmi:///jndi/rmi://` URL.
+- `--tls-ca` takes PEM certificates only, not a key store.
+- ajmx cannot present a client certificate, so it cannot connect to a JVM started with
+  `com.sun.management.jmxremote.ssl.need.client.auth=true`.
+
+See [TLS](./connect/remote.md#tls).
 
 ## JVMs that ps does not list
 

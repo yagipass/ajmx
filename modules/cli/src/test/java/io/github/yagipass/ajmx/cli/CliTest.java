@@ -8,8 +8,11 @@ import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.json.Json;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 final class CliTest {
 
@@ -42,6 +46,25 @@ final class CliTest {
           {"--pid", "1", "write", "d:k=v", "novalue"},
           {"--pid", "1", "read", "d:k=v", "A", "--args", "[]"},
           {"--pid", "1", "invoke", "d:k=v", "op", "--args", "[1e99999999999]"}
+        }) {
+      Run r = run(args);
+      assertEquals("INVALID_ARGUMENT", r.code(), String.join(" ", args));
+      assertEquals(2, r.exit());
+    }
+  }
+
+  @Test
+  void unusableTlsSettingsFailAsInvalidArgumentsBeforeConnecting(@TempDir Path dir)
+      throws IOException {
+    String url = "service:jmx:rmi:///jndi/rmi://127.0.0.1:1/jmxrmi";
+    Path empty = Files.createFile(dir.resolve("empty.pem"));
+    Path notPem = Files.writeString(dir.resolve("notes.pem"), "not a certificate\n");
+    for (String[] args :
+        new String[][] {
+          {"--url", url, "--tls", "--tls-ca", dir.resolve("missing.pem").toString(), "ping"},
+          {"--url", url, "--tls", "--tls-ca", empty.toString(), "ping"},
+          {"--url", url, "--tls", "--tls-ca", notPem.toString(), "ping"},
+          {"--url", "service:jmx:rmi://127.0.0.1/stub/rO0ABQ==", "--tls", "ping"}
         }) {
       Run r = run(args);
       assertEquals("INVALID_ARGUMENT", r.code(), String.join(" ", args));

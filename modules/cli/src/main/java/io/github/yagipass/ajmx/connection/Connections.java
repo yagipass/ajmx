@@ -12,8 +12,8 @@ public final class Connections {
     JMXConnector connector =
         switch (target) {
           case Target.Local(long pid) -> LocalConnector.connect(pid, timeoutMs);
-          case Target.Remote(String url, @Nullable Credentials credentials) ->
-              RemoteConnector.connect(url, credentials, timeoutMs);
+          case Target.Remote(String url, @Nullable Credentials credentials, @Nullable Tls tls) ->
+              RemoteConnector.connect(url, credentials, tls, timeoutMs);
         };
     try {
       return new JmxSession(connector, timeoutMs);

@@ -1,5 +1,5 @@
 ---
-description: Connect ajmx to a JVM on another host or in a container with --url, the JVM flags that turn on remote JMX, and how to pass a username and password.
+description: Connect ajmx to a JVM on another host or in a container with --url, the JVM flags that turn on remote JMX, how to pass a username and password, and how to require TLS.
 ---
 
 # Remote JVMs
@@ -63,7 +63,8 @@ java -Dcom.sun.management.jmxremote.port=7199 \
 
 ::: warning
 These flags turn off authentication, so anyone who can reach the port can read and change the
-JVM. Use them on your own machine for development. Elsewhere, turn on [credentials](#credentials).
+JVM. Use them on your own machine for development. Elsewhere, turn on [credentials](#credentials)
+and [TLS](#tls).
 :::
 
 | Property | Value |
@@ -73,7 +74,7 @@ JVM. Use them on your own machine for development. Elsewhere, turn on [credentia
 | `java.rmi.server.hostname` | The host name that ajmx uses to reach the JVM. The JVM hands it to ajmx, and ajmx connects to it for every call |
 | `com.sun.management.jmxremote.host` | `127.0.0.1` to accept connections from the same machine only. Leave it out to accept them from other hosts |
 | `com.sun.management.jmxremote.authenticate` | `true` to require a username and password. See [Credentials](#credentials) |
-| `com.sun.management.jmxremote.ssl` | `false`. ajmx has no TLS settings, such as a trust store |
+| `com.sun.management.jmxremote.ssl` | `false` to turn off TLS. To use TLS, see [TLS](#tls) |
 
 ## A JVM in a container
 
@@ -183,6 +184,9 @@ ajmx --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi ping | jq .
 
 ::::
 
+Without [TLS](#tls), the username and password cross the network in plain text. Beyond your own
+machine, turn on TLS too.
+
 ajmx has no option that takes a password, so it never shows up in your shell history or the
 process list. `batch` reads its requests from stdin, so it takes credentials from the environment
 variables only.
@@ -244,6 +248,82 @@ ajmx --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi write java.lang:t
 ```
 
 :::
+
+## TLS
+
+`--tls` makes ajmx use TLS for both the RMI registry and the connection, and refuse a JVM that
+does not. ajmx checks this before it sends the credentials.
+
+:::: steps
+
+1. Make a key pair for the JVM, and export its certificate. The subject alternative names must
+   include the host in the URL and the value of `java.rmi.server.hostname`.
+
+   ::: terminal
+
+   ```sh
+   read -rs STORE_PASSWORD && export STORE_PASSWORD
+   keytool -genkeypair -alias jmx -keyalg RSA -validity 365 \
+           -dname CN=jmx.example.com -ext san=dns:jmx.example.com \
+           -storetype PKCS12 -keystore jmx.p12 -storepass:env STORE_PASSWORD
+   keytool -exportcert -rfc -alias jmx -storetype PKCS12 -keystore jmx.p12 \
+           -storepass:env STORE_PASSWORD -file jmx.pem
+   ```
+
+   :::
+
+2. Write the key store and its password to a file readable by its owner only. The JVM refuses to
+   start if other users can read it.
+
+   ::: terminal
+
+   ```sh
+   printf 'javax.net.ssl.keyStore=jmx.p12\njavax.net.ssl.keyStorePassword=%s\n' "$STORE_PASSWORD" > jmxremote.ssl
+   chmod 600 jmxremote.ssl
+   ```
+
+   :::
+
+3. Start the JVM with TLS for both the registry and the connection.
+
+   ::: terminal
+
+   ```sh
+   java -Dcom.sun.management.jmxremote.port=7199 \
+        -Dcom.sun.management.jmxremote.rmi.port=7199 \
+        -Dcom.sun.management.jmxremote.ssl=true \
+        -Dcom.sun.management.jmxremote.registry.ssl=true \
+        -Dcom.sun.management.jmxremote.ssl.config.file=jmxremote.ssl \
+        -Dcom.sun.management.jmxremote.authenticate=true \
+        -Dcom.sun.management.jmxremote.password.file=jmxremote.password \
+        -Dcom.sun.management.jmxremote.access.file=jmxremote.access \
+        -Djava.rmi.server.hostname=jmx.example.com \
+        -jar app.jar
+   ```
+
+   :::
+
+4. Give ajmx `--tls`, and the certificate with `--tls-ca`.
+
+   ::: terminal
+
+   ```sh
+   ajmx --url service:jmx:rmi:///jndi/rmi://jmx.example.com:7199/jmxrmi --tls --tls-ca jmx.pem ping
+   ```
+
+   :::
+
+::::
+
+`--tls-ca` takes one or more PEM certificates, such as the JVM's own or the CA that signed it.
+Without it, ajmx trusts the CAs built into it.
+
+The JDK sets `com.sun.management.jmxremote.registry.ssl` to `false` by default. Then the registry
+hands out the connection's address in plain text, which anyone on the network can replace, so
+`--tls` fails with `TLS_FAILED`. Set it to `true`.
+
+`--tls` takes only a `service:jmx:rmi:///jndi/rmi://` URL, and cannot present a client certificate.
+See [Limitations](../limitations.md).
 
 ## Next
 

@@ -21,6 +21,7 @@ for shell scripts.
 | `CONNECTION_FAILED` | Could not connect, or the connection was lost |
 | `CONNECTION_TIMEOUT` | Connecting took longer than `--timeout` |
 | `AUTH_FAILED` | The JVM rejected the credentials |
+| `TLS_FAILED` | TLS with the JVM failed: its certificate is not trusted or names another host, or, with `--tls`, it does not use TLS. `details.reason` says why |
 | `PROCESS_NOT_FOUND` | No process has the PID given to `--pid` |
 | `ATTACH_NOT_SUPPORTED` | The process is not a HotSpot JVM, or it disables attach |
 | `ATTACH_PERMISSION_DENIED` | The JVM runs as another user |
@@ -46,7 +47,7 @@ Names of MBeans, attributes and operations are case-sensitive. Check them with `
 | 0 | Success |
 | 1 | `INTERNAL_ERROR`, or stdout could not be written |
 | 2 | `INVALID_ARGUMENT`, `TYPE_CONVERSION_FAILED`, `ATTRIBUTE_NOT_WRITABLE` |
-| 3 | `CONNECTION_FAILED`, `CONNECTION_TIMEOUT`, `AUTH_FAILED`, `PROCESS_NOT_FOUND`, `ATTACH_NOT_SUPPORTED`, `ATTACH_PERMISSION_DENIED`, `LOCAL_JMX_UNAVAILABLE` |
+| 3 | `CONNECTION_FAILED`, `CONNECTION_TIMEOUT`, `AUTH_FAILED`, `TLS_FAILED`, `PROCESS_NOT_FOUND`, `ATTACH_NOT_SUPPORTED`, `ATTACH_PERMISSION_DENIED`, `LOCAL_JMX_UNAVAILABLE` |
 | 4 | `MBEAN_NOT_FOUND`, `ATTRIBUTE_NOT_FOUND`, `OPERATION_NOT_FOUND`, `AMBIGUOUS_OPERATION` |
 | 5 | `REMOTE_EXCEPTION`, `UNSUPPORTED_TYPE` |
 | 6 | `TIMEOUT`, `SKIPPED` |

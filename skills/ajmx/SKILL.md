@@ -46,7 +46,7 @@ A `byte[]` is `{"$base64": "..."}` in standard base64 and is never cut by `--lim
 
 Each command opens its own connection, so send more than a few calls as one `batch`.
 
-Credentials for `--url` come from `JMX_USERNAME` and `JMX_PASSWORD`, or from stdin with `--credentials-stdin`, never from arguments. Ask the user to export the variables rather than paste a password into the conversation.
+Credentials for `--url` come from `JMX_USERNAME` and `JMX_PASSWORD`, or from stdin with `--credentials-stdin`, never from arguments. Ask the user to export the variables rather than paste a password into the conversation. When the JVM uses TLS, add `--tls`, and `--tls-ca <pem-file>` for a certificate that no public CA signed.
 
 `--pid` starts a JMX agent in the target JVM if it has none, and the agent stays until the JVM restarts. Mention this when the target is a production process the user has not said you may touch.
 
@@ -68,6 +68,7 @@ Credentials for `--url` come from `JMX_USERNAME` and `JMX_PASSWORD`, or from std
 - `"executed": "unknown"` in the `details` of a failed `write` or `invoke` means the change may have been applied or may still be running. Do not retry. Read the state and tell the user what you know.
 - `"executed": true` means the change was made although the command failed, for example because the result was too large to print. Running it again to see the result runs the operation again.
 - `UNSUPPORTED_TYPE` means ajmx cannot deserialize the value's class. Retrying does not help; read a related attribute or operation instead.
+- `TLS_FAILED` means the JVM does not use TLS for `--tls`, or its certificate is not trusted or names another host. Retrying does not help; tell the user `details.reason`.
 - `ATTACH_PERMISSION_DENIED` means the JVM runs as another user. Tell the user instead of reaching for `sudo`.
 
 ## batch

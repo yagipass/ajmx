@@ -100,6 +100,12 @@ final class Ajmx {
     return r;
   }
 
+  static Result runInOwnProcess(Map<String, String> env, String... args) throws Exception {
+    Result r = runNative(env, "", p -> {}, command(args));
+    assertSingleJsonDocument(r.stdout());
+    return r;
+  }
+
   static Result runNativeWhile(WhileRunning whileRunning, String... args) throws Exception {
     Result r = runNative(Map.of(), "", whileRunning, command(args));
     assertSingleJsonDocument(r.stdout());

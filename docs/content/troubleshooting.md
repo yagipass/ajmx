@@ -244,6 +244,19 @@ target JVM to the host name in the URL. For a container, see
 - With `mbean` in `details`, the user is `readonly`, and the command was a `write` or `invoke`. It
   did not run.
 
+## --url fails with TLS_FAILED
+
+`details.reason` says what failed.
+
+| `reason` | Fix |
+|---|---|
+| Starts with `(certificate_unknown) PKIX path building failed` | ajmx does not trust the certificate. Pass it, or the CA that signed it, with `--tls-ca` |
+| Starts with `(certificate_unknown) No subject alternative names matching` | The certificate does not name the host. Its subject alternative names must include the host in the URL and `java.rmi.server.hostname` |
+| `Remote host terminated the handshake` | The registry does not use TLS. Start the JVM with `com.sun.management.jmxremote.registry.ssl=true` |
+| Starts with `Expecting a` | The connection does not use TLS. Start the JVM with `com.sun.management.jmxremote.ssl=true` |
+
+See [TLS](./connect/remote.md#tls).
+
 ## search returns no items
 
 A pattern without `*` matches only a name with exactly those keys.

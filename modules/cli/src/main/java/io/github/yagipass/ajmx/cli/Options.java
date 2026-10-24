@@ -23,6 +23,8 @@ record Options(
     @Nullable String argsJson,
     @Nullable List<String> signature,
     boolean credentialsStdin,
+    boolean tls,
+    @Nullable String tlsCa,
     boolean debug,
     boolean help,
     boolean version) {
@@ -39,6 +41,8 @@ record Options(
     private @Nullable String argsJson;
     private @Nullable List<String> signature;
     private boolean credentialsStdin;
+    private boolean tls;
+    private @Nullable String tlsCa;
     private boolean debug;
     private boolean help;
     private boolean version;
@@ -54,6 +58,8 @@ record Options(
         case PID -> pid = positiveLong(name, value);
         case URL -> url = value;
         case CREDENTIALS_STDIN -> credentialsStdin = true;
+        case TLS -> tls = true;
+        case TLS_CA -> tlsCa = value;
         case TIMEOUT -> timeoutMs = duration(value);
         case LIMIT -> limit = (int) Math.min(Integer.MAX_VALUE, positiveLong(name, value));
         case MAX_BYTES -> {
@@ -105,6 +111,8 @@ record Options(
           argsJson,
           signature == null ? null : List.copyOf(signature),
           credentialsStdin,
+          tls,
+          tlsCa,
           debug,
           help,
           version);
@@ -184,6 +192,12 @@ record Options(
     }
     if (credentialsStdin && url == null) {
       throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--credentials-stdin requires --url");
+    }
+    if (tls && url == null) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--tls requires --url");
+    }
+    if (tlsCa != null && !tls) {
+      throw new AjmxException(ErrorCode.INVALID_ARGUMENT, "--tls-ca requires --tls");
     }
   }
 
