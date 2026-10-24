@@ -44,7 +44,7 @@ See [Local JVMs](./connect/local.md).
 - `--tls` needs TLS for both the registry and the connection, as
   `com.sun.management.jmxremote.registry.ssl=true` and `com.sun.management.jmxremote.ssl=true`.
 - `--tls` takes only a `service:jmx:rmi:///jndi/rmi://` URL.
-- `--tls-ca` takes PEM certificates only, not a key store.
+- `--tls-ca` takes PEM certificates, not a key store.
 - ajmx cannot present a client certificate, so it cannot connect to a JVM started with
   `com.sun.management.jmxremote.ssl.need.client.auth=true`.
 

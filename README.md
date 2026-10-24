@@ -155,7 +155,7 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 - `write` and `invoke` accept primitives and their wrappers, `String`, `ObjectName`, `BigInteger`, `BigDecimal`, and one-dimensional arrays of these. A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64": ...}`.
 - `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
-- `--tls` needs TLS for both the RMI registry and the connection, takes PEM certificates only, and cannot present a client certificate.
+- `--tls` needs TLS for both the RMI registry and the connection, takes PEM certificates rather than a key store, and cannot present a client certificate.
 - `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`. `--pid` still connects to them if they run the `java` launcher.
 
 ## Development
