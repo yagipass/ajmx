@@ -23,7 +23,7 @@ for shell scripts.
 | `AUTH_FAILED` | The JVM rejected the credentials |
 | `TLS_FAILED` | TLS with the JVM failed: its certificate is not trusted or names another host, or, with `--tls`, it does not use TLS. `details.reason` says why |
 | `PROCESS_NOT_FOUND` | No process has the PID given to `--pid` |
-| `ATTACH_NOT_SUPPORTED` | The process is not a HotSpot JVM, or it disables attach |
+| `ATTACH_NOT_SUPPORTED` | The process is not a HotSpot JVM, disables attach, or runs in another network namespace, such as a container |
 | `ATTACH_PERMISSION_DENIED` | The JVM runs as another user |
 | `LOCAL_JMX_UNAVAILABLE` | The JVM could not start its local JMX agent |
 | `MBEAN_NOT_FOUND` | No MBean has this name |

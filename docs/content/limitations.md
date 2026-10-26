@@ -52,6 +52,10 @@ A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64":
   settings, the JVM writes a `javacore` file into its working directory for each `SIGQUIT`, so a
   try can leave several. `--url` works.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
+- `--pid` cannot reach a JVM in another network namespace, such as a container seen from its host,
+  because the local JMX agent accepts connections only from its own. If ajmx can read both
+  namespaces in `/proc`, it refuses such a JVM with `ATTACH_NOT_SUPPORTED` before attaching. Run
+  ajmx inside the JVM's container, or use `--url`.
 
 See [Local JVMs](./connect/local.md).
 

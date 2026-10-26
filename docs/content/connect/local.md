@@ -44,12 +44,15 @@ ajmx ps | jq '.result.items[] | select(.displayName == "OrderService")'
 
 ## How it connects
 
-1. ajmx checks that the process runs as the same user, or that ajmx runs as root on Linux.
+1. ajmx checks that the process runs as the same user, or that ajmx runs as root on Linux. On
+   Linux, it also checks that the process runs in the same network namespace, if it can read both
+   in `/proc`.
 2. It reads the JVM's performance data file, `hsperfdata_<user>/<pid>` under the temporary
    directory. If the JVM's local JMX agent is already running, ajmx connects to it.
 3. Otherwise ajmx attaches with the Attach API, starts the local JMX agent, and connects to it.
 
-The local JMX agent accepts connections only from the same machine. It stays until the JVM
+The local JMX agent accepts connections only from its own network namespace. For a JVM in a
+container with its own network, that means only from inside the container. It stays until the JVM
 restarts, so later commands connect directly.
 
 ## Requirements
@@ -59,6 +62,10 @@ restarts, so later commands connect directly.
   default, connects to another user's JVM only if `ps` lists it.
 - The attach mechanism must be enabled. A JVM started with `-XX:+DisableAttachMechanism` fails
   with `ATTACH_NOT_SUPPORTED`.
+- On Linux, the same network namespace. A container started with `--network host` shares the
+  host's. If ajmx can read both namespaces in `/proc`, it refuses a JVM in another one with
+  `ATTACH_NOT_SUPPORTED` before it attaches. Run ajmx inside the JVM's container, such as with
+  `docker exec`, or [use `--url`](./remote.md).
 
 Attaching sends `SIGQUIT` to the process, which kills many processes that are not JVMs. So ajmx
 refuses a process that has no performance data file and does not run the `java` launcher, with

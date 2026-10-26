@@ -143,6 +143,24 @@ a `javacore.*.txt` file into its working directory for each `SIGQUIT` from ajmx,
 leave several. Delete them, and [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and
 use `--url`.
 
+A JVM in another network namespace fails right away, before ajmx attaches:
+
+```json
+{
+  "code": "ATTACH_NOT_SUPPORTED",
+  "message": "The JVM runs in another network namespace, such as a container, where ajmx cannot reach its local JMX agent",
+  "retryable": false,
+  "details": {
+    "pid": 12345
+  }
+}
+```
+
+ajmx and the JVM run in different network namespaces, as when the JVM runs in a container with its
+own network and ajmx runs outside it or in another container. The JVM's local JMX agent accepts
+connections only from its own network namespace. Run ajmx inside the JVM's container, such as with
+`docker exec`, or [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and use `--url`.
+
 ## --pid fails with ATTACH_PERMISSION_DENIED
 
 ::: terminal

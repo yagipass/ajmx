@@ -8,6 +8,7 @@ import io.github.yagipass.ajmx.concurrent.Timeouts;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +43,7 @@ final class LocalConnector {
   private static final long HANDSHAKE_END_TIMEOUT_MS = 1000;
   private static final long HANDSHAKE_INTERRUPT_STEP_MS = 10;
   private static final String DELETED = " (deleted)";
+  private static final Path PROC = Path.of("/proc");
 
   private LocalConnector() {}
 
@@ -99,6 +101,16 @@ final class LocalConnector {
     return e instanceof AttachOperationFailedException ? unavailable.disableRetry() : unavailable;
   }
 
+  static void requireSameNetworkNamespace(Path proc, long pid) {
+    Optional<Path> own = networkNamespace(proc.resolve("self"));
+    Optional<Path> target = networkNamespace(proc.resolve(Long.toString(pid)));
+    if (own.isPresent() && target.isPresent() && !own.equals(target)) {
+      throw new AjmxException(
+          ErrorCode.ATTACH_NOT_SUPPORTED,
+          "The JVM runs in another network namespace, such as a container, where ajmx cannot reach its local JMX agent");
+    }
+  }
+
   static AjmxException classifyAttachFailure(long timeoutMs, Exception e, boolean hasPerfData) {
     String m = String.valueOf(e.getMessage()).toLowerCase(Locale.ROOT);
     if (m.contains("doesn't respond within")) {
@@ -132,6 +144,7 @@ final class LocalConnector {
                 () -> new AjmxException(ErrorCode.PROCESS_NOT_FOUND, "Process was not found"));
     ProcessHandle.Info info = process.info();
     requireSameUser(info);
+    requireSameNetworkNamespace(PROC, pid);
     Optional<PerfData> perf = PerfDataFiles.load(process);
     if (perf.isEmpty() && !info.command().map(LocalConnector::isJavaLauncher).orElse(false)) {
       throw new AjmxException(
@@ -156,6 +169,14 @@ final class LocalConnector {
       throw new AjmxException(
               ErrorCode.ATTACH_PERMISSION_DENIED, "The process belongs to another user")
           .with("processUser", owner);
+    }
+  }
+
+  private static Optional<Path> networkNamespace(Path process) {
+    try {
+      return Optional.of(Files.readSymbolicLink(process.resolve("ns").resolve("net")));
+    } catch (IOException | UnsupportedOperationException e) {
+      return Optional.empty();
     }
   }
 

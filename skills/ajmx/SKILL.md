@@ -70,6 +70,7 @@ Credentials for `--url` come from `JMX_USERNAME` and `JMX_PASSWORD`, or from std
 - `UNSUPPORTED_TYPE` means ajmx cannot deserialize the value's class, or, with `maxDepth` in `details`, the value is nested too deeply or holds too long an array. Retrying does not help; read a related attribute or operation instead.
 - `TLS_FAILED` means the JVM does not use TLS for `--tls`, or its certificate is not trusted or names another host. Retrying does not help; tell the user `details.reason`.
 - `ATTACH_PERMISSION_DENIED` means the JVM runs as another user. Tell the user instead of reaching for `sudo`.
+- `ATTACH_NOT_SUPPORTED` with "another network namespace" in its message means the JVM and ajmx run in different network namespaces, usually because the JVM runs in a container with its own network. Retrying does not help. Run ajmx inside the JVM's container, or use `--url` if the JVM has remote JMX turned on; otherwise tell the user.
 
 ## batch
 
