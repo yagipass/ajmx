@@ -251,7 +251,7 @@ target JVM to the host name in the URL. For a container, see
 | `reason` | Fix |
 |---|---|
 | Starts with `(certificate_unknown) PKIX path building failed` | ajmx does not trust the certificate. Pass it, or the CA that signed it, with `--tls-ca` |
-| Starts with `(certificate_unknown) No subject alternative names matching` | The certificate does not name the host. Its subject alternative names must include the host in the URL and `java.rmi.server.hostname` |
+| Starts with `(certificate_unknown) No subject alternative` or `(certificate_unknown) No name matching` | The certificate does not name the host. Its subject alternative names must include the host in the URL and `java.rmi.server.hostname` |
 | `Remote host terminated the handshake` | The registry does not use TLS. Start the JVM with `com.sun.management.jmxremote.registry.ssl=true` |
 | Starts with `Expecting a` | The connection does not use TLS. Start the JVM with `com.sun.management.jmxremote.ssl=true` |
 
