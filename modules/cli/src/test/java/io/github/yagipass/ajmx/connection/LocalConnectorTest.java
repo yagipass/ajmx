@@ -1,5 +1,6 @@
 package io.github.yagipass.ajmx.connection;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,15 +12,49 @@ import com.sun.tools.attach.AttachOperationFailedException;
 import io.github.yagipass.ajmx.error.AjmxException;
 import io.github.yagipass.ajmx.error.ErrorCode;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 final class LocalConnectorTest {
 
   private static final String NO_RESPONSE =
       "Unable to open socket file /tmp/.java_pid1: target process 1 doesn't respond within 4500ms or HotSpot VM not loaded";
+
+  @TempDir Path proc;
+
+  @Test
+  void jvmInAnotherNetworkNamespaceIsRefusedForGoodBecauseItsLocalAgentCannotBeReachedFromHere()
+      throws IOException {
+    networkNamespace("self", "net:[4026531833]");
+    networkNamespace("4242", "net:[4026532699]");
+    AjmxException e =
+        assertThrows(
+            AjmxException.class, () -> LocalConnector.requireSameNetworkNamespace(proc, 4242));
+    assertEquals(ErrorCode.ATTACH_NOT_SUPPORTED, e.code());
+    assertFalse(e.retryable());
+  }
+
+  @Test
+  void jvmInTheSameNetworkNamespaceIsAttachedSoAjmxInsideItsContainerStillConnects()
+      throws IOException {
+    networkNamespace("self", "net:[4026532699]");
+    networkNamespace("4242", "net:[4026532699]");
+    assertDoesNotThrow(() -> LocalConnector.requireSameNetworkNamespace(proc, 4242));
+  }
+
+  @Test
+  void namespaceThatCannotBeReadDoesNotStopTheAttachBecauseOnlyAKnownMismatchIsSureToFail()
+      throws IOException {
+    networkNamespace("self", "net:[4026531833]");
+    assertDoesNotThrow(() -> LocalConnector.requireSameNetworkNamespace(proc, 4242));
+    assertDoesNotThrow(
+        () -> LocalConnector.requireSameNetworkNamespace(proc.resolve("missing"), 4242));
+  }
 
   @Test
   void linuxOtherUserIsPermissionDenied() {
@@ -151,5 +186,10 @@ final class LocalConnectorTest {
 
   private static ErrorCode classify(Exception e) {
     return LocalConnector.classifyAttachFailure(5000, e, true).code();
+  }
+
+  private void networkNamespace(String process, String namespace) throws IOException {
+    Path ns = Files.createDirectories(proc.resolve(process).resolve("ns"));
+    Files.createSymbolicLink(ns.resolve("net"), Path.of(namespace));
   }
 }
