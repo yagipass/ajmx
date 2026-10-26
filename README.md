@@ -157,7 +157,7 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 - `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. Root without `CAP_SYS_PTRACE`, as in a Docker container by default, reaches another user's JVM only if `ps` lists it. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
 - `--tls` needs TLS for both the RMI registry and the connection, takes PEM certificates rather than a key store, and cannot present a client certificate.
-- `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or running as a UID with no user name, such as one missing from `/etc/passwd`. `--pid` still connects to them if they run the `java` launcher.
+- `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or running as a UID with no user name, such as one missing from `/etc/passwd`. `--pid` still connects to them if they run the `java` launcher, except as root without `CAP_SYS_PTRACE` for another user's JVM.
 
 ## Development
 
