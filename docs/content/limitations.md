@@ -1,5 +1,5 @@
 ---
-description: Known limitations of ajmx, such as classes that exist only in the target application, the types write and invoke accept, and the JVMs --pid can attach to.
+description: Known limitations of ajmx, such as classes that exist only in the target application, how deep and long a value it reads, the types write and invoke accept, and the JVMs --pid can attach to.
 ---
 
 # Limitations
@@ -13,6 +13,16 @@ as do JDK classes the native binary leaves out, such as those of `java.desktop`.
 MXBeans and most JDK MBeans use only open types, such as CompositeData, so ajmx reads them. For an
 MBean that returns its own classes, read a related attribute or operation that returns open types
 instead.
+
+## Values nested too deeply or holding long arrays
+
+ajmx does not read a value nested more than 500 levels deep, or holding an array of more than
+16,777,216 elements. Some lists, sets and maps of about that size, such as `ArrayList`, `HashMap`
+and `TabularData`, are refused too. `LinkedList`, `TreeMap` and `ConcurrentHashMap` are not. It
+fails with `UNSUPPORTED_TYPE`, and `details` gives the limits as `maxDepth` and `maxArrayLength`.
+The limits keep a JVM from making ajmx run out of stack with a deep value, or out of memory with an
+array it declares but does not send. A JVM that does send more data than ajmx has memory for can
+still make it run out of memory.
 
 ## Enums of Standard MBeans
 

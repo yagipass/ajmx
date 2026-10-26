@@ -31,7 +31,7 @@ for shell scripts.
 | `OPERATION_NOT_FOUND` | The MBean has no operation of this name, or none that takes these arguments |
 | `AMBIGUOUS_OPERATION` | Several overloads fit the arguments. `details.candidates` lists them |
 | `REMOTE_EXCEPTION` | The MBean threw an exception |
-| `UNSUPPORTED_TYPE` | ajmx cannot read or send a value of this class. See [Limitations](./limitations.md) |
+| `UNSUPPORTED_TYPE` | ajmx cannot read or send a value of this class, or the value is nested too deeply or holds too long an array. See [Limitations](./limitations.md) |
 | `TIMEOUT` | An operation took longer than `--timeout` |
 | `SKIPPED` | A `batch` request did not run, because an earlier `write` or `invoke` may still be running |
 | `OUTPUT_TRUNCATED` | The result does not fit `--max-bytes` |
