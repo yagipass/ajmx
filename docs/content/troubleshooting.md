@@ -118,6 +118,25 @@ A JVM that turns attach off fails with another message:
 The JVM runs with `-XX:+DisableAttachMechanism`. Remove the flag, or
 [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and use `--url`.
 
+A process that does not answer the attach fails after about `--timeout`:
+
+```json
+{
+  "code": "ATTACH_NOT_SUPPORTED",
+  "message": "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)",
+  "retryable": false,
+  "details": {
+    "pid": 12345,
+    "timeoutMs": 10000
+  }
+}
+```
+
+An OpenJ9 JVM, such as IBM Semeru, fails this way. With its default dump settings, it also writes
+a `javacore.*.txt` file into its working directory for each `SIGQUIT` from ajmx, so a try can
+leave several. Delete them, and [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and
+use `--url`.
+
 ## --pid fails with ATTACH_PERMISSION_DENIED
 
 ::: terminal

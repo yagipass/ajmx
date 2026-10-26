@@ -45,6 +45,10 @@ A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64":
   are tested.
 - It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because
   attaching sends `SIGQUIT`, which kills many processes that are not JVMs.
+- `--pid` does not work with OpenJ9 JVMs, such as IBM Semeru. ajmx does not refuse them up front.
+  It fails with `ATTACH_NOT_SUPPORTED` after about `--timeout`. With OpenJ9's default dump
+  settings, the JVM writes a `javacore` file into its working directory for each `SIGQUIT`, so a
+  try can leave several. `--url` works.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
 
 See [Local JVMs](./connect/local.md).
