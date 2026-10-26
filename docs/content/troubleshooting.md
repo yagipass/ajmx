@@ -156,10 +156,10 @@ A JVM in another network namespace fails right away, before ajmx attaches:
 }
 ```
 
-The JVM runs in a container, and ajmx runs outside it or in another container. The JVM's local JMX
-agent accepts connections only from inside its own container. Run ajmx inside that container, such
-as with `docker exec`, or [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and use
-`--url`.
+ajmx and the JVM run in different network namespaces, as when the JVM runs in a container with its
+own network and ajmx runs outside it or in another container. The JVM's local JMX agent accepts
+connections only from its own network namespace. Run ajmx inside the JVM's container, such as with
+`docker exec`, or [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and use `--url`.
 
 ## --pid fails with ATTACH_PERMISSION_DENIED
 
