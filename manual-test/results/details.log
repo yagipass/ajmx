@@ -1,0 +1,940 @@
+### A-01 [PASS] exit=0 version prints the release version
+$ ./ajmx version
+{"schemaVersion":1,"ok":true,"result":{"version":"0.2.0"},"durationMs":0}
+
+### A-02 [PASS] exit=0 --version prints the same
+$ ./ajmx --version
+{"schemaVersion":1,"ok":true,"result":{"version":"0.2.0"},"durationMs":0}
+
+### A-03 [PASS] exit=0 help is JSON and lists --tls and --tls-ca
+$ ./ajmx help
+{"schemaVersion":1,"ok":true,"result":{"usage":"ajmx [--pid <pid> | --url <jmx-service-url>] [options] <command> [arguments]","commands":{"ps":"List local JVMs (pid, mainClass, displayName)","ping":"Check the JMX connection","search [pattern]":"List MBean ObjectNames matching a pattern (default *:*)","describe <mbean>":"Show attributes and operations of an MBean","read <mbean> <attribute>...":"Read one or more attributes","write <mbean> <attribute>=<value>":"Write an attribute","invoke <mbean> <operation>":"Invoke an operation","batch":"Run requests from stdin, one {\"id\", \"op\", ...} per line, over one connection","help":"Print this usage","version":"Print the ajmx version"},"options":{"--pid <pid>":"Local JVM (Attach API)","--url <jmx-service-url>":"Remote JVM (JSR-160); credentials from JMX_USERNAME/JMX_PASSWORD","--credentials-stdin":"Read {\"username\", \"password\"} from stdin (with --url)","--tls":"Require TLS for the registry and the connection (with --url)","--tls-ca <pem-file>":"Trust these certificates instead of the built-in CAs (with --tls)","--timeout <duration>":"Attach, connect and per-operation timeout (default 10s)","--limit <n>":"Max list items and collection elements (default 100)","--max-bytes <n>":"Max stdout bytes (default 262144)","--args <json-array>":"invoke arguments","--signature <type,...>":"invoke parameter types, to pick an overload","--debug":"Print stack traces to stderr","--help":"Print this usage","--version":"Print the ajmx version"}},"durationMs":0}
+
+### A-04 [PASS] exit=0 --help prints the usage like help
+$ ./ajmx --help
+{"schemaVersion":1,"ok":true,"result":{"usage":"ajmx [--pid <pid> | --url <jmx-service-url>] [options] <command> [arguments]","commands":{"ps":"List local JVMs (pid, mainClass, displayName)","ping":"Check the JMX connection","search [pattern]":"List MBean ObjectNames matching a pattern (default *:*)","describe <mbean>":"Show attributes and operations of an MBean","read <mbean> <attribute>...":"Read one or more attributes","write <mbean> <attribute>=<value>":"Write an attribute","invoke <mbean> <operation>":"Invoke an operation","batch":"Run requests from stdin, one {\"id\", \"op\", ...} per line, over one connection","help":"Print this usage","version":"Print the ajmx version"},"options":{"--pid <pid>":"Local JVM (Attach API)","--url <jmx-service-url>":"Remote JVM (JSR-160); credentials from JMX_USERNAME/JMX_PASSWORD","--credentials-stdin":"Read {\"username\", \"password\"} from stdin (with --url)","--tls":"Require TLS for the registry and the connection (with --url)","--tls-ca <pem-file>":"Trust these certificates instead of the built-in CAs (with --tls)","--timeout <duration>":"Attach, connect and per-operation timeout (default 10s)","--limit <n>":"Max list items and collection elements (default 100)","--max-bytes <n>":"Max stdout bytes (default 262144)","--args <json-array>":"invoke arguments","--signature <type,...>":"invoke parameter types, to pick an overload","--debug":"Print stack traces to stderr","--help":"Print this usage","--version":"Print the ajmx version"}},"durationMs":0}
+
+### A-05 [INFO] exit=0 dynamic libraries
+$ ldd ./ajmx
+	linux-vdso.so.1 (0x00007f2e254de000)
+	libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f2e254af000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f2e25200000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f2e254e0000)
+
+### A-06 [INFO] exit=0 newest glibc symbol version required
+$ sh -c objdump -T './ajmx' | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+GLIBC_2.34
+
+### A-07[ubuntu:20.04] [FAIL] exit=1 runs version and ps on ubuntu:20.04
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx ubuntu:20.04 ps
+
+--- stderr
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### A-07[ubuntu:24.04] [PASS] exit=0 runs version and ps on ubuntu:24.04
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx ubuntu:24.04 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[],"returned":0,"truncated":false},"durationMs":0}
+
+### A-07[debian:11] [FAIL] exit=1 runs version and ps on debian:11
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx debian:11 ps
+
+--- stderr
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### A-07[rockylinux:8] [FAIL] exit=1 runs version and ps on rockylinux:8
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx rockylinux:8 ps
+
+--- stderr
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### A-07[amazonlinux:2] [FAIL] exit=1 runs version and ps on amazonlinux:2
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx amazonlinux:2 ps
+
+--- stderr
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### A-07[gcr.io/distroless/base-debian12] [FAIL] exit=127 runs version and ps on gcr.io/distroless/base-debian12
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx gcr.io/distroless/base-debian12 ps
+
+--- stderr
+/ajmx/ajmx: error while loading shared libraries: libz.so.1: cannot open shared object file: No such file or directory
+
+### A-08[alpine] [INFO] exit=255 runs on musl (alpine:3.20)
+$ docker run --rm -v ./ajmx:/ajmx/ajmx:ro alpine:3.20 /ajmx/ajmx version
+
+--- stderr
+exec /ajmx/ajmx: no such file or directory
+
+### B-01[jdk8] [PASS] exit=0 ps lists the JVM (PID 1) with mainClass and displayName
+$ ax jdk8 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":2}
+
+### B-02[jdk8] [PASS] exit=0 ping attaches and starts the local agent
+$ ax jdk8 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":178}
+
+### B-03[jdk8] [PASS] exit=0 read Runtime VmVendor SpecVersion
+$ ax jdk8 --pid 1 read java.lang:type=Runtime VmVendor SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Temurin","SpecVersion":"1.8"}},"durationMs":17}
+
+### B-04[jdk8] [PASS] exit=0 second ping reuses the running agent
+$ ax jdk8 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":13}
+
+### B-05[jdk8] [PASS] exit=0 batch of read, search and invoke
+$ axi jdk8 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"heap","ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":253231104,"init":264241152,"max":3750756352,"used":17176408}}}},{"id":"gc","ok":true,"result":{"items":["java.lang:type=GarbageCollector,name=PS MarkSweep","java.lang:type=GarbageCollector,name=PS Scavenge"],"returned":2,"truncated":false}},{"id":"dl","ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads","signature":[],"returnValue":null}}]},"durationMs":41}
+
+### B-06[jdk8] [PASS] exit=5 a value 501 levels deep fails with UNSUPPORTED_TYPE
+$ ax jdk8 --pid 1 invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":21}
+
+### B-07[jdk8] [PASS] exit=0 Standard MBean write and read back
+$ ax jdk8 --pid 1 write ajmxtest:type=Cache MaxConnections=42
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":42},"durationMs":20}
+
+### B-01[jdk11] [PASS] exit=0 ps lists the JVM (PID 1) with mainClass and displayName
+$ ax jdk11 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":2}
+
+### B-02[jdk11] [PASS] exit=0 ping attaches and starts the local agent
+$ ax jdk11 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":237}
+
+### B-03[jdk11] [PASS] exit=0 read Runtime VmVendor SpecVersion
+$ ax jdk11 --pid 1 read java.lang:type=Runtime VmVendor SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Eclipse Adoptium","SpecVersion":"11"}},"durationMs":21}
+
+### B-04[jdk11] [PASS] exit=0 second ping reuses the running agent
+$ ax jdk11 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":14}
+
+### B-05[jdk11] [PASS] exit=0 batch of read, search and invoke
+$ axi jdk11 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"heap","ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":264241152,"init":264241152,"max":4219469824,"used":10485760}}}},{"id":"gc","ok":true,"result":{"items":["java.lang:name=G1 Old Generation,type=GarbageCollector","java.lang:name=G1 Young Generation,type=GarbageCollector"],"returned":2,"truncated":false}},{"id":"dl","ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads","signature":[],"returnValue":null}}]},"durationMs":40}
+
+### B-06[jdk11] [PASS] exit=5 a value 501 levels deep fails with UNSUPPORTED_TYPE
+$ ax jdk11 --pid 1 invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":21}
+
+### B-07[jdk11] [PASS] exit=0 Standard MBean write and read back
+$ ax jdk11 --pid 1 write ajmxtest:type=Cache MaxConnections=42
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":42},"durationMs":15}
+
+### B-01[jdk17] [PASS] exit=0 ps lists the JVM (PID 1) with mainClass and displayName
+$ ax jdk17 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":1}
+
+### B-02[jdk17] [PASS] exit=0 ping attaches and starts the local agent
+$ ax jdk17 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":195}
+
+### B-03[jdk17] [PASS] exit=0 read Runtime VmVendor SpecVersion
+$ ax jdk17 --pid 1 read java.lang:type=Runtime VmVendor SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Eclipse Adoptium","SpecVersion":"17"}},"durationMs":17}
+
+### B-04[jdk17] [PASS] exit=0 second ping reuses the running agent
+$ ax jdk17 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":12}
+
+### B-05[jdk17] [PASS] exit=0 batch of read, search and invoke
+$ axi jdk17 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"heap","ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":268435456,"init":264241152,"max":4219469824,"used":9359360}}}},{"id":"gc","ok":true,"result":{"items":["java.lang:name=G1 Old Generation,type=GarbageCollector","java.lang:name=G1 Young Generation,type=GarbageCollector"],"returned":2,"truncated":false}},{"id":"dl","ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads","signature":[],"returnValue":null}}]},"durationMs":37}
+
+### B-06[jdk17] [PASS] exit=5 a value 501 levels deep fails with UNSUPPORTED_TYPE
+$ ax jdk17 --pid 1 invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":22}
+
+### B-07[jdk17] [PASS] exit=0 Standard MBean write and read back
+$ ax jdk17 --pid 1 write ajmxtest:type=Cache MaxConnections=42
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":42},"durationMs":15}
+
+### B-01[jdk21] [PASS] exit=0 ps lists the JVM (PID 1) with mainClass and displayName
+$ ax jdk21 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":2}
+
+### B-02[jdk21] [PASS] exit=0 ping attaches and starts the local agent
+$ ax jdk21 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":217}
+
+### B-03[jdk21] [PASS] exit=0 read Runtime VmVendor SpecVersion
+$ ax jdk21 --pid 1 read java.lang:type=Runtime VmVendor SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Eclipse Adoptium","SpecVersion":"21"}},"durationMs":27}
+
+### B-04[jdk21] [PASS] exit=0 second ping reuses the running agent
+$ ax jdk21 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":11}
+
+### B-05[jdk21] [PASS] exit=0 batch of read, search and invoke
+$ axi jdk21 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"heap","ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":266338304,"init":264241152,"max":4219469824,"used":9488000}}}},{"id":"gc","ok":true,"result":{"items":["java.lang:name=G1 Concurrent GC,type=GarbageCollector","java.lang:name=G1 Old Generation,type=GarbageCollector","java.lang:name=G1 Young Generation,type=GarbageCollector"],"returned":3,"truncated":false}},{"id":"dl","ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads","signature":[],"returnValue":null}}]},"durationMs":48}
+
+### B-06[jdk21] [PASS] exit=5 a value 501 levels deep fails with UNSUPPORTED_TYPE
+$ ax jdk21 --pid 1 invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":25}
+
+### B-07[jdk21] [PASS] exit=0 Standard MBean write and read back
+$ ax jdk21 --pid 1 write ajmxtest:type=Cache MaxConnections=42
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":42},"durationMs":18}
+
+### B-01[jdk25] [PASS] exit=0 ps lists the JVM (PID 1) with mainClass and displayName
+$ ax jdk25 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":2}
+
+### B-02[jdk25] [PASS] exit=0 ping attaches and starts the local agent
+$ ax jdk25 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":202}
+
+### B-03[jdk25] [PASS] exit=0 read Runtime VmVendor SpecVersion
+$ ax jdk25 --pid 1 read java.lang:type=Runtime VmVendor SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Eclipse Adoptium","SpecVersion":"25"}},"durationMs":24}
+
+### B-04[jdk25] [PASS] exit=0 second ping reuses the running agent
+$ ax jdk25 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":13}
+
+### B-05[jdk25] [PASS] exit=0 batch of read, search and invoke
+$ axi jdk25 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"heap","ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"HeapMemoryUsage":{"committed":266338304,"init":264241152,"max":4219469824,"used":17971952}}}},{"id":"gc","ok":true,"result":{"items":["java.lang:name=G1 Concurrent GC,type=GarbageCollector","java.lang:name=G1 Old Generation,type=GarbageCollector","java.lang:name=G1 Young Generation,type=GarbageCollector"],"returned":3,"truncated":false}},{"id":"dl","ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads","signature":[],"returnValue":null}}]},"durationMs":45}
+
+### B-06[jdk25] [PASS] exit=5 a value 501 levels deep fails with UNSUPPORTED_TYPE
+$ ax jdk25 --pid 1 invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":29}
+
+### B-07[jdk25] [PASS] exit=0 Standard MBean write and read back
+$ ax jdk25 --pid 1 write ajmxtest:type=Cache MaxConnections=42
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":42},"durationMs":20}
+
+### B-10[corretto21] [PASS] exit=0 Amazon Corretto 21: ping and read VmVendor
+$ ax corretto --pid 1 read java.lang:type=Runtime VmVendor
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Amazon.com Inc."}},"durationMs":220}
+
+### B-11[zulu17] [PASS] exit=0 Azul Zulu 17: read VmVendor
+$ ax zulu --pid 1 read java.lang:type=Runtime VmVendor
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmVendor":"Azul Systems, Inc."}},"durationMs":205}
+
+### B-12[jre21] [PASS] exit=0 Temurin 21 JRE image: ping
+$ ax jre --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":238}
+
+### B-13[openj9] [PASS] exit=3 OpenJ9 is refused rather than attached
+$ ax openj9 --pid 1 --timeout 5s ping
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTACH_NOT_SUPPORTED","message":"The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)","retryable":false,"details":{"pid":1,"timeoutMs":5000}},"durationMs":4506}
+
+### B-13b[openj9] [PASS] exit=0 OpenJ9 JVM is still running after the attempt
+$ alive openj9 1
+
+
+### B-13c[openj9] [INFO] exit=0 files OpenJ9 wrote in reply to SIGQUIT
+$ docker exec ajmx-mt-openj9 sh -c ls / /tmp | grep -i -E "javacore|core" || true
+javacore.20261026.042918.1.0001.txt
+javacore.20261026.042921.1.0002.txt
+javacore.20261026.042922.1.0003.txt
+javacore.20261026.042922.1.0004.txt
+
+### B-14 [PASS] exit=0 -XX:-UsePerfData: ps does not list it
+$ ax noperf ps
+{"schemaVersion":1,"ok":true,"result":{"items":[],"returned":0,"truncated":false},"durationMs":0}
+
+### B-14b [PASS] exit=0 -XX:-UsePerfData: --pid still connects
+$ ax noperf --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":219}
+
+### B-15 [PASS] exit=3 -XX:+DisableAttachMechanism fails with ATTACH_NOT_SUPPORTED
+$ ax noattach --pid 1 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTACH_NOT_SUPPORTED","message":"The JVM disables the attach mechanism","retryable":false,"details":{"pid":1}},"durationMs":2}
+
+### B-16 [PASS] exit=3 a process that is not a JVM is refused
+$ ax jdk21 --pid 122 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTACH_NOT_SUPPORTED","message":"The process is not recognizable as a HotSpot JVM (no perf data and not the java launcher)","retryable":false,"details":{"pid":122}},"durationMs":1}
+
+### B-16b [PASS] exit=0 the process that is not a JVM is still alive
+$ alive jdk21 122
+
+
+### B-17 [PASS] exit=3 a PID that does not exist
+$ ax jdk21 --pid 999999 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"PROCESS_NOT_FOUND","message":"Process was not found","retryable":false,"details":{"pid":999999}},"durationMs":0}
+
+### B-18 [PASS] exit=0 root connects to a JVM of user 1000
+$ axo user -u 0 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":208}
+
+### B-18b [PASS] exit=0 user 1000 connects to its own JVM
+$ axo user -u 1000:1000 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":12}
+
+### B-18c [PASS] exit=3 another user is refused with processUser
+$ axo user -u 1001:1001 --pid 1 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTACH_PERMISSION_DENIED","message":"The process belongs to another user","retryable":false,"details":{"pid":1,"processUser":"ubuntu"}},"durationMs":0}
+
+### B-18d [PASS] exit=0 user 1000 lists its JVM with ps
+$ axo user -u 1000:1000 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"ajmxtest.TestTarget","displayName":"TestTarget"}],"returned":1,"truncated":false},"durationMs":1}
+
+### B-19 [INFO] exit=0 a JVM of a UID without a passwd entry (OpenShift style): ps as that UID
+$ axo anyuid -u 12345:0 ps
+{"schemaVersion":1,"ok":true,"result":{"items":[],"returned":0,"truncated":false},"durationMs":0}
+
+### B-19b [PASS] exit=0 a JVM of a UID without a passwd entry: --pid as that UID
+$ axo anyuid -u 12345:0 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":221}
+
+### B-19c [FAIL] exit=3 a JVM of a UID without a passwd entry: --pid as root
+$ axo anyuid -u 0 --pid 1 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTACH_NOT_SUPPORTED","message":"The process is not recognizable as a HotSpot JVM (no perf data and not the java launcher)","retryable":false,"details":{"pid":1}},"durationMs":1}
+
+### B-20 [PASS] exit=3 a jlink runtime without jdk.management.agent
+$ ax jlink --pid 1 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"LOCAL_JMX_UNAVAILABLE","message":"Unable to start the local JMX agent in the JVM","retryable":false,"details":{"pid":1,"reason":"java.lang.module.FindException: Module jdk.management.agent not found"}},"durationMs":115}
+
+### B-21 [PASS] exit=0 a JVM that is not PID 1 (pid 7)
+$ ax child --pid 7 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":238}
+
+### B-22 [INFO] exit=3 host ajmx --pid on a JVM inside a container (other PID namespace)
+$ ./ajmx --pid 1322 --timeout 5s ping
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_FAILED","message":"Connection to the JVM failed","retryable":true,"details":{"pid":1322}},"durationMs":19}
+
+### B-22b [PASS] exit=0 the container JVM is still running after B-22
+$ ax jdk21 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":13}
+
+### B-22c [PASS] exit=0 host ps does not list JVMs inside containers
+$ ./ajmx ps
+{"schemaVersion":1,"ok":true,"result":{"items":[],"returned":0,"truncated":false},"durationMs":0}
+
+### B-23 [PASS] exit=0 Tomcat: ps shows Bootstrap
+$ ax tomcat ps
+{"schemaVersion":1,"ok":true,"result":{"items":[{"pid":1,"mainClass":"org.apache.catalina.startup.Bootstrap","displayName":"Bootstrap"}],"returned":1,"truncated":false},"durationMs":2}
+
+### B-23b [PASS] exit=0 Tomcat: search the thread pools
+$ ax tomcat --pid 1 search Catalina:type=ThreadPool,*
+{"schemaVersion":1,"ok":true,"result":{"items":["Catalina:type=ThreadPool,name=\"http-nio-8080\""],"returned":1,"truncated":false},"durationMs":191}
+
+### B-23c [PASS] exit=0 Tomcat: read maxThreads
+$ ax tomcat --pid 1 read Catalina:type=ThreadPool,name="http-nio-8080" maxThreads currentThreadCount
+{"schemaVersion":1,"ok":true,"result":{"mbean":"Catalina:type=ThreadPool,name=\"http-nio-8080\"","attributes":{"maxThreads":200,"currentThreadCount":10}},"durationMs":23}
+
+### B-23d [PASS] exit=0 Tomcat: write maxThreads=150 and read it back
+$ sh -c docker exec ajmx-mt-tomcat /ajmx/ajmx --pid 1 write 'Catalina:type=ThreadPool,name="http-nio-8080"' maxThreads=150 >/dev/null && docker exec ajmx-mt-tomcat /ajmx/ajmx --pid 1 read 'Catalina:type=ThreadPool,name="http-nio-8080"' maxThreads
+{"schemaVersion":1,"ok":true,"result":{"mbean":"Catalina:type=ThreadPool,name=\"http-nio-8080\"","attributes":{"maxThreads":150}},"durationMs":18}
+
+### B-23e [PASS] exit=0 Tomcat: describe Catalina:type=Server
+$ ax tomcat --pid 1 describe Catalina:type=Server
+{"schemaVersion":1,"ok":true,"result":{"mbean":"Catalina:type=Server","className":"org.apache.tomcat.util.modeler.BaseModelMBean","attributes":[{"name":"address","type":"java.lang.String","readable":true,"writable":true},{"name":"managedResource","type":"java.lang.Object","readable":true,"writable":true},{"name":"modelerType","type":"java.lang.String","readable":true,"writable":false},{"name":"port","type":"int","readable":true,"writable":true},{"name":"portOffset","type":"int","readable":true,"writable":true},{"name":"portWithOffset","type":"int","readable":true,"writable":false},{"name":"serverBuilt","type":"java.lang.String","readable":true,"writable":false},{"name":"serverInfo","type":"java.lang.String","readable":true,"writable":false},{"name":"serverNumber","type":"java.lang.String","readable":true,"writable":false},{"name":"serviceNames","type":"[Ljavax.management.ObjectName;","readable":true,"writable":false},{"name":"shutdown","type":"java.lang.String","readable":true,"writable":true},{"name":"stateName","type":"java.lang.String","readable":true,"writable":false}],"operations":[{"name":"await","returnType":"void","signature":[]},{"name":"storeConfig","returnType":"void","signature":[]}]},"durationMs":16}
+
+### C-01 [PASS] exit=0 search ajmxtest:* is sorted
+$ a search ajmxtest:*
+{"schemaVersion":1,"ok":true,"result":{"items":["ajmxtest:type=ArrayEcho","ajmxtest:type=Cache","ajmxtest:type=Evolving","ajmxtest:type=Quirky","ajmxtest:type=Settings","ajmxtest:type=Sleepy"],"returned":6,"truncated":false},"durationMs":13}
+
+### C-02 [PASS] exit=0 a pattern without ,* matches only exact keys
+$ a search java.lang:type=GarbageCollector
+{"schemaVersion":1,"ok":true,"result":{"items":[],"returned":0,"truncated":false},"durationMs":12}
+
+### C-02b [PASS] exit=0 with ,* it matches
+$ a search java.lang:type=GarbageCollector,*
+{"schemaVersion":1,"ok":true,"result":{"items":["java.lang:name=G1 Concurrent GC,type=GarbageCollector","java.lang:name=G1 Old Generation,type=GarbageCollector","java.lang:name=G1 Young Generation,type=GarbageCollector"],"returned":3,"truncated":false},"durationMs":16}
+
+### C-03 [PASS] exit=0 describe lists attributes and operations
+$ a describe ajmxtest:type=Cache
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","className":"ajmxtest.TestTarget$Cache","attributes":[{"name":"ByteValue","type":"byte","readable":true,"writable":true},{"name":"ClearCount","type":"int","readable":true,"writable":false},{"name":"Custom","type":"ajmxtest.TestTarget$CustomValue","readable":true,"writable":false},{"name":"DeepValue","type":"java.lang.Object","readable":true,"writable":false},{"name":"DoubleValue","type":"double","readable":true,"writable":true},{"name":"Enabled","type":"boolean","readable":true,"writable":true},{"name":"FloatValue","type":"float","readable":true,"writable":true},{"name":"Grid","type":"[[Ljava.lang.Integer;","readable":true,"writable":false},{"name":"Handle","type":"java.lang.Object","readable":true,"writable":false},{"name":"HugeText","type":"java.lang.String","readable":true,"writable":false},{"name":"JdkLambda","type":"java.util.Comparator","readable":true,"writable":false},{"name":"LargeArray","type":"[I","readable":true,"writable":false},{"name":"LargeText","type":"java.lang.String","readable":true,"writable":false},{"name":"Letter","type":"char","readable":true,"writable":true},{"name":"LongValue","type":"long","readable":true,"writable":true},{"name":"Matrix","type":"[[F","readable":true,"writable":false},{"name":"MaxConnections","type":"int","readable":true,"writable":true},{"name":"Mode","type":"ajmxtest.TestTarget$Mode","readable":true,"writable":true},{"name":"Name","type":"java.lang.String","readable":true,"writable":true},{"name":"Numbers","type":"[I","readable":true,"writable":true},{"name":"QualifiedName","type":"javax.xml.namespace.QName","readable":true,"writable":false},{"name":"Ref","type":"javax.management.ObjectName","readable":true,"writable":true},{"name":"SelfReference","type":"java.lang.Object","readable":true,"writable":false},{"name":"Shared","type":"java.lang.Object","readable":true,"writable":false},{"name":"ShortValue","type":"short","readable":true,"writable":true},{"name":"Size","type":"int","readable":true,"writable":false},{"name":"SlowValue","type":"long","readable":true,"writable":false},{"name":"Tags","type":"[Ljava.lang.String;","readable":true,"writable":true},{"name":"TargetLambda","type":"java.lang.Object","readable":true,"writable":false},{"name":"Unsendable","type":"java.lang.Object","readable":true,"writable":false},{"name":"Unsendable2","type":"java.lang.Object","readable":true,"writable":false}],"operations":[{"name":"bytes","returnType":"[B","signature":[{"name":"p1","type":"int"}]},{"name":"clear","returnType":"void","signature":[]},{"name":"fail","returnType":"void","signature":[]},{"name":"failRuntime","returnType":"void","signature":[]},{"name":"failVerbose","returnType":"void","signature":[]},{"name":"greet","returnType":"java.lang.String","signature":[{"name":"p1","type":"java.lang.String"}]},{"name":"invalidate","returnType":"java.lang.String","signature":[{"name":"p1","type":"java.lang.Object"}]},{"name":"invalidate","returnT
+
+### C-04 [PASS] exit=0 read two attributes
+$ a read ajmxtest:type=Cache MaxConnections Name
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"MaxConnections":42,"Name":"cache"}},"durationMs":19}
+
+### C-05 [PASS] exit=7 read with one bad attribute is partial (exit 7)
+$ a read ajmxtest:type=Cache MaxConnections Nope
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"MaxConnections":42},"errors":{"Nope":{"code":"ATTRIBUTE_NOT_FOUND","message":"Attribute was not found","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"Nope"}}}},"durationMs":28}
+
+### C-06 [PASS] exit=4 read a single missing attribute
+$ a read java.lang:type=Memory heapMemoryUsage
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTRIBUTE_NOT_FOUND","message":"Attribute was not found","retryable":false,"details":{"mbean":"java.lang:type=Memory","attribute":"heapMemoryUsage"}},"durationMs":19}
+
+### C-07 [PASS] exit=4 read a missing MBean
+$ a read com.example:type=Nope X
+{"schemaVersion":1,"ok":false,"error":{"code":"MBEAN_NOT_FOUND","message":"MBean was not found","retryable":false,"details":{"mbean":"com.example:type=Nope"}},"durationMs":16}
+
+### C-08 [PASS] exit=4 an unquoted name with spaces is split by the shell
+$ a read java.lang:type=GarbageCollector,name=G1 Young Generation CollectionCount
+{"schemaVersion":1,"ok":false,"error":{"code":"MBEAN_NOT_FOUND","message":"MBean was not found","retryable":false,"details":{"mbean":"java.lang:type=GarbageCollector,name=G1"}},"durationMs":13}
+
+### C-09 [PASS] exit=0 write a number
+$ a write ajmxtest:type=Cache MaxConnections=20
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":20},"durationMs":19}
+
+### C-10 [PASS] exit=0 write a boolean
+$ a write ajmxtest:type=Cache Enabled=true
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"Enabled","value":true},"durationMs":16}
+
+### C-11 [PASS] exit=0 write an ObjectName
+$ a write ajmxtest:type=Cache Ref=java.lang:type=Memory
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"Ref","value":"java.lang:type=Memory"},"durationMs":34}
+
+### C-12 [PASS] exit=0 write a String[]
+$ a write ajmxtest:type=Cache Tags=["a","b"]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"Tags","value":["a","b"]},"durationMs":17}
+
+### C-13 [PASS] exit=0 write an MXBean enum
+$ a write ajmxtest:type=Settings Mode=SAFE
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Settings","attribute":"Mode","value":"SAFE"},"durationMs":23}
+
+### C-14 [PASS] exit=2 write a value of the wrong type
+$ a write ajmxtest:type=Cache MaxConnections=abc
+{"schemaVersion":1,"ok":false,"error":{"code":"TYPE_CONVERSION_FAILED","message":"Failed to convert input value","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","expected":"int","input":"abc"}},"durationMs":14}
+
+### C-15 [PASS] exit=2 write a read-only attribute
+$ a write ajmxtest:type=Cache Size=1
+{"schemaVersion":1,"ok":false,"error":{"code":"ATTRIBUTE_NOT_WRITABLE","message":"Attribute is not writable","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"Size"}},"durationMs":21}
+
+### C-16 [PASS] exit=0 invoke with a String argument
+$ a invoke ajmxtest:type=Cache greet --args ["x"]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"greet","signature":["java.lang.String"],"returnValue":"hello x"},"durationMs":15}
+
+### C-17 [PASS] exit=4 an argument that fits two overloads is ambiguous
+$ a invoke ajmxtest:type=Cache invalidate --args ["k"]
+{"schemaVersion":1,"ok":false,"error":{"code":"AMBIGUOUS_OPERATION","message":"Multiple matching operations","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"invalidate","candidates":[{"signature":["java.lang.Object"]},{"signature":["java.lang.String"]}]}},"durationMs":17}
+
+### C-17b [PASS] exit=0 --signature picks the overload
+$ a invoke ajmxtest:type=Cache invalidate --args ["k"] --signature java.lang.String
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"invalidate","signature":["java.lang.String"],"returnValue":"String:k"},"durationMs":19}
+
+### C-18 [PASS] exit=0 --signature with two types
+$ a invoke ajmxtest:type=Cache put --args ["k", 1] --signature java.lang.String,long
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"put","signature":["java.lang.String","long"],"returnValue":"long:k=1"},"durationMs":16}
+
+### C-19 [PASS] exit=0 invoke with an int[] argument
+$ a invoke ajmxtest:type=Cache sum --args [[1,2,3]]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"sum","signature":["[I"],"returnValue":6},"durationMs":15}
+
+### C-20 [PASS] exit=0 byte[] is base64
+$ a invoke ajmxtest:type=Cache bytes --args [5]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"bytes","signature":["int"],"returnValue":{"$base64":"AQIDBAU="}},"durationMs":15}
+
+### C-21 [PASS] exit=5 an exception of a JDK class is REMOTE_EXCEPTION
+$ a invoke ajmxtest:type=Cache failRuntime
+{"schemaVersion":1,"ok":false,"error":{"code":"REMOTE_EXCEPTION","message":"The MBean threw an exception","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"failRuntime","exceptionClass":"java.lang.IllegalStateException","exceptionMessage":"bad state"}},"durationMs":20}
+
+### C-21b [PASS] exit=5 an exception of an application class is UNSUPPORTED_TYPE
+$ a invoke ajmxtest:type=Cache fail
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value or exception has a type that is not available to ajmx","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"fail","class":"ajmxtest.TestTarget$CustomException","executed":"unknown"}},"durationMs":17}
+
+### C-22 [PASS] exit=5 a value of an application class
+$ a read ajmxtest:type=Cache Custom
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value or exception has a type that is not available to ajmx","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"Custom","class":"ajmxtest.TestTarget$CustomValue"}},"durationMs":14}
+
+### C-23 [PASS] exit=7 --limit cuts an array (exit 7)
+$ a read ajmxtest:type=Cache LargeArray --limit 5
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"LargeArray":{"$truncated":true,"$total":1000,"$items":[0,1,2,3,4]}},"truncated":true},"durationMs":14}
+
+### C-24 [PASS] exit=7 a 400 KB string does not fit the default --max-bytes
+$ a read ajmxtest:type=Cache LargeText
+{"schemaVersion":1,"ok":false,"error":{"code":"OUTPUT_TRUNCATED","message":"Output exceeds --max-bytes","retryable":false,"details":{"maxBytes":262144,"outputBytes":400117}},"durationMs":30}
+
+### C-25 [PASS] exit=7 search over --max-bytes drops trailing items
+$ a --max-bytes 512 search
+{"schemaVersion":1,"ok":true,"result":{"items":["JMImplementation:type=MBeanServerDelegate","ajmxtest:type=ArrayEcho","ajmxtest:type=Cache","ajmxtest:type=Evolving","ajmxtest:type=Quirky","ajmxtest:type=Settings","ajmxtest:type=Sleepy","com.sun.management:type=DiagnosticCommand","com.sun.management:type=HotSpotDiagnostic","java.lang:name=CodeCacheManager,type=MemoryManager","java.lang:name=CodeHeap 'non-nmethods',type=MemoryPool"],"returned":11,"truncated":true},"durationMs":11}
+
+### C-26 [PASS] exit=2 --max-bytes below 512
+$ a --max-bytes 100 search
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Value is too small","retryable":false,"details":{"option":"--max-bytes","minimum":512}},"durationMs":0}
+
+### C-27 [PASS] exit=6 a slow read times out and may be retried
+$ a --timeout 1s read ajmxtest:type=Cache SlowValue
+{"schemaVersion":1,"ok":false,"error":{"code":"TIMEOUT","message":"JMX operation timed out","retryable":true,"details":{"mbean":"ajmxtest:type=Cache","attribute":"SlowValue","timeoutMs":1000}},"durationMs":1016}
+
+### C-28 [PASS] exit=6 a slow invoke times out, not retryable, executed unknown
+$ a --timeout 1s invoke ajmxtest:type=Cache sleep --args [3000]
+{"schemaVersion":1,"ok":false,"error":{"code":"TIMEOUT","message":"JMX operation timed out","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"sleep","timeoutMs":1000,"executed":"unknown"}},"durationMs":1017}
+
+### C-29 [PASS] exit=4 an operation that does not exist
+$ a invoke ajmxtest:type=Cache nope
+{"schemaVersion":1,"ok":false,"error":{"code":"OPERATION_NOT_FOUND","message":"Operation was not found","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nope"}},"durationMs":15}
+
+### C-30 [PASS] exit=0 HotSpotDiagnostic getVMOption (docs example)
+$ a invoke com.sun.management:type=HotSpotDiagnostic getVMOption --args ["MaxHeapSize"]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"com.sun.management:type=HotSpotDiagnostic","operation":"getVMOption","signature":["java.lang.String"],"returnValue":{"name":"MaxHeapSize","origin":"ERGONOMIC","value":"4219469824","writeable":false}},"durationMs":21}
+
+### C-31 [PASS] exit=7 DiagnosticCommand threadPrint over --max-bytes (docs example)
+$ a --max-bytes 4096 invoke com.sun.management:type=DiagnosticCommand threadPrint --args [[]]
+{"schemaVersion":1,"ok":false,"error":{"code":"OUTPUT_TRUNCATED","message":"Output exceeds --max-bytes","retryable":false,"details":{"maxBytes":4096,"outputBytes":24154,"executed":true}},"durationMs":33}
+
+### C-31b [PASS] exit=0 DiagnosticCommand gcClassHistogram (docs example)
+$ a --max-bytes 4194304 invoke com.sun.management:type=DiagnosticCommand gcClassHistogram --args [[]]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"com.sun.management:type=DiagnosticCommand","operation":"gcClassHistogram","signature":["[Ljava.lang.String;"],"returnValue":" num     #instances         #bytes  class name (module)\n-------------------------------------------------------\n   1:         19799        1116144  [B (java.base@21.0.12.1)\n   2:         18862         452688  java.lang.String (java.base@21.0.12.1)\n   3:          2936         356392  java.lang.Class (java.base@21.0.12.1)\n   4:          3111         240648  [Ljava.lang.Object; (java.base@21.0.12.1)\n   5:          1945         171160  java.lang.reflect.Method (java.base@21.0.12.1)\n   6:          4422         141504  java.util.concurrent.ConcurrentHashMap$Node (java.base@21.0.12.1)\n   7:          4192         134144  java.util.HashMap$Node (java.base@21.0.12.1)\n   8:           494          65232  [Ljava.util.HashMap$Node; (java.base@21.0.12.1)\n   9:           267          59904  [C (java.base@21.0.12.1)\n  10:           128          54112  [Ljava.util.concurrent.ConcurrentHashMap$Node; (java.base@21.0.12.1)\n  11:          1127          54096  java.lang.invoke.MemberName (java.base@21.0.12.1)\n  12:          1128          51592  [I (java.base@21.0.12.1)\n  13:          1974          51544  [Ljava.lang.Class; (java.base@21.0.12.1)\n  14:           525          37800  java.lang.reflect.Field (java.base@21.0.12.1)\n  15:          1129          36128  java.lang.invoke.LambdaForm$Name (java.base@21.0.12.1)\n  16:          1013          34792  [Ljava.lang.String; (java.base@21.0.12.1)\n  17:           735          29400  java.lang.invoke.MethodType (java.base@21.0.12.1)\n  18:           344          26144  [Ljava.lang.ref.SoftReference; (java.base@21.0.12.1)\n  19:           809          25888  jdk.internal.util.WeakReferenceKey (java.base@21.0.12.1)\n  20:           516          24768  java.util.HashMap (java.base@21.0.12.1)\n  21:           340          21760  java.util.concurrent.ConcurrentHashMap (java.base@21.0.12.1)\n  22:           531          21240  java.util.LinkedHashMap$Entry (java.base@21.0.12.1)\n  23:           841          20184  java.lang.invoke.ResolvedMethodName (java.base@21.0.12.1)\n  24:           266          19152  java.lang.reflect.Constructor (java.base@21.0.12.1)\n  25:           471          18840  java.lang.ref.SoftReference (java.base@21.0.12.1)\n  26:           261          16704  java.lang.Class$ReflectionData (java.base@21.0.12.1)\n  27:             4          16448  [Ljava.nio.ByteBuffer; (java.base@21.0.12.1)\n  28:            87          14344  [Ljava.lang.invoke.MethodHandle; (java.base@21.0.12.1)\n  29:           291          13968  java.lang.invoke.LambdaForm (java.base@21.0.12.1)\n  30:           296          13840  [Ljava.lang.invoke.LambdaForm$Name; (java.base@21.0.12.1)\n  31:           203          12384  [Ljava.lang.reflect.Method; (java.base@21.0.12.1)\n  32:           341          10912  jdk.internal.math.FDBigInteger (java.base@2
+
+### C-32 [PASS] exit=0 Threading getThreadInfo with long[] (docs example)
+$ a invoke java.lang:type=Threading getThreadInfo --args [[1], 1]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Threading","operation":"getThreadInfo","signature":["[J","int"],"returnValue":[{"blockedCount":0,"blockedTime":-1,"daemon":false,"inNative":false,"lockInfo":null,"lockName":null,"lockOwnerId":-1,"lockOwnerName":null,"lockedMonitors":[],"lockedSynchronizers":[],"priority":5,"stackTrace":[{"classLoaderName":null,"className":"java.lang.Thread","fileName":"Thread.java","lineNumber":-2,"methodName":"sleep0","moduleName":"java.base","moduleVersion":"21.0.12.1","nativeMethod":true}],"suspended":false,"threadId":1,"threadName":"main","threadState":"TIMED_WAITING","waitedCount":1,"waitedTime":-1}]},"durationMs":21}
+
+### C-33 [PASS] exit=7 SystemProperties --limit 2 (docs example)
+$ a read java.lang:type=Runtime SystemProperties --limit 2
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"SystemProperties":{"$truncated":true,"$total":50,"$items":[{"key":"file.encoding","value":"UTF-8"},{"key":"file.separator","value":"/"}]}},"truncated":true},"durationMs":22}
+
+### C-34 [PASS] exit=7 a list that contains itself is cut
+$ a read ajmxtest:type=Cache SelfReference
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"SelfReference":[{"$truncated":true,"$type":"java.util.ArrayList"},{"$truncated":true,"$type":"java.util.ArrayList"}]},"truncated":true},"durationMs":13}
+
+### C-35 [PASS] exit=0 MXBean CompositeData and Map
+$ a read ajmxtest:type=Settings Stats Limits
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Settings","attributes":{"Stats":{"hits":7,"misses":3},"Limits":[{"key":"a","value":1},{"key":"b","value":2},{"key":"c","value":3}]}},"durationMs":17}
+
+### C-36 [PASS] exit=0 LastGcInfo after a GC (docs example)
+$ sh -c docker exec ajmx-mt-jdk21 /ajmx/ajmx --pid 1 invoke java.lang:type=Memory gc >/dev/null && docker exec ajmx-mt-jdk21 /ajmx/ajmx --pid 1 read 'java.lang:type=GarbageCollector,name=G1 Young Generation' LastGcInfo
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=GarbageCollector,name=G1 Young Generation","attributes":{"LastGcInfo":{"GcThreadCount":5,"duration":3,"endTime":994,"id":1,"memoryUsageAfterGc":[{"key":"CodeHeap 'non-nmethods'","value":{"committed":2555904,"init":2555904,"max":5836800,"used":1500288}},{"key":"CodeHeap 'non-profiled nmethods'","value":{"committed":2555904,"init":2555904,"max":122912768,"used":344448}},{"key":"CodeHeap 'profiled nmethods'","value":{"committed":2555904,"init":2555904,"max":122908672,"used":1814272}},{"key":"Compressed Class Space","value":{"committed":917504,"init":0,"max":1073741824,"used":755664}},{"key":"G1 Eden Space","value":{"committed":18874368,"init":12582912,"max":-1,"used":0}},{"key":"G1 Old Gen","value":{"committed":245366784,"init":251658240,"max":4219469824,"used":1230464}},{"key":"G1 Survivor Space","value":{"committed":2097152,"init":0,"max":-1,"used":2097152}},{"key":"Metaspace","value":{"committed":7143424,"init":0,"max":-1,"used":6809952}}],"memoryUsageBeforeGc":[{"key":"CodeHeap 'non-nmethods'","value":{"committed":2555904,"init":2555904,"max":5836800,"used":1500288}},{"key":"CodeHeap 'non-profiled nmethods'","value":{"committed":2555904,"init":2555904,"max":122912768,"used":344448}},{"key":"CodeHeap 'profiled nmethods'","value":{"committed":2555904,"init":2555904,"max":122908672,"used":1814272}},{"key":"Compressed Class Space","value":{"committed":917504,"init":0,"max":1073741824,"used":755664}},{"key":"G1 Eden Space","value":{"committed":12582912,"init":12582912,"max":-1,"used":10485760}},{"key":"G1 Old Gen","value":{"committed":253755392,"init":251658240,"max":4219469824,"used":1099392}},{"key":"G1 Survivor Space","value":{"committed":0,"init":0,"max":-1,"used":0}},{"key":"Metaspace","value":{"committed":7143424,"init":0,"max":-1,"used":6809952}}],"startTime":991}}},"durationMs":26}
+
+### C-40 [PASS] exit=0 batch with every op
+$ ai batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":1,"ok":true,"result":{"connected":true}},{"id":"s","ok":true,"result":{"items":["ajmxtest:type=ArrayEcho","ajmxtest:type=Cache","ajmxtest:type=Evolving","ajmxtest:type=Quirky","ajmxtest:type=Settings","ajmxtest:type=Sleepy"],"returned":6,"truncated":false}},{"id":"d","ok":true,"result":{"mbean":"ajmxtest:type=Cache","className":"ajmxtest.TestTarget$Cache","attributes":[{"name":"ByteValue","type":"byte","readable":true,"writable":true},{"name":"ClearCount","type":"int","readable":true,"writable":false},{"name":"Custom","type":"ajmxtest.TestTarget$CustomValue","readable":true,"writable":false},{"name":"DeepValue","type":"java.lang.Object","readable":true,"writable":false},{"name":"DoubleValue","type":"double","readable":true,"writable":true},{"name":"Enabled","type":"boolean","readable":true,"writable":true},{"name":"FloatValue","type":"float","readable":true,"writable":true},{"name":"Grid","type":"[[Ljava.lang.Integer;","readable":true,"writable":false},{"name":"Handle","type":"java.lang.Object","readable":true,"writable":false},{"name":"HugeText","type":"java.lang.String","readable":true,"writable":false},{"name":"JdkLambda","type":"java.util.Comparator","readable":true,"writable":false},{"name":"LargeArray","type":"[I","readable":true,"writable":false},{"name":"LargeText","type":"java.lang.String","readable":true,"writable":false},{"name":"Letter","type":"char","readable":true,"writable":true},{"name":"LongValue","type":"long","readable":true,"writable":true},{"name":"Matrix","type":"[[F","readable":true,"writable":false},{"name":"MaxConnections","type":"int","readable":true,"writable":true},{"name":"Mode","type":"ajmxtest.TestTarget$Mode","readable":true,"writable":true},{"name":"Name","type":"java.lang.String","readable":true,"writable":true},{"name":"Numbers","type":"[I","readable":true,"writable":true},{"name":"QualifiedName","type":"javax.xml.namespace.QName","readable":true,"writable":false},{"name":"Ref","type":"javax.management.ObjectName","readable":true,"writable":true},{"name":"SelfReference","type":"java.lang.Object","readable":true,"writable":false},{"name":"Shared","type":"java.lang.Object","readable":true,"writable":false},{"name":"ShortValue","type":"short","readable":true,"writable":true},{"name":"Size","type":"int","readable":true,"writable":false},{"name":"SlowValue","type":"long","readable":true,"writable":false},{"name":"Tags","type":"[Ljava.lang.String;","readable":true,"writable":true},{"name":"TargetLambda","type":"java.lang.Object","readable":true,"writable":false},{"name":"Unsendable","type":"java.lang.Object","readable":true,"writable":false},{"name":"Unsendable2","type":"java.lang.Object","readable":true,"writable":false}],"operations":[{"name":"bytes","returnType":"[B","signature":[{"name":"p1","type":"int"}]},{"name":"clear","returnType":"void","signature":[]},{"name":"fail","returnType":"void","signature":[]},{"name":"failRuntime","returnType":"void","signature"
+
+### C-41 [PASS] exit=2 a bad line rejects the whole batch with details.line
+$ ai batch
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Unknown op","retryable":false,"details":{"line":2,"id":"gc","op":"lookup","allowed":["ping","search","describe","read","write","invoke"]}},"durationMs":0}
+
+### C-41b [PASS] exit=0 no request of the rejected batch ran
+$ a read ajmxtest:type=Cache ClearCount
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"ClearCount":0}},"durationMs":11}
+
+### C-42 [PASS] exit=7 after an invoke times out, later writes are SKIPPED and reads still run
+$ ai --timeout 1s batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"slow","ok":false,"error":{"code":"TIMEOUT","message":"JMX operation timed out","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"sleep","timeoutMs":1000,"executed":"unknown"}}},{"id":"w","ok":false,"error":{"code":"SKIPPED","message":"Not executed because an earlier write or invoke may still be running","retryable":true,"details":{"stillRunningIndex":0}}},{"id":"r","ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"Name":"cache"}}}]},"durationMs":1019}
+
+### C-43 [PASS] exit=7 batch over --max-bytes replaces the largest items
+$ ai --max-bytes 4096 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"big","ok":true,"truncated":true},{"id":"small","ok":true,"result":{"connected":true}}],"truncated":true},"durationMs":22}
+
+### C-50 [PASS] exit=2 unknown command lists the allowed ones
+$ a frobnicate
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Unknown command","retryable":false,"details":{"command":"frobnicate","allowed":["ps","ping","search","describe","read","write","invoke","batch","help","version"]}},"durationMs":0}
+
+### C-51 [PASS] exit=2 unknown option
+$ a --nope ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Unknown option","retryable":false,"details":{"option":"--nope"}},"durationMs":0}
+
+### C-52 [PASS] exit=2 --pid and --url together
+$ a --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--pid and --url are mutually exclusive","retryable":false,"details":{}},"durationMs":0}
+
+### C-53 [PASS] exit=2 a command that needs a target without one
+$ ax jdk21 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--pid or --url is required","retryable":false,"details":{"command":"ping"}},"durationMs":0}
+
+### C-54 [PASS] exit=2 a bad duration
+$ a --timeout 5x ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Invalid duration (examples: 500ms, 5s, 1m)","retryable":false,"details":{"option":"--timeout","value":"5x"}},"durationMs":0}
+
+### C-55 [PASS] exit=7 --limit=2 and options after the command
+$ a search java.lang:* --limit=2
+{"schemaVersion":1,"ok":true,"result":{"items":["java.lang:name=CodeCacheManager,type=MemoryManager","java.lang:name=CodeHeap 'non-nmethods',type=MemoryPool"],"returned":2,"truncated":true},"durationMs":11}
+
+### C-56 [PASS] exit=7 -- ends the options
+$ a read ajmxtest:type=Cache Name -- --weird
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attributes":{"Name":"cache"},"errors":{"--weird":{"code":"ATTRIBUTE_NOT_FOUND","message":"Attribute was not found","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"--weird"}}}},"durationMs":13}
+
+### C-57 [PASS] exit=4 --debug prints a stack trace to stderr, stdout stays JSON
+$ a --debug read com.example:type=Nope X
+{"schemaVersion":1,"ok":false,"error":{"code":"MBEAN_NOT_FOUND","message":"MBean was not found","retryable":false,"details":{"mbean":"com.example:type=Nope"}},"durationMs":13}
+--- stderr
+io.github.yagipass.ajmx.error.AjmxException: MBean was not found
+	at io.github.yagipass.ajmx.connection.JmxErrors.classify(JmxErrors.java:49)
+	at io.github.yagipass.ajmx.connection.JmxErrors.translate(JmxErrors.java:43)
+	at io.github.yagipass.ajmx.connection.JmxSession.lambda$start$2(JmxSession.java:42)
+	at io.github.yagipass.ajmx.concurrent.Timeouts.lambda$start$0(Timeouts.java:53)
+	at io.github.yagipass.ajmx.connection.JmxSession.call(JmxSession.java:32)
+	at io.github.yagipass.ajmx.core.MBeanClient.fetch(MBeanClient.java:203)
+	at io.github.yagipass.ajmx.core.MBeanClient.read(MBeanClient.java:169)
+	at io.github.yagipass.ajmx.core.MBeanClient.run(MBeanClient.java:54)
+	at io.github.yagipass.ajmx.cli.Cli.lambda$runRequest$0(Cli.java:109)
+	at io.github.yagipass.ajmx.cli.Cli.withClient(Cli.java:154)
+	at io.github.yagipass.ajmx.cli.Cli.runRequest(Cli.java:109)
+	at io.github.yagipass.ajmx.cli.Cli.execute(Cli.java:79)
+	at io.github.yagipass.ajmx.cli.Cli.run(Cli.java:45)
+	at io.github.yagipass.ajmx.Main.main(Main.java:14)
+	at java.base@25.0.2/java.lang.invoke.LambdaForm$DMH/sa346b79c.invokeStaticInit(LambdaForm$DMH)
+Caused by: javax.management.InstanceNotFoundException: com.example:type=Nope
+	at java.management/com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.getMBean(DefaultMBeanServerInterceptor.java:1073)
+	at java.management/com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.getAttributes(DefaultMBeanServerInterceptor.java:666)
+	at java.management/com.sun.jmx.mbeanserver.JmxMBeanServer.getAttributes(JmxMBeanServer.java:706)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.doOperation(RMIConnectionImpl.java:1453)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl$PrivilegedOperation.run(RMIConnectionImpl.java:1310)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.doPrivilegedOperation(RMIConnectionImpl.java:1405)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.getAttributes(RMIConnectionImpl.java:675)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:714)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:598)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:844)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:721)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(T
+### C-57b [PASS] exit=4 the stack trace is on stderr
+$ a --debug read com.example:type=Nope X
+{"schemaVersion":1,"ok":false,"error":{"code":"MBEAN_NOT_FOUND","message":"MBean was not found","retryable":false,"details":{"mbean":"com.example:type=Nope"}},"durationMs":19}
+--- stderr
+io.github.yagipass.ajmx.error.AjmxException: MBean was not found
+	at io.github.yagipass.ajmx.connection.JmxErrors.classify(JmxErrors.java:49)
+	at io.github.yagipass.ajmx.connection.JmxErrors.translate(JmxErrors.java:43)
+	at io.github.yagipass.ajmx.connection.JmxSession.lambda$start$2(JmxSession.java:42)
+	at io.github.yagipass.ajmx.concurrent.Timeouts.lambda$start$0(Timeouts.java:53)
+	at io.github.yagipass.ajmx.connection.JmxSession.call(JmxSession.java:32)
+	at io.github.yagipass.ajmx.core.MBeanClient.fetch(MBeanClient.java:203)
+	at io.github.yagipass.ajmx.core.MBeanClient.read(MBeanClient.java:169)
+	at io.github.yagipass.ajmx.core.MBeanClient.run(MBeanClient.java:54)
+	at io.github.yagipass.ajmx.cli.Cli.lambda$runRequest$0(Cli.java:109)
+	at io.github.yagipass.ajmx.cli.Cli.withClient(Cli.java:154)
+	at io.github.yagipass.ajmx.cli.Cli.runRequest(Cli.java:109)
+	at io.github.yagipass.ajmx.cli.Cli.execute(Cli.java:79)
+	at io.github.yagipass.ajmx.cli.Cli.run(Cli.java:45)
+	at io.github.yagipass.ajmx.Main.main(Main.java:14)
+	at java.base@25.0.2/java.lang.invoke.LambdaForm$DMH/sa346b79c.invokeStaticInit(LambdaForm$DMH)
+Caused by: javax.management.InstanceNotFoundException: com.example:type=Nope
+	at java.management/com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.getMBean(DefaultMBeanServerInterceptor.java:1073)
+	at java.management/com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.getAttributes(DefaultMBeanServerInterceptor.java:666)
+	at java.management/com.sun.jmx.mbeanserver.JmxMBeanServer.getAttributes(JmxMBeanServer.java:706)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.doOperation(RMIConnectionImpl.java:1453)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl$PrivilegedOperation.run(RMIConnectionImpl.java:1310)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.doPrivilegedOperation(RMIConnectionImpl.java:1405)
+	at java.management.rmi/javax.management.remote.rmi.RMIConnectionImpl.getAttributes(RMIConnectionImpl.java:675)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:714)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:598)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:844)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:721)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(T
+### C-58 [PASS] exit=2 the same option twice
+$ a --limit 1 --limit 2 ps
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Option given more than once","retryable":false,"details":{"option":"--limit"}},"durationMs":0}
+
+### C-59 [PASS] exit=2 --credentials-stdin with --pid
+$ a --credentials-stdin ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--credentials-stdin requires --url","retryable":false,"details":{}},"durationMs":0}
+
+### C-60 [PASS] exit=2 --tls with --pid
+$ a --tls ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--tls requires --url","retryable":false,"details":{}},"durationMs":0}
+
+### C-61 [PASS] exit=2 --tls-ca without --tls
+$ ax jdk21 --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--tls-ca requires --tls","retryable":false,"details":{}},"durationMs":0}
+
+### D-01 [PASS] exit=7 a value 500 levels deep is read (and cut at 32 for output)
+$ a invoke ajmxtest:type=Cache nested --args [500]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"nested","signature":["int"],"returnValue":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[{"$truncated":true,"$type":"[Ljava.lang.Object;"}]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]],"truncated":true},"durationMs":14}
+
+### D-02 [PASS] exit=5 501 levels: UNSUPPORTED_TYPE with the limits, not retryable
+$ a invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":14}
+
+### D-03 [PASS] exit=5 an attribute 100,000 levels deep: UNSUPPORTED_TYPE, not INTERNAL_ERROR
+$ a read ajmxtest:type=Cache DeepValue
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"DeepValue","maxDepth":500,"maxArrayLength":16777216}},"durationMs":18}
+
+### D-04 [PASS] exit=0 a byte[] of 16,777,216 elements is read
+$ a --timeout 60s --max-bytes 30000000 invoke ajmxtest:type=Cache bytes --args [16777216]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"bytes","signature":["int"],"returnValue":{"$base64":"AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZ
+
+### D-05 [PASS] exit=5 a byte[] of 16,777,217 elements: UNSUPPORTED_TYPE
+$ a --timeout 60s invoke ajmxtest:type=Cache bytes --args [16777217]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"bytes","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":45}
+
+### D-06 [PASS] exit=7 in a batch, the deep value fails alone
+$ axi jdk21 --pid 1 batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":"deep","ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}}},{"id":"ok","ok":true,"result":{"connected":true}}]},"durationMs":17}
+
+### D-07 [PASS] exit=7 a 100,000,000-character string does not fit --max-bytes
+$ a --timeout 60s read ajmxtest:type=Cache HugeText
+{"schemaVersion":1,"ok":false,"error":{"code":"OUTPUT_TRUNCATED","message":"Output exceeds --max-bytes","retryable":false,"details":{"maxBytes":262144,"outputBytes":100000118}},"durationMs":1133}
+
+### D-08 [PASS] exit=0 ajmx still works after D-07
+$ a ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":12}
+
+### E-01 [PASS] exit=0 host to a published container port (docs recipe)
+$ ./ajmx --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":57}
+
+### E-02 [PASS] exit=0 host: read VmName VmVersion (docs example)
+$ ./ajmx --url service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi read java.lang:type=Runtime VmName VmVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmName":"OpenJDK 64-Bit Server VM","VmVersion":"21.0.12.1+1-LTS"}},"durationMs":25}
+
+### E-03 [PASS] exit=0 container to container: search, describe, read
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi search ajmxtest:*
+{"schemaVersion":1,"ok":true,"result":{"items":["ajmxtest:type=ArrayEcho","ajmxtest:type=Cache","ajmxtest:type=Evolving","ajmxtest:type=Quirky","ajmxtest:type=Settings","ajmxtest:type=Sleepy"],"returned":6,"truncated":false},"durationMs":59}
+
+### E-03b [PASS] exit=0 container to container: write and invoke
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi invoke ajmxtest:type=Cache greet --args ["r"]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"greet","signature":["java.lang.String"],"returnValue":"hello r"},"durationMs":40}
+
+### E-04 [PASS] exit=0 a JDK 8 JVM over --url
+$ c --url service:jmx:rmi:///jndi/rmi://plain8:7199/jmxrmi read java.lang:type=Runtime SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"SpecVersion":"1.8"}},"durationMs":39}
+
+### E-05 [PASS] exit=3 jmxremote.host=127.0.0.1 in the container: CONNECTION_FAILED (docs)
+$ c --url service:jmx:rmi:///jndi/rmi://loopback:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_FAILED","message":"Connection to the JVM failed","retryable":true,"details":{"url":"service:jmx:rmi:///jndi/rmi://loopback:7199/jmxrmi"}},"durationMs":3}
+
+### E-06 [PASS] exit=3 an unreachable java.rmi.server.hostname: CONNECTION_TIMEOUT
+$ c --timeout 3s --url service:jmx:rmi:///jndi/rmi://badhost:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_TIMEOUT","message":"Timed out connecting to the JMX server","retryable":true,"details":{"url":"service:jmx:rmi:///jndi/rmi://badhost:7199/jmxrmi","timeoutMs":3000}},"durationMs":3000}
+
+### E-07 [PASS] exit=3 nothing listens on the port
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7299/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_FAILED","message":"Connection to the JVM failed","retryable":true,"details":{"url":"service:jmx:rmi:///jndi/rmi://plain:7299/jmxrmi"}},"durationMs":3}
+
+### E-08 [PASS] exit=2 --url host:port is not a URL
+$ c --url localhost:7199 ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Invalid or unsupported JMX service URL","retryable":false,"details":{"url":"localhost:7199"}},"durationMs":0}
+
+### E-09 [PASS] exit=0 operator: ping
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":71}
+
+### E-09b [PASS] exit=0 operator: write Verbose (docs example)
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi write java.lang:type=Memory Verbose=true
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Memory","attribute":"Verbose","value":true},"durationMs":50}
+
+### E-10 [PASS] exit=0 viewer: read
+$ axo client -e JMX_USERNAME=viewer -e JMX_PASSWORD=v1ew-pw --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi read java.lang:type=Memory Verbose
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Memory","attributes":{"Verbose":true}},"durationMs":23}
+
+### E-10b [PASS] exit=3 viewer: write fails with AUTH_FAILED and mbean in details
+$ axo client -e JMX_USERNAME=viewer -e JMX_PASSWORD=v1ew-pw --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi write java.lang:type=Memory Verbose=false
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"mbean":"java.lang:type=Memory","attribute":"Verbose"}},"durationMs":36}
+
+### E-10c [PASS] exit=3 viewer: invoke findDeadlockedThreads fails (docs)
+$ axo client -e JMX_USERNAME=viewer -e JMX_PASSWORD=v1ew-pw --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi invoke java.lang:type=Threading findDeadlockedThreads
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"mbean":"java.lang:type=Threading","operation":"findDeadlockedThreads"}},"durationMs":30}
+
+### E-11 [PASS] exit=3 a wrong password
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=wrong --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi"}},"durationMs":16}
+
+### E-12 [PASS] exit=3 no credentials
+$ c --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi"}},"durationMs":11}
+
+### E-13 [PASS] exit=0 --credentials-stdin
+$ axi client --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi --credentials-stdin ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":15}
+
+### E-14 [PASS] exit=2 --credentials-stdin with a malformed document
+$ axi client --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi --credentials-stdin ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Invalid JSON","retryable":false,"details":{"source":"stdin","reason":"Unexpected character 'o' at offset 0"}},"durationMs":0}
+
+### E-15 [PASS] exit=2 batch with --credentials-stdin is refused
+$ axi client --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi --credentials-stdin batch
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"batch reads requests from stdin; use JMX_USERNAME/JMX_PASSWORD for credentials","retryable":false,"details":{}},"durationMs":0}
+
+### E-16 [PASS] exit=0 batch with credentials from the environment
+$ docker exec -i -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw ajmx-mt-client /ajmx/ajmx --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":1,"ok":true,"result":{"connected":true}},{"id":2,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"Uptime":8478}}}]},"durationMs":27}
+
+### E-17 [PASS] exit=5 501 levels over --url: UNSUPPORTED_TYPE
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":39}
+
+### E-18 [PASS] exit=5 100,000 levels over --url: UNSUPPORTED_TYPE
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi read ajmxtest:type=Cache DeepValue
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"DeepValue","maxDepth":500,"maxArrayLength":16777216}},"durationMs":30}
+
+### F-01 [PASS] exit=0 --tls --tls-ca: ping (docs recipe)
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":286}
+
+### F-02 [PASS] exit=0 read over TLS
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem read java.lang:type=Runtime VmName
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"VmName":"OpenJDK 64-Bit Server VM"}},"durationMs":93}
+
+### F-02b [PASS] exit=0 write over TLS
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem write ajmxtest:type=Cache MaxConnections=33
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections","value":33},"durationMs":72}
+
+### F-02c [PASS] exit=0 invoke over TLS
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem invoke ajmxtest:type=Cache greet --args ["tls"]
+{"schemaVersion":1,"ok":true,"result":{"mbean":"ajmxtest:type=Cache","operation":"greet","signature":["java.lang.String"],"returnValue":"hello tls"},"durationMs":63}
+
+### F-03 [PASS] exit=0 batch over TLS
+$ docker exec -i -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw ajmx-mt-client /ajmx/ajmx --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem batch
+{"schemaVersion":1,"ok":true,"result":{"items":[{"id":1,"ok":true,"result":{"connected":true}},{"id":2,"ok":true,"result":{"items":["ajmxtest:type=ArrayEcho","ajmxtest:type=Cache","ajmxtest:type=Evolving","ajmxtest:type=Quirky","ajmxtest:type=Settings","ajmxtest:type=Sleepy"],"returned":6,"truncated":false}}]},"durationMs":51}
+
+### F-04 [PASS] exit=0 --credentials-stdin over TLS
+$ axi client --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem --credentials-stdin ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":54}
+
+### F-05 [PASS] exit=3 without --tls-ca a self-signed certificate is not trusted
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi","reason":"(certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"}},"durationMs":12}
+
+### F-06 [PASS] exit=3 --tls-ca with another certificate
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/wrong.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi","reason":"(certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"}},"durationMs":15}
+
+### F-07 [PASS] exit=3 a certificate for another host name
+$ op --url service:jmx:rmi:///jndi/rmi://tls-wrong:7199/jmxrmi --tls --tls-ca /ajmx/conf/wrong.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-wrong:7199/jmxrmi","reason":"(certificate_unknown) No subject alternative DNS name matching tls-wrong found."}},"durationMs":92}
+
+### F-07b [FAIL] exit=3 ...with the reason troubleshooting.md lists for it
+$ op --url service:jmx:rmi:///jndi/rmi://tls-wrong:7199/jmxrmi --tls --tls-ca /ajmx/conf/wrong.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-wrong:7199/jmxrmi","reason":"(certificate_unknown) No subject alternative DNS name matching tls-wrong found."}},"durationMs":17}
+
+### F-08 [PASS] exit=3 a registry without TLS (registry.ssl=false)
+$ op --url service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi","reason":"Remote host terminated the handshake"}},"durationMs":18}
+
+### F-09 [PASS] exit=3 a connection without TLS (ssl=false, registry.ssl=true)
+$ op --url service:jmx:rmi:///jndi/rmi://tls-plainconn:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"The JMX server does not use TLS for the connection","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-plainconn:7199/jmxrmi","reason":"Expecting a sun.rmi.server.UnicastRef2 remote reference in stub!"}},"durationMs":207}
+
+### F-10 [PASS] exit=3 --tls against a JVM without any TLS
+$ c --url service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi --tls ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://plain:7199/jmxrmi","reason":"Remote host terminated the handshake"}},"durationMs":6}
+
+### F-11 [PASS] exit=3 --tls against a plain-text JVM with auth fails...
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=Marker-7f3a9c --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi --tls ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi","reason":"Remote host terminated the handshake"}},"durationMs":13}
+
+### F-11b [PASS] exit=0 ...and the password never crossed the network
+$ sh -c docker cp ajmx-mt-cap:/tmp/cap.pcap '$OUT/work/cap1.pcap' && test -s '$OUT/work/cap1.pcap' && ! grep -aq Marker-7f3a9c '$OUT/work/cap1.pcap'
+
+
+### F-11c [PASS] exit=3 control: without --tls the same password is sent in plain text
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=Marker-7f3a9c --url service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://auth:7199/jmxrmi"}},"durationMs":22}
+
+### F-11d [PASS] exit=0 control: the capture shows the password
+$ sh -c docker cp ajmx-mt-cap:/tmp/cap.pcap '$OUT/work/cap2.pcap' && grep -aq Marker-7f3a9c '$OUT/work/cap2.pcap'
+
+
+### F-12 [PASS] exit=3 without --tls, an untrusted certificate is TLS_FAILED, not a retryable CONNECTION_FAILED
+$ op --url service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi","reason":"(certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"}},"durationMs":173}
+
+### F-13 [PASS] exit=0 --tls-ca with the CA that signed the certificate
+$ op --url service:jmx:rmi:///jndi/rmi://tls-ca:7199/jmxrmi --tls --tls-ca /ajmx/conf/ca.pem ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":298}
+
+### F-14 [PASS] exit=0 --tls-ca with a PEM bundle of several certificates
+$ op --url service:jmx:rmi:///jndi/rmi://tls-ca:7199/jmxrmi --tls --tls-ca /ajmx/conf/bundle.pem ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":59}
+
+### F-15 [PASS] exit=2 --tls-ca: a missing file, before connecting
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/nope.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"Unable to read the --tls-ca file","retryable":false,"details":{"file":"/ajmx/conf/nope.pem","reason":"/ajmx/conf/nope.pem"}},"durationMs":0}
+
+### F-15b [PASS] exit=2 --tls-ca: an empty file
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/empty.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"The --tls-ca file has no certificates","retryable":false,"details":{"file":"/ajmx/conf/empty.pem"}},"durationMs":0}
+
+### F-15c [PASS] exit=2 --tls-ca: a file that is not PEM
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/notpem.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"The --tls-ca file is not PEM certificates","retryable":false,"details":{"file":"/ajmx/conf/notpem.pem","reason":"No certificate data found"}},"durationMs":2}
+
+### F-15d [PASS] exit=2 --tls-ca: a key store instead of PEM
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/jmxremote.access ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"The --tls-ca file is not PEM certificates","retryable":false,"details":{"file":"/ajmx/conf/jmxremote.access","reason":"No certificate data found"}},"durationMs":0}
+
+### F-16 [PASS] exit=2 --tls with a URL that is not /jndi/rmi://
+$ op --url service:jmx:rmi://tls:7199/stub/rO0ABQ== --tls ping
+{"schemaVersion":1,"ok":false,"error":{"code":"INVALID_ARGUMENT","message":"--tls needs a service:jmx:rmi:///jndi/rmi://<host>:<port>/<name> URL","retryable":false,"details":{"url":"service:jmx:rmi://tls:7199/stub/rO0ABQ=="}},"durationMs":0}
+
+### F-17 [PASS] exit=0 --tls on a JDK 8 JVM
+$ op --url service:jmx:rmi:///jndi/rmi://tls8:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem read java.lang:type=Runtime SpecVersion
+{"schemaVersion":1,"ok":true,"result":{"mbean":"java.lang:type=Runtime","attributes":{"SpecVersion":"1.8"}},"durationMs":233}
+
+### F-18 [INFO] exit=3 need.client.auth=true (documented as unsupported)
+$ op --url service:jmx:rmi:///jndi/rmi://tls-clientauth:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-clientauth:7199/jmxrmi","reason":"(certificate_required) Received fatal alert: certificate_required"}},"durationMs":215}
+
+### F-19 [PASS] exit=3 an IP address in the URL that the certificate does not name
+$ op --url service:jmx:rmi:///jndi/rmi://172.18.0.5:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"TLS_FAILED","message":"TLS with the JMX server failed","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://172.18.0.5:7199/jmxrmi","reason":"(certificate_unknown) No subject alternative names matching IP address 172.18.0.5 found"}},"durationMs":22}
+
+### F-20 [PASS] exit=3 a wrong password over TLS is AUTH_FAILED
+$ axo client -e JMX_USERNAME=operator -e JMX_PASSWORD=wrong --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem ping
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi"}},"durationMs":41}
+
+### F-21 [PASS] exit=3 viewer write over TLS is AUTH_FAILED
+$ axo client -e JMX_USERNAME=viewer -e JMX_PASSWORD=v1ew-pw --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem write ajmxtest:type=Cache MaxConnections=1
+{"schemaVersion":1,"ok":false,"error":{"code":"AUTH_FAILED","message":"Access denied by the JMX server","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","attribute":"MaxConnections"}},"durationMs":42}
+
+### F-22 [PASS] exit=5 501 levels over TLS: UNSUPPORTED_TYPE
+$ op --url service:jmx:rmi:///jndi/rmi://tls:7199/jmxrmi --tls --tls-ca /ajmx/conf/tls.pem invoke ajmxtest:type=Cache nested --args [501]
+{"schemaVersion":1,"ok":false,"error":{"code":"UNSUPPORTED_TYPE","message":"A value is nested more deeply or holds a longer array than ajmx reads","retryable":false,"details":{"mbean":"ajmxtest:type=Cache","operation":"nested","maxDepth":500,"maxArrayLength":16777216,"executed":"unknown"}},"durationMs":42}
+
+### G-01 [FAIL] exit=1 install.sh installs the released v0.1.0 into -b
+$ sh manual-test/../install.sh -b $OUT/work/install v0.1.0
+
+--- stderr
+curl: (22) The requested URL returned error: 403
+yagipass/ajmx crit could not determine release tag v0.1.0
+
+### G-01b [PASS] exit=0 download the v0.1.0 asset and check its SHA-256
+$ sh -c cd '$OUT/work/install' &&
+      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/v0.1.0/ajmx-linux-amd64 &&
+      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/v0.1.0/ajmx-linux-amd64.sha256 &&
+      sha256sum -c ajmx-linux-amd64.sha256 && chmod +x ajmx-linux-amd64 && mv ajmx-linux-amd64 ajmx
+ajmx-linux-amd64: OK
+
+### G-01c [PASS] exit=0 the released v0.1.0 binary runs
+$ $OUT/work/install/ajmx version
+{"schemaVersion":1,"ok":true,"result":{"version":"0.1.0"},"durationMs":0}
+
+### G-02a [INFO] exit=0 for comparison: v0.1.0 ping
+$ docker exec ajmx-mt-jdk21 /tmp/ajmx-0.1.0 --pid 1 ping
+{"schemaVersion":1,"ok":true,"result":{"connected":true},"durationMs":12}
+
+### G-02 [INFO] exit=3 for comparison: v0.1.0 reads the 100,000-level value
+$ docker exec ajmx-mt-jdk21 /tmp/ajmx-0.1.0 --pid 1 read ajmxtest:type=Cache DeepValue
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_FAILED","message":"Connection to the JVM failed","retryable":true,"details":{"mbean":"ajmxtest:type=Cache","attribute":"DeepValue"}},"durationMs":56}
+
+### G-02b [INFO] exit=3 for comparison: v0.1.0 without --tls against an untrusted TLS connection
+$ docker exec -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw ajmx-mt-jdk21 /tmp/ajmx-0.1.0 --url service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi ping
+{"schemaVersion":1,"ok":false,"error":{"code":"CONNECTION_FAILED","message":"Connection to the JVM failed","retryable":true,"details":{"url":"service:jmx:rmi:///jndi/rmi://tls-noreg:7199/jmxrmi"}},"durationMs":32}
+
+### G-03 [INFO] exit=0 newest glibc symbol version the released v0.1.0 requires
+$ sh -c objdump -T '$OUT/work/install/ajmx' | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+GLIBC_2.34
+
+### G-04[ubuntu:20.04] [INFO] exit=1 the released v0.1.0 binary on ubuntu:20.04
+$ docker run --rm -v $OUT/work/install/ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx ubuntu:20.04 version
+
+--- stderr
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### G-04[debian:11] [INFO] exit=1 the released v0.1.0 binary on debian:11
+$ docker run --rm -v $OUT/work/install/ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx debian:11 version
+
+--- stderr
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### G-04[rockylinux:8] [INFO] exit=1 the released v0.1.0 binary on rockylinux:8
+$ docker run --rm -v $OUT/work/install/ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx rockylinux:8 version
+
+--- stderr
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
+### G-04[amazonlinux:2] [INFO] exit=1 the released v0.1.0 binary on amazonlinux:2
+$ docker run --rm -v $OUT/work/install/ajmx:/ajmx/ajmx:ro --entrypoint /ajmx/ajmx amazonlinux:2 version
+
+--- stderr
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.32' not found (required by /ajmx/ajmx)
+/ajmx/ajmx: /lib64/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
+
