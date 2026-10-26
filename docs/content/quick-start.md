@@ -11,7 +11,7 @@ needs no flags and no restart.
 
 | Part | Needs |
 |---|---|
-| ajmx | macOS on Apple silicon, or Linux on x86_64 or arm64 |
+| ajmx | macOS on Apple silicon, or Linux on x86_64 or arm64 with glibc 2.34 or later and zlib |
 | AI agent | One that supports agent skills |
 | Target JVM | A HotSpot JVM, JDK 8 to 25, running as your user |
 

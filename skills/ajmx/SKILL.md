@@ -2,7 +2,7 @@
 name: ajmx
 description: Inspect and operate running JVMs over JMX with the ajmx CLI — list local JVMs, search and describe MBeans, read attributes, write attributes and invoke operations, on local processes (by PID) or remote JMX URLs. Use this whenever the user wants to look inside a running Java process — heap and GC, threads, class loading, connection pools, caches, Kafka/Tomcat/Hikari metrics, log levels or feature flags exposed as MBeans — or mentions JMX, MBeans, jconsole, VisualVM or a service:jmx URL, even if they do not name ajmx.
 license: Apache-2.0
-compatibility: Requires the ajmx binary on PATH (macOS arm64, Linux x86_64 and arm64).
+compatibility: Requires the ajmx binary on PATH (macOS arm64, Linux x86_64 and arm64 with glibc 2.34 or later and zlib).
 ---
 
 # ajmx
