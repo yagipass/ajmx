@@ -43,6 +43,8 @@ A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64":
 
 - `--pid` supports HotSpot JVMs of the same user, or of any user for root on Linux. JDK 8 to 25
   are tested.
+- Root without `CAP_SYS_PTRACE`, as in a Docker container by default, connects to another user's
+  JVM only if `ps` lists it.
 - It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because
   attaching sends `SIGQUIT`, which kills many processes that are not JVMs.
 - `--pid` does not work with OpenJ9 JVMs, such as IBM Semeru. ajmx does not refuse them up front.
@@ -66,5 +68,7 @@ See [TLS](./connect/remote.md#tls).
 
 ## JVMs that ps does not list
 
-`ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`. `--pid`
-still connects to them if they run the `java` launcher.
+`ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or JVMs
+running as a UID with no user name, such as one missing from `/etc/passwd`. `--pid` still connects
+to them if they run the `java` launcher, except as root without `CAP_SYS_PTRACE` for another
+user's JVM.

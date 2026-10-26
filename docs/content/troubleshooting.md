@@ -10,8 +10,9 @@ Every failure has an `error.code`. Find it below, or in [Error codes](./errors.m
 ## ps does not list the JVM
 
 `ps` finds JVMs by their performance data files. A JVM started with `-XX:-UsePerfData` or
-`-XX:+PerfDisableSharedMem` writes none. Here two `ShopApplication` JVMs run, and `ps` lists only
-the one without `-XX:-UsePerfData`.
+`-XX:+PerfDisableSharedMem` writes none, and neither does a JVM running as a UID with no user
+name, such as one missing from `/etc/passwd`. Here two `ShopApplication` JVMs run, and `ps` lists
+only the one without `-XX:-UsePerfData`.
 
 ::: terminal
 
@@ -30,7 +31,8 @@ ajmx ps | jq '.result.items[] | select(.mainClass == "com.example.shop.ShopAppli
 :::
 
 Find the other PID with your operating system's tools, such as `pgrep -f ShopApplication`.
-`--pid` still connects if the JVM runs the `java` launcher.
+`--pid` still connects if the JVM runs the `java` launcher, except as root without `CAP_SYS_PTRACE`
+for another user's JVM.
 
 ::: terminal
 
@@ -101,6 +103,10 @@ does not run the `java` launcher. Attaching sends `SIGQUIT`, which kills most pr
 not JVMs, so ajmx does not try. Check the PID with `ajmx ps`. For a JVM started by its own
 launcher, remove `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or
 [use `--url`](./connect/remote.md).
+
+As root, ajmx also fails this way for another user's JVM that `ps` does not list, when root lacks
+`CAP_SYS_PTRACE`, as in a Docker container by default. Root then cannot see which program the
+process runs. Run ajmx as the JVM's user and group, or give root `CAP_SYS_PTRACE`.
 
 A JVM that turns attach off fails with another message:
 
