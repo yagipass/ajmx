@@ -64,9 +64,9 @@ refuses a process that has no performance data file and does not run the `java` 
 `ATTACH_NOT_SUPPORTED`.
 
 An OpenJ9 JVM, such as IBM Semeru, also runs the `java` launcher, so ajmx attaches. OpenJ9 does
-not answer, and writes a `javacore` file into its working directory for each `SIGQUIT` instead.
-ajmx fails with `ATTACH_NOT_SUPPORTED` after about `--timeout`. Connect to it with
-[`--url`](./remote.md).
+not answer. With its default dump settings, it writes a `javacore` file into its working directory
+for each `SIGQUIT` instead. ajmx fails with `ATTACH_NOT_SUPPORTED` after about `--timeout`.
+Connect to it with [`--url`](./remote.md).
 
 ## JVMs that ps does not list
 

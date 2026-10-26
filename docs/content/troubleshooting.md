@@ -132,9 +132,10 @@ A process that does not answer the attach fails after about `--timeout`:
 }
 ```
 
-An OpenJ9 JVM, such as IBM Semeru, fails this way. It also writes a `javacore.*.txt` file into its
-working directory for each `SIGQUIT` from ajmx, several for each try. Delete them, and
-[turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and use `--url`.
+An OpenJ9 JVM, such as IBM Semeru, fails this way. With its default dump settings, it also writes
+a `javacore.*.txt` file into its working directory for each `SIGQUIT` from ajmx, so a try can
+leave several. Delete them, and [turn on remote JMX](./connect/remote.md#turn-on-remote-jmx) and
+use `--url`.
 
 ## --pid fails with ATTACH_PERMISSION_DENIED
 
