@@ -4,12 +4,17 @@ A-03	PASS	0	help is JSON and lists --tls and --tls-ca
 A-04	PASS	0	--help prints the usage like help
 A-05	INFO	0	dynamic libraries
 A-06	INFO	0	newest glibc symbol version required
-A-07[ubuntu:20.04]	FAIL	1	runs version and ps on ubuntu:20.04
-A-07[ubuntu:24.04]	PASS	0	runs version and ps on ubuntu:24.04
-A-07[debian:11]	FAIL	1	runs version and ps on debian:11
-A-07[rockylinux:8]	FAIL	1	runs version and ps on rockylinux:8
-A-07[amazonlinux:2]	FAIL	1	runs version and ps on amazonlinux:2
-A-07[gcr.io/distroless/base-debian12]	FAIL	127	runs version and ps on gcr.io/distroless/base-debian12
+A-07[ubuntu:22.04]	PASS	0	runs ps on ubuntu:22.04, which install.md lists as supported
+A-07[ubuntu:24.04]	PASS	0	runs ps on ubuntu:24.04, which install.md lists as supported
+A-07[debian:12]	PASS	0	runs ps on debian:12, which install.md lists as supported
+A-07[rockylinux:9]	PASS	0	runs ps on rockylinux:9, which install.md lists as supported
+A-07[amazonlinux:2023]	PASS	0	runs ps on amazonlinux:2023, which install.md lists as supported
+A-07b[ubuntu:20.04]	PASS	1	fails on ubuntu:20.04 with the glibc error install.md quotes
+A-07b[debian:11]	PASS	1	fails on debian:11 with the glibc error install.md quotes
+A-07b[rockylinux:8]	PASS	1	fails on rockylinux:8 with the glibc error install.md quotes
+A-07b[amazonlinux:2]	PASS	1	fails on amazonlinux:2 with the glibc error install.md quotes
+A-07c[gcr.io/distroless/base-debian12]	PASS	127	fails on gcr.io/distroless/base-debian12 for want of zlib, as install.md says
+A-07c[gcr.io/distroless/cc-debian12]	PASS	127	fails on gcr.io/distroless/cc-debian12 for want of zlib, as install.md says
 A-08[alpine]	INFO	255	runs on musl (alpine:3.20)
 B-01[jdk8]	PASS	0	ps lists the JVM (PID 1) with mainClass and displayName
 B-02[jdk8]	PASS	0	ping attaches and starts the local agent
@@ -49,9 +54,10 @@ B-07[jdk25]	PASS	0	Standard MBean write and read back
 B-10[corretto21]	PASS	0	Amazon Corretto 21: ping and read VmVendor
 B-11[zulu17]	PASS	0	Azul Zulu 17: read VmVendor
 B-12[jre21]	PASS	0	Temurin 21 JRE image: ping
-B-13[openj9]	PASS	3	OpenJ9 is refused rather than attached
+B-13[openj9]	PASS	3	OpenJ9 fails after about --timeout with the message in troubleshooting.md
 B-13b[openj9]	PASS	0	OpenJ9 JVM is still running after the attempt
-B-13c[openj9]	INFO	0	files OpenJ9 wrote in reply to SIGQUIT
+B-13c[openj9]	PASS	0	OpenJ9 wrote javacore files into its working directory, as the docs warn
+B-13d[openj9]	INFO	0	number of javacore files from one try
 B-14	PASS	0	-XX:-UsePerfData: ps does not list it
 B-14b	PASS	0	-XX:-UsePerfData: --pid still connects
 B-15	PASS	3	-XX:+DisableAttachMechanism fails with ATTACH_NOT_SUPPORTED
@@ -62,14 +68,25 @@ B-18	PASS	0	root connects to a JVM of user 1000
 B-18b	PASS	0	user 1000 connects to its own JVM
 B-18c	PASS	3	another user is refused with processUser
 B-18d	PASS	0	user 1000 lists its JVM with ps
-B-19	INFO	0	a JVM of a UID without a passwd entry (OpenShift style): ps as that UID
+B-18e	PASS	3	root without CAP_SYS_PTRACE, user 1000's JVM that ps does not list: refused
+B-18f	PASS	0	user 1000 still connects to it
+B-18g	PASS	0	root with CAP_SYS_PTRACE connects to it
+B-19	PASS	0	a JVM of a UID without a passwd entry is not listed by ps (docs)
 B-19b	PASS	0	a JVM of a UID without a passwd entry: --pid as that UID
-B-19c	FAIL	3	a JVM of a UID without a passwd entry: --pid as root
+B-19c	PASS	3	a JVM of a UID without a passwd entry: root without CAP_SYS_PTRACE is refused (docs)
+B-19d	PASS	0	a JVM of a UID without a passwd entry: root with CAP_SYS_PTRACE connects (docs)
 B-20	PASS	3	a jlink runtime without jdk.management.agent
 B-21	PASS	0	a JVM that is not PID 1 (pid 7)
-B-22	INFO	3	host ajmx --pid on a JVM inside a container (other PID namespace)
-B-22b	PASS	0	the container JVM is still running after B-22
+B-22	PASS	3	host --pid on a JVM in a container with its own network: refused at once
+B-22a	PASS	3	the same again
+B-22b	PASS	0	the JVM's local agent was not started
 B-22c	PASS	0	host ps does not list JVMs inside containers
+B-22d	PASS	3	ajmx in another container sharing the host's PID namespace: refused
+B-22e	PASS	0	ajmx in a container sharing the JVM's network and the host's PID namespace connects
+B-22f	PASS	0	ajmx inside the JVM's container still connects
+B-24	PASS	0	host --pid on a JVM in a container on the host network (--network host) connects
+B-25	PASS	0	host: ps lists a JVM on the host
+B-25b	PASS	0	host: --pid on a JVM on the host connects
 B-23	PASS	0	Tomcat: ps shows Bootstrap
 B-23b	PASS	0	Tomcat: search the thread pools
 B-23c	PASS	0	Tomcat: read maxThreads
@@ -172,7 +189,8 @@ F-04	PASS	0	--credentials-stdin over TLS
 F-05	PASS	3	without --tls-ca a self-signed certificate is not trusted
 F-06	PASS	3	--tls-ca with another certificate
 F-07	PASS	3	a certificate for another host name
-F-07b	FAIL	3	...with the reason troubleshooting.md lists for it
+F-07b	PASS	3	...with a reason the troubleshooting.md row matches (DNS name)
+F-07c	PASS	3	a certificate with only an IP address, by host name: the row matches 'No name matching'
 F-08	PASS	3	a registry without TLS (registry.ssl=false)
 F-09	PASS	3	a connection without TLS (ssl=false, registry.ssl=true)
 F-10	PASS	3	--tls against a JVM without any TLS
@@ -201,7 +219,3 @@ G-02a	INFO	0	for comparison: v0.1.0 ping
 G-02	INFO	3	for comparison: v0.1.0 reads the 100,000-level value
 G-02b	INFO	3	for comparison: v0.1.0 without --tls against an untrusted TLS connection
 G-03	INFO	0	newest glibc symbol version the released v0.1.0 requires
-G-04[ubuntu:20.04]	INFO	1	the released v0.1.0 binary on ubuntu:20.04
-G-04[debian:11]	INFO	1	the released v0.1.0 binary on debian:11
-G-04[rockylinux:8]	INFO	1	the released v0.1.0 binary on rockylinux:8
-G-04[amazonlinux:2]	INFO	1	the released v0.1.0 binary on amazonlinux:2

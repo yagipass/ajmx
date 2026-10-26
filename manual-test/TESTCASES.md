@@ -8,6 +8,8 @@ v0.1.0 から 0.2.0 までの変更のうち、CI (`./gradlew -Pnative check` �
 |---|---|
 | #88 `--tls` / `--tls-ca` / `TLS_FAILED` | docs の手順どおりに TLS の JVM を立てて繋がるか。信頼できない証明書、ホスト名違い、registry や接続が平文の JVM を拒否するか。平文の JVM に資格情報を送らないか。`--tls` なしの TLS 失敗が `CONNECTION_FAILED` (retryable) から `TLS_FAILED` に変わったこと |
 | #90 デシリアライズ制限 (`maxdepth=500;maxarray=16777216`) | 境界値 (500/501 段、16,777,216/16,777,217 要素) で読める/`UNSUPPORTED_TYPE` になるか。`--pid`/`--url`/TLS/`batch` のどの経路でも効くか。v0.1.0 との差 |
+| #101 別ネットワーク名前空間の JVM を `--pid` で拒否 | ホストや別コンテナからコンテナ内の JVM を指定すると、attach せずにすぐ `ATTACH_NOT_SUPPORTED` で拒否するか。同じ名前空間 (コンテナ内、`--network host`、ネットワーク共有、コンテナなしのホスト) では今までどおり繋がるか |
+| #96〜#99 ドキュメント (glibc と zlib、TLS の reason、OpenJ9、`CAP_SYS_PTRACE` のない root) | docs に書いた挙動、メッセージ、対応ディストリビューションが実際と合うか |
 | Maven から Gradle への移行 (#33) ほかビルドの変更 | `version` が 0.2.0 を返すか。ネイティブバイナリが動く Linux ディストリビューションと、リンクするライブラリ |
 | 既存機能 (回帰) | ターゲット JDK 8〜25 とベンダー違い、コンテナ、ユーザー違い、Tomcat 等の実アプリ、docs の例のコマンド |
 
@@ -24,7 +26,7 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 
 結果は `results.tsv` (ID・PASS/FAIL/INFO・終了コード・説明) と `details.log` (コマンドと出力) に出る。INFO は判定せず挙動を記録するだけのケース。
 
-使うイメージ: `eclipse-temurin:{8,11,17,21,25}-jdk`, `eclipse-temurin:21-jre`, `amazoncorretto:21`, `azul/zulu-openjdk:17`, `ibm-semeru-runtimes:open-21-jdk`, `tomcat:10.1-jdk21-temurin`, `ubuntu:{20.04,24.04}`, `debian:11`, `rockylinux:8`, `amazonlinux:2`, `alpine:3.20`, `gcr.io/distroless/base-debian12`, `nicolaka/netshoot`。ホストの 127.0.0.1:7199 を使う。
+使うイメージ: `eclipse-temurin:{8,11,17,21,25}-jdk`, `eclipse-temurin:21-jre`, `amazoncorretto:21`, `azul/zulu-openjdk:17`, `ibm-semeru-runtimes:open-21-jdk`, `tomcat:10.1-jdk21-temurin`, `ubuntu:{20.04,22.04,24.04}`, `debian:{11,12}`, `rockylinux:{8,9}`, `amazonlinux:{2,2023}`, `alpine:3.20`, `gcr.io/distroless/{base,cc}-debian12`, `nicolaka/netshoot`。ホストの 127.0.0.1:7199 を使う。B-25 はホストの `java` で TestTarget を動かす (なければ飛ばす)。
 
 ## A. バイナリ
 
@@ -36,7 +38,9 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 | A-04 | `--help` | `ajmx --help` | `ok: true` |
 | A-05 | リンクするライブラリ | `ldd ajmx` | libc, libz, vdso, ld-linux のみ (INFO) |
 | A-06 | 必要な glibc | `objdump -T` の `GLIBC_*` の最大 | 記録 (INFO) |
-| A-07 | ディストリビューション | ubuntu:20.04 / 24.04, debian:11, rockylinux:8, amazonlinux:2, distroless/base-debian12 で `ajmx ps` | 起動して空の一覧を返す |
+| A-07 | install.md が対応とする glibc 2.34 以上の環境 | ubuntu:22.04 / 24.04, debian:12, rockylinux:9, amazonlinux:2023 で `ajmx ps` | 起動して空の一覧を返す |
+| A-07b | install.md が動かないとする環境 | ubuntu:20.04, debian:11, rockylinux:8, amazonlinux:2 で `ajmx ps` | install.md どおり ``version `GLIBC_2.34' not found`` で失敗する |
+| A-07c | zlib のない distroless | distroless/base-debian12, cc-debian12 で `ajmx ps` | install.md どおり `libz.so.1` がなくて失敗する |
 | A-08 | musl | alpine:3.20 で `ajmx version` | 記録 (INFO)。glibc 前提なので動かないのが想定 |
 
 ## B. `--pid` (ローカル attach)
@@ -49,16 +53,19 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 | B-10 | Amazon Corretto 21 | `read Runtime VmVendor` | 成功 |
 | B-11 | Azul Zulu 17 | 同上 | 成功 |
 | B-12 | JRE イメージ (Temurin 21 JRE) | `ping` | 成功 |
-| B-13 | OpenJ9 (Semeru 21) | `--timeout 5s ping`、その後プロセスの生存確認、作られたファイルの確認 | `ATTACH_NOT_SUPPORTED` (exit 3)、JVM は生きている。SIGQUIT で書かれるファイルを記録 (INFO) |
+| B-13 | OpenJ9 (Semeru 21) | `--timeout 5s ping`、その後プロセスの生存確認、作業ディレクトリのファイルの確認 | troubleshooting.md の `The process did not respond to attach ...` で `ATTACH_NOT_SUPPORTED` (exit 3, `timeoutMs: 5000`)、5 秒ほどかかる。JVM は生きている。docs の警告どおり `javacore.*.txt` が書かれる (個数は INFO) |
 | B-14 | `-XX:-UsePerfData` | `ps`、`--pid 1 ping` | `ps` に出ない。`--pid` は繋がる |
 | B-15 | `-XX:+DisableAttachMechanism` | `--pid 1 ping` | `ATTACH_NOT_SUPPORTED`、message `The JVM disables the attach mechanism` |
 | B-16 | JVM でないプロセス (`sleep`) | `--pid <sleep>` | `ATTACH_NOT_SUPPORTED`、`sleep` は生きている (SIGQUIT を送っていない) |
 | B-17 | 存在しない PID | `--pid 999999` | `PROCESS_NOT_FOUND` (exit 3) |
-| B-18 | JVM が uid 1000 | root / uid 1000 / uid 1001 から `ping`、uid 1000 から `ps` | root と uid 1000 は成功。uid 1001 は `ATTACH_PERMISSION_DENIED` (`processUser` あり) |
-| B-19 | passwd にない UID (OpenShift 風、`-u 12345:0`) | 同じ UID から `ps` (INFO) と `ping`、root から `ping` | `ping` は両方成功 (docs: root は任意のユーザーの JVM に繋がる) |
+| B-18〜B-18d | JVM が uid 1000 | root / uid 1000 / uid 1001 から `ping`、uid 1000 から `ps` | root と uid 1000 は成功。uid 1001 は `ATTACH_PERMISSION_DENIED` (`processUser` あり) |
+| B-18e〜B-18g | uid 1000 の JVM で `-XX:-UsePerfData` (`ps` に出ない) | `CAP_SYS_PTRACE` のない root、uid 1000、`--cap-add SYS_PTRACE` したコンテナの root から `ping` | docs (#98) どおり、`CAP_SYS_PTRACE` のない root だけ `ATTACH_NOT_SUPPORTED` |
+| B-19〜B-19d | passwd にない UID (OpenShift 風、`-u 12345:0`) | その UID から `ps` と `ping`、root から `ping` (`CAP_SYS_PTRACE` なし / あり) | docs どおり `ps` に出ない。同じ UID と `CAP_SYS_PTRACE` のある root は繋がる。ない root は `ATTACH_NOT_SUPPORTED` |
 | B-20 | jlink で `jdk.management.agent` を抜いたランタイム | `ping` | `LOCAL_JMX_UNAVAILABLE`、`reason` に `jdk.management.agent` |
 | B-21 | PID 1 でない JVM | `--pid <子プロセス>` | 成功 |
-| B-22 | ホストからコンテナ内 JVM を `--pid <ホスト側 PID>` | ホストの ajmx で `ping`、その後コンテナ内から `ping`、ホストで `ps` | 挙動を記録 (INFO)。JVM は生きている。ホストの `ps` にコンテナ内 JVM は出ない |
+| B-22〜B-22f | 別のネットワーク名前空間の JVM (#101) | 新しいコンテナの JVM に、ホストから `--pid <ホスト側 PID>` を 2 回、`jcmd 1 ManagementAgent.status`、ホストで `ps`、`--pid host` の別コンテナから、`--pid host` で JVM のネットワークを共有するコンテナから、コンテナ内から | ホストと別コンテナからは `ATTACH_NOT_SUPPORTED` (`another network namespace`、retryable でない、1 秒未満)。agent は disabled のまま。ネットワークを共有すれば繋がる。コンテナ内からは繋がる |
+| B-24 | `--network host` のコンテナの JVM | ホストから `--pid <ホスト側 PID>` | 繋がる (同じネットワーク名前空間) |
+| B-25 | コンテナを使わないホスト上の JVM | ホストで `ps` と `--pid` で `read` | 一覧に出て、読める (#101 の回帰確認) |
 | B-23 | 実アプリ (Tomcat 10.1) | `ps`、`search 'Catalina:type=ThreadPool,*'`、`read maxThreads`、`write maxThreads=150` して読み戻し、`describe Catalina:type=Server` | すべて成功 |
 
 ## C. コマンド・値・出力の制限 (JDK 21, `--pid`)
@@ -128,7 +135,8 @@ docs (connect/remote.md の TLS) の手順で証明書と `ssl.config.file` を�
 | F-01〜F-04 | docs の手順で `--tls --tls-ca`: ping、read、write、invoke、batch、`--credentials-stdin` | 成功 |
 | F-05 | `--tls-ca` なしで自己署名 | `TLS_FAILED`、reason が `(certificate_unknown) PKIX path building failed` で始まる、retryable でない |
 | F-06 | 別の証明書を `--tls-ca` に | `TLS_FAILED` (PKIX) |
-| F-07 / F-07b | 別ホスト名の証明書 | `TLS_FAILED`。F-07b は reason が troubleshooting.md の表どおり `(certificate_unknown) No subject alternative names matching` で始まるか |
+| F-07 / F-07b | 別ホスト名 (DNS 名の SAN) の証明書 | `TLS_FAILED`。reason が troubleshooting.md の表 (#97) の `(certificate_unknown) No subject alternative` か `(certificate_unknown) No name matching` で始まる |
+| F-07c | IP アドレスの SAN だけの証明書にホスト名で接続 | `TLS_FAILED`、reason が `(certificate_unknown) No name matching` で始まる |
 | F-08 | registry が平文 (`registry.ssl=false`) | `TLS_FAILED`、`Remote host terminated the handshake` |
 | F-09 | 接続が平文 (`ssl=false`, `registry.ssl=true`) | `TLS_FAILED`、`Expecting a` で始まる |
 | F-10 | TLS なしの JVM に `--tls` | `TLS_FAILED` |
@@ -139,7 +147,7 @@ docs (connect/remote.md の TLS) の手順で証明書と `ssl.config.file` を�
 | F-16 | `/jndi/rmi://` でない URL と `--tls` | `INVALID_ARGUMENT` |
 | F-17 | JDK 8 の JVM に TLS | 成功 |
 | F-18 | `need.client.auth=true` (未対応と docs にある) | 記録 (INFO) |
-| F-19 | 証明書にない IP アドレスで接続 | `TLS_FAILED` |
+| F-19 | 証明書にない IP アドレスで接続 | `TLS_FAILED`、reason が troubleshooting.md の同じ行に合う |
 | F-20 / F-21 | TLS 上で誤ったパスワード / viewer の write | `AUTH_FAILED` |
 | F-22 | TLS 上で 501 段の値 | `UNSUPPORTED_TYPE` |
 
@@ -150,7 +158,7 @@ docs (connect/remote.md の TLS) の手順で証明書と `ssl.config.file` を�
 | G-01 | `install.sh -b <dir> v0.1.0` | インストールされる |
 | G-01b / G-01c | (G-01 ができない環境の代わり) v0.1.0 のアセットと `.sha256` を直接取得して検証、実行 | チェックサム OK、`version == "0.1.0"` |
 | G-02a / G-02 / G-02b | v0.1.0 で ping、100,000 段の値、`--tls` なしの TLS 失敗 | 記録 (INFO)。0.2.0 との差を見る |
-| G-03 / G-04 | リリース済み v0.1.0 (CI ビルド) が必要とする glibc と、古いディストリビューションでの起動 | 記録 (INFO)。A-06/A-07 が既存の制約か回帰かを判断する |
+| G-03 | リリース済み v0.1.0 (CI ビルド) が必要とする glibc | 記録 (INFO)。A-06 と比べる |
 
 ## H. リリース後に手で確認すること (Docker では実行しない)
 

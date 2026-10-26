@@ -54,6 +54,8 @@ docker run --rm -v "$WORK/conf:/conf" -w /conf "$T21" sh -ec '
   pem jmx wrong.p12 wrong.pem
   pair ca ajmx-test-ca "-ext bc:c" ca.p12
   pem ca ca.p12 ca.pem
+  pair jmx 127.0.0.1 "-ext san=ip:127.0.0.1" ipcert.p12
+  pem jmx ipcert.p12 ipcert.pem
   pair jmx tls-ca "" server-ca.p12
   keytool -certreq -alias jmx -keystore server-ca.p12 -storepass $P -file server-ca.csr 2>/dev/null
   keytool -gencert -alias ca -keystore ca.p12 -storepass $P -infile server-ca.csr -outfile server-ca.crt \
@@ -63,7 +65,7 @@ docker run --rm -v "$WORK/conf:/conf" -w /conf "$T21" sh -ec '
   cat wrong.pem ca.pem > bundle.pem
   : > empty.pem
   echo "not a certificate" > notpem.pem
-  for k in tls wrong server-ca; do
+  for k in tls wrong ipcert server-ca; do
     printf "javax.net.ssl.keyStore=/ajmx/conf/%s.p12\njavax.net.ssl.keyStorePassword=%s\n" $k $P > $k.ssl
   done
   printf "operator s3cret-pw\nviewer v1ew-pw\n" > jmxremote.password
@@ -85,8 +87,17 @@ if section A; then
   check A-04 "--help prints the usage like help" 0 '.ok' -- "$BIN" --help
   info A-05 "dynamic libraries" -- ldd "$BIN"
   info A-06 "newest glibc symbol version required" -- sh -c "objdump -T '$BIN' | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1"
-  for img in ubuntu:20.04 ubuntu:24.04 debian:11 rockylinux:8 amazonlinux:2 gcr.io/distroless/base-debian12; do
-    check "A-07[$img]" "runs version and ps on $img" 0 '.ok and .result.returned == 0' -- \
+  # docs/content/install.md: glibc 2.34 or later and zlib.
+  for img in ubuntu:22.04 ubuntu:24.04 debian:12 rockylinux:9 amazonlinux:2023; do
+    check "A-07[$img]" "runs ps on $img, which install.md lists as supported" 0 '.ok and .result.returned == 0' -- \
+      docker run --rm -v "$BIN:$BIN_IN:ro" --entrypoint "$BIN_IN" "$img" ps
+  done
+  for img in ubuntu:20.04 debian:11 rockylinux:8 amazonlinux:2; do
+    check "A-07b[$img]" "fails on $img with the glibc error install.md quotes" nz "re:version .GLIBC_2.34' not found" -- \
+      docker run --rm -v "$BIN:$BIN_IN:ro" --entrypoint "$BIN_IN" "$img" ps
+  done
+  for img in gcr.io/distroless/base-debian12 gcr.io/distroless/cc-debian12; do
+    check "A-07c[$img]" "fails on $img for want of zlib, as install.md says" nz 're:libz\.so\.1' -- \
       docker run --rm -v "$BIN:$BIN_IN:ro" --entrypoint "$BIN_IN" "$img" ps
   done
   info "A-08[alpine]" "runs on musl (alpine:3.20)" -- docker run --rm -v "$BIN:$BIN_IN:ro" alpine:3.20 "$BIN_IN" version
@@ -127,10 +138,14 @@ EOF
   docker rm -f "${P}corretto" "${P}zulu" "${P}jre" >/dev/null 2>&1
 
   if target openj9 ibm-semeru-runtimes:open-21-jdk --; then
-    check "B-13[openj9]" "OpenJ9 is refused rather than attached" 3 '.error.code == "ATTACH_NOT_SUPPORTED"' -- \
+    check "B-13[openj9]" "OpenJ9 fails after about --timeout with the message in troubleshooting.md" 3 \
+      '.error.code == "ATTACH_NOT_SUPPORTED" and (.error.retryable | not) and .error.details.timeoutMs == 5000 and .durationMs >= 4000
+       and .error.message == "The process did not respond to attach (it may not be a HotSpot JVM, or may disable attach)"' -- \
       ax openj9 --pid 1 --timeout 5s ping
     check "B-13b[openj9]" "OpenJ9 JVM is still running after the attempt" 0 - -- alive openj9 1
-    info "B-13c[openj9]" "files OpenJ9 wrote in reply to SIGQUIT" -- docker exec "${P}openj9" sh -c 'ls / /tmp | grep -i -E "javacore|core" || true'
+    check "B-13c[openj9]" "OpenJ9 wrote javacore files into its working directory, as the docs warn" 0 're:javacore\..*\.txt' -- \
+      docker exec "${P}openj9" sh -c 'ls "$(readlink /proc/1/cwd)"'
+    info "B-13d[openj9]" "number of javacore files from one try" -- docker exec "${P}openj9" sh -c 'ls "$(readlink /proc/1/cwd)" | grep -c "^javacore"'
     docker rm -f "${P}openj9" >/dev/null
   fi
 
@@ -160,11 +175,28 @@ EOF
     check B-18d "user 1000 lists its JVM with ps" 0 '.result.items | any(.pid == 1)' -- axo user "-u 1000:1000" ps
     docker rm -f "${P}user" >/dev/null
   fi
+  # docs (#98): root without CAP_SYS_PTRACE reaches another user's JVM only if ps lists it.
+  if target usernoperf "$T21" -u 1000:1000 -- -XX:-UsePerfData; then
+    check B-18e "root without CAP_SYS_PTRACE, user 1000's JVM that ps does not list: refused" 3 \
+      '.error.code == "ATTACH_NOT_SUPPORTED"' -- axo usernoperf "-u 0" --pid 1 ping
+    check B-18f "user 1000 still connects to it" 0 '.result.connected' -- axo usernoperf "-u 1000:1000" --pid 1 ping
+    docker rm -f "${P}usernoperf" >/dev/null
+  fi
+  if target usernoperfcap "$T21" -u 1000:1000 --cap-add SYS_PTRACE -- -XX:-UsePerfData; then
+    check B-18g "root with CAP_SYS_PTRACE connects to it" 0 '.result.connected' -- axo usernoperfcap "-u 0" --pid 1 ping
+    docker rm -f "${P}usernoperfcap" >/dev/null
+  fi
   if target anyuid "$T21" -u 12345:0 --; then
-    info B-19 "a JVM of a UID without a passwd entry (OpenShift style): ps as that UID" -- axo anyuid "-u 12345:0" ps
+    check B-19 "a JVM of a UID without a passwd entry is not listed by ps (docs)" 0 '.result.returned == 0' -- axo anyuid "-u 12345:0" ps
     check B-19b "a JVM of a UID without a passwd entry: --pid as that UID" 0 '.result.connected' -- axo anyuid "-u 12345:0" --pid 1 ping
-    check B-19c "a JVM of a UID without a passwd entry: --pid as root" 0 '.result.connected' -- axo anyuid "-u 0" --pid 1 ping
+    check B-19c "a JVM of a UID without a passwd entry: root without CAP_SYS_PTRACE is refused (docs)" 3 \
+      '.error.code == "ATTACH_NOT_SUPPORTED"' -- axo anyuid "-u 0" --pid 1 ping
     docker rm -f "${P}anyuid" >/dev/null
+  fi
+  if target anyuidcap "$T21" -u 12345:0 --cap-add SYS_PTRACE --; then
+    check B-19d "a JVM of a UID without a passwd entry: root with CAP_SYS_PTRACE connects (docs)" 0 '.result.connected' -- \
+      axo anyuidcap "-u 0" --pid 1 ping
+    docker rm -f "${P}anyuidcap" >/dev/null
   fi
 
   if start jlink "$T21" -- sh -c "jlink --add-modules java.base,java.management,java.xml --output /tmp/rt >/dev/null &&
@@ -180,10 +212,41 @@ EOF
     docker rm -f "${P}child" >/dev/null
   fi
 
-  HOST_PID=$(docker inspect -f '{{.State.Pid}}' "${P}jdk21")
-  info B-22 "host ajmx --pid on a JVM inside a container (other PID namespace)" -- "$BIN" --pid "$HOST_PID" --timeout 5s ping
-  check B-22b "the container JVM is still running after B-22" 0 '.result.connected' -- ax jdk21 --pid 1 ping
-  check B-22c "host ps does not list JVMs inside containers" 0 '.result.items | all(.pid != '"$HOST_PID"')' -- "$BIN" ps
+  # #101: --pid refuses a JVM in another network namespace before it attaches.
+  if target netns "$T21" --; then
+    HOST_PID=$(docker inspect -f '{{.State.Pid}}' "${P}netns")
+    NETNS_REFUSED='.error.code == "ATTACH_NOT_SUPPORTED" and (.error.retryable | not) and .durationMs < 1000
+      and (.error.message | contains("another network namespace"))'
+    check B-22 "host --pid on a JVM in a container with its own network: refused at once" 3 "$NETNS_REFUSED" -- \
+      "$BIN" --pid "$HOST_PID" ping
+    check B-22a "the same again" 3 "$NETNS_REFUSED" -- "$BIN" --pid "$HOST_PID" ping
+    check B-22b "the JVM's local agent was not started" 0 're:Agent: disabled' -- docker exec "${P}netns" jcmd 1 ManagementAgent.status
+    check B-22c "host ps does not list JVMs inside containers" 0 '.result.items | all(.pid != '"$HOST_PID"')' -- "$BIN" ps
+    check B-22d "ajmx in another container sharing the host's PID namespace: refused" 3 "$NETNS_REFUSED" -- \
+      docker run --rm --pid host --network "$NET" -v "$BIN:$BIN_IN:ro" ubuntu:24.04 "$BIN_IN" --pid "$HOST_PID" ping
+    check B-22e "ajmx in a container sharing the JVM's network and the host's PID namespace connects" 0 '.result.connected' -- \
+      docker run --rm --pid host --network "container:${P}netns" -v "$BIN:$BIN_IN:ro" ubuntu:24.04 "$BIN_IN" --pid "$HOST_PID" ping
+    check B-22f "ajmx inside the JVM's container still connects" 0 '.result.connected' -- ax netns --pid 1 ping
+    docker rm -f "${P}netns" >/dev/null
+  fi
+  docker rm -f "${P}hostnet" >/dev/null 2>&1
+  if docker run -d --name "${P}hostnet" --network host -v "$CLASSES:$CLASSES_IN:ro" "$T21" java -cp "$CLASSES_IN" "$MAIN" >/dev/null &&
+    wait_ready hostnet; then
+    check B-24 "host --pid on a JVM in a container on the host network (--network host) connects" 0 '.result.connected' -- \
+      "$BIN" --pid "$(docker inspect -f '{{.State.Pid}}' "${P}hostnet")" ping
+    docker rm -f "${P}hostnet" >/dev/null
+  fi
+  # A JVM on the host itself, outside any container.
+  if command -v java >/dev/null; then
+    env -u JAVA_TOOL_OPTIONS java -cp "$CLASSES" "$MAIN" >"$WORK/host-jvm.log" 2>&1 &
+    HOST_JVM=$!
+    for _ in $(seq 1 100); do grep -q '^READY' "$WORK/host-jvm.log" && break; sleep 0.2; done
+    check B-25 "host: ps lists a JVM on the host" 0 ".result.items | any(.pid == $HOST_JVM and .displayName == \"TestTarget\")" -- "$BIN" ps
+    check B-25b "host: --pid on a JVM on the host connects" 0 '.result.attributes.MaxConnections != null' -- \
+      "$BIN" --pid "$HOST_JVM" read "$CACHE" MaxConnections
+    kill "$HOST_JVM" 2>/dev/null
+    wait "$HOST_JVM" 2>/dev/null
+  fi
 
   docker rm -f "${P}tomcat" >/dev/null 2>&1
   docker run -d --name "${P}tomcat" --network "$NET" -v "$BIN:$BIN_IN:ro" tomcat:10.1-jdk21-temurin >/dev/null
@@ -393,6 +456,7 @@ if section F; then
   tls tls "$T21" true true tls
   tls tls8 "$T8" true true tls
   tls tls-wrong "$T21" true true wrong
+  tls tls-ipcert "$T21" true true ipcert
   # With TLS for only one of them, the registry and the connection cannot share a port.
   tls tls-noreg "$T21" true false tls -Dcom.sun.management.jmxremote.rmi.port=7200
   tls tls-plainconn "$T21" false true tls -Dcom.sun.management.jmxremote.rmi.port=7200
@@ -423,9 +487,13 @@ EOF
   check F-07 "a certificate for another host name" 3 \
     '.error.code == "TLS_FAILED" and (.error.details.reason | test("No subject alternative"))' -- \
     op --url "$(url tls-wrong)" --tls --tls-ca $CA/wrong.pem ping
-  check F-07b "...with the reason troubleshooting.md lists for it" 3 \
-    '.error.details.reason | startswith("(certificate_unknown) No subject alternative names matching")' -- \
-    op --url "$(url tls-wrong)" --tls --tls-ca $CA/wrong.pem ping
+  # The host name row of the TLS_FAILED table in troubleshooting.md (#97).
+  HOSTNAME_ROW='(.error.details.reason | startswith("(certificate_unknown) No subject alternative") or startswith("(certificate_unknown) No name matching"))'
+  check F-07b "...with a reason the troubleshooting.md row matches (DNS name)" 3 \
+    ".error.code == \"TLS_FAILED\" and $HOSTNAME_ROW" -- op --url "$(url tls-wrong)" --tls --tls-ca $CA/wrong.pem ping
+  check F-07c "a certificate with only an IP address, by host name: the row matches 'No name matching'" 3 \
+    ".error.code == \"TLS_FAILED\" and $HOSTNAME_ROW and (.error.details.reason | startswith(\"(certificate_unknown) No name matching\"))" -- \
+    op --url "$(url tls-ipcert)" --tls --tls-ca $CA/ipcert.pem ping
   check F-08 "a registry without TLS (registry.ssl=false)" 3 '.error.code == "TLS_FAILED" and .error.details.reason == "Remote host terminated the handshake"' -- \
     op --url "$(url tls-noreg)" --tls --tls-ca $CA/tls.pem ping
   check F-09 "a connection without TLS (ssl=false, registry.ssl=true)" 3 '.error.code == "TLS_FAILED" and (.error.details.reason | startswith("Expecting a"))' -- \
@@ -461,7 +529,7 @@ EOF
   check F-17 "--tls on a JDK 8 JVM" 0 '.result.attributes.SpecVersion == "1.8"' -- op --url "$(url tls8)" --tls --tls-ca $CA/tls.pem read java.lang:type=Runtime SpecVersion
   info F-18 "need.client.auth=true (documented as unsupported)" -- op --url "$(url tls-clientauth)" --tls --tls-ca $CA/tls.pem ping
   TLS_IP=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}" "${P}tls")
-  check F-19 "an IP address in the URL that the certificate does not name" 3 '.error.code == "TLS_FAILED"' -- \
+  check F-19 "an IP address in the URL that the certificate does not name" 3 ".error.code == \"TLS_FAILED\" and $HOSTNAME_ROW" -- \
     op --url "$(url "$TLS_IP")" --tls --tls-ca $CA/tls.pem ping
   check F-20 "a wrong password over TLS is AUTH_FAILED" 3 '.error.code == "AUTH_FAILED"' -- \
     axo client "-e JMX_USERNAME=operator -e JMX_PASSWORD=wrong" --url "$(url tls)" --tls --tls-ca $CA/tls.pem ping
@@ -495,10 +563,6 @@ if section G; then
   if [[ -x $WORK/install/ajmx ]]; then
     info G-03 "newest glibc symbol version the released v0.1.0 requires" -- \
       sh -c "objdump -T '$WORK/install/ajmx' | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1"
-    for img in ubuntu:20.04 debian:11 rockylinux:8 amazonlinux:2; do
-      info "G-04[$img]" "the released v0.1.0 binary on $img" -- \
-        docker run --rm -v "$WORK/install/ajmx:$BIN_IN:ro" --entrypoint "$BIN_IN" "$img" version
-    done
   fi
 fi
 

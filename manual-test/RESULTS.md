@@ -1,74 +1,65 @@
-# ajmx 0.2.0 手動テスト結果 (2026-10-26)
+# ajmx 0.2.0 手動テスト結果 (2026-10-26, 2 回目)
 
 [TESTCASES.md](TESTCASES.md) のケースを `run.sh` で Docker 上で実行した結果。生の出力は [results/results.tsv](results/results.tsv) と [results/details.log](results/details.log)。
 
-**207 件: PASS 184 / FAIL 8 / INFO 15。** 新機能の TLS (#88) とデシリアライズ制限 (#90) はすべて期待どおりに動いた。FAIL 8 件のうち 0.2.0 で入った回帰はない。ドキュメントのずれ 1 件 (F-07b)、v0.1.0 からある制約 6 件 (A-07 ×5, B-19c)、この環境では実行できなかったもの 1 件 (G-01)。
+**221 件: PASS 211 / FAIL 1 / INFO 9。** 製品の不具合による FAIL はない。FAIL の 1 件 (G-01 install.sh) はこの環境のプロキシ制限で実行できなかったもの。
+
+## 判定
+
+0.2.0 はリリースしてよい。
+
+- TLS (#88)、デシリアライズ制限 (#90)、別ネットワーク名前空間の拒否 (#101) は期待どおりに動き、既存機能の回帰もない。
+- 1 回目で見つかった点は、#96〜#99 で docs に書いた挙動、メッセージ、対応ディストリビューションが実際と一致し、#101 で修正された。
+- 残っているのは、リリースノートに `TLS_FAILED` の挙動変更を書くことと、リリース後の確認 (TESTCASES.md の H)。
 
 ## 環境
 
 | 項目 | 値 |
 |---|---|
-| テスト対象 | `origin/tagpr-from-v0.1.0` (main `12ded42` + `version=0.2.0`) を `./gradlew :cli:nativeCompile :it:classes` でビルドしたもの |
+| テスト対象 | リリース PR (yagipass/ajmx#23) の head `a5c8348` (main `dbc9d76` + `version=0.2.0`) を `./gradlew :cli:nativeCompile :it:classes` でビルドしたもの |
 | ビルド環境 | `ghcr.io/graalvm/native-image-community:25` (GraalVM CE 25.0.2, Oracle Linux 9)。CI は ubuntu-latest と setup-graalvm |
-| ホスト | Linux 6.18 x86_64, Docker 29.9.2 |
+| ホスト | Linux 6.18 x86_64, Docker 29.9.2, ホストの JVM は OpenJDK 21.0.12 (B-25) |
 | ターゲット JVM | Temurin 1.8.0_504 / 11.0.32.1 / 17.0.20.1 / 21.0.12.1 / 25.0.4.1, Temurin 21 JRE, Corretto 21.0.13, Zulu 17.0.20.1, Semeru (OpenJ9) 21.0.12, Tomcat 10.1.61 (Temurin 21) |
 
-CI の成果物 (`ajmx-linux-amd64`) はこの環境のプロキシが Azure Blob への接続を拒否したため取得できず、手元でビルドしたバイナリを使った。glibc の要件は、リリース済みの v0.1.0 (CI ビルド) と同じであることを G-03 で確かめた。
+CI の成果物はこの環境のプロキシが取得を拒否するため、手元でビルドしたバイナリを使った。glibc の要件 (`GLIBC_2.34`) は、リリース済みの v0.1.0 (CI ビルド) と同じ (A-06, G-03)。
 
-## 見つかったこと
+## 1 回目 (main `12ded42`) からの変化
 
-### 1. glibc 2.34 未満のディストリビューションで動かない (A-07, G-03, G-04) — 既存、ドキュメント化を推奨
+| 1 回目の指摘 | 対応 | 今回の確認 |
+|---|---|---|
+| glibc 2.34 未満と distroless で起動しない | #96 で docs に要件と環境を記載 | install.md が対応とする ubuntu:22.04 / 24.04, debian:12, rockylinux:9, amazonlinux:2023 で起動する (A-07)。動かないとする 4 つは docs が引用する ``version `GLIBC_2.34' not found`` で失敗し (A-07b)、distroless base / cc は `libz.so.1` がなく失敗する (A-07c) |
+| troubleshooting.md のホスト名不一致の reason が DNS 名の場合と合わない | #97 で表の行を拡張 | DNS 名の SAN (`No subject alternative DNS name matching`)、IP の SAN だけの証明書にホスト名で接続 (`No name matching`)、IP アドレスで接続 (`No subject alternative names matching IP address`) のどれも表の行に合う (F-07b, F-07c, F-19) |
+| OpenJ9 で javacore が書かれる | #99 で docs に記載 | troubleshooting.md のメッセージどおり、`--timeout 5s` に対して 4.5 秒で `ATTACH_NOT_SUPPORTED`。JVM は生きていて、javacore が 4 つ書かれた (B-13〜B-13d) |
+| `CAP_SYS_PTRACE` のない root が passwd にない UID の JVM に繋がらない | #98 で docs に記載 | docs どおり、`ps` に出ない他ユーザーの JVM (passwd にない UID、`-XX:-UsePerfData`) には `CAP_SYS_PTRACE` のない root だけが `ATTACH_NOT_SUPPORTED` になり、`--cap-add SYS_PTRACE` した root と同じ UID は繋がる (B-18e〜B-18g, B-19〜B-19d) |
+| ホストからコンテナ内 JVM に `--pid` すると agent を起動したうえで retryable な `CONNECTION_FAILED` | #101 で attach 前に拒否 | 下記 |
 
-0.2.0 のバイナリは `GLIBC_2.34` を要求し、ubuntu:20.04, debian:11, rockylinux:8 (RHEL 8 系), amazonlinux:2 で起動しない。
+### #101 (別ネットワーク名前空間の拒否) の確認
 
-```text
-/ajmx/ajmx: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by /ajmx/ajmx)
-```
+| ajmx | JVM | 結果 |
+|---|---|---|
+| ホスト | 自分のネットワークを持つコンテナ | `ATTACH_NOT_SUPPORTED` (`The JVM runs in another network namespace ...`)、retryable でない、1〜2 ms。2 回目も同じ。`jcmd 1 ManagementAgent.status` は `Agent: disabled` のまま (B-22〜B-22b) |
+| 別コンテナ (`--pid host`、別ネットワーク) | 同上 | 同じく拒否 (B-22d) |
+| 別コンテナ (`--pid host`、JVM のネットワークを共有) | 同上 | 繋がる (B-22e) |
+| 同じコンテナ (`docker exec`) | 同上 | 繋がる (B-22f, B 全般) |
+| ホスト | `--network host` のコンテナ | 繋がる (B-24) |
+| ホスト | ホスト上の JVM (コンテナなし) | `ps` に出て、`--pid` で読める (B-25) |
 
-リリース済みの v0.1.0 も `GLIBC_2.34` を要求し、同じ 4 つで起動しないので回帰ではない。README と docs/content/install.md は対応環境を「Linux の x86_64 / arm64」としか書いていない。「glibc 2.34 以上 (Ubuntu 22.04+, Debian 12+, RHEL 9+, Amazon Linux 2023)」と書くか、古い glibc でビルドするかを検討したい。
-
-`gcr.io/distroless/base-debian12` では `libz.so.1` がなく起動しない (exit 127)。alpine (musl) も起動しない (A-08、想定どおり)。
-
-### 2. troubleshooting.md のホスト名不一致の `reason` が実際と違う (F-07b) — ドキュメント修正
-
-証明書の SAN にない DNS 名で接続したときの `reason`:
-
-```text
-(certificate_unknown) No subject alternative DNS name matching tls-wrong found.
-```
-
-troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject alternative names matching` で始まる」としている。この形になるのは IP アドレスで接続したとき (F-19: `No subject alternative names matching IP address 172.18.0.3 found`) だけ。表を「`(certificate_unknown) No subject alternative` で始まる」にすれば両方に合う。
-
-### 3. root が passwd にない UID の JVM に `--pid` で繋がらない (B-19c) — 既存、軽微
-
-`docker run -u 12345:0` (OpenShift 風) の JVM に、コンテナ内の root から `--pid 1 ping` すると `ATTACH_NOT_SUPPORTED` (`not recognizable as a HotSpot JVM`) になる。同じ UID からは繋がる (B-19b)。
-
-- passwd にない UID の JVM は `hsperfdata_*` を作らないので、ajmx は `/proc/1/exe` で `java` ランチャーかを見る。
-- Docker 既定のコンテナ内 root には `CAP_SYS_PTRACE` がなく、別 UID のプロセスの `/proc/<pid>/exe` を読めない。
-- docs は「Linux では root は任意のユーザーの JVM に繋がる」としている。同じ UID で実行すれば回避できる。同じ理由で、その JVM は `ps` にも出ない (B-19)。Limitations に一文あるとよい。
-
-### 4. その他の挙動 (INFO)
+## INFO の内容
 
 | ID | 内容 |
 |---|---|
-| B-13c | OpenJ9 は `ATTACH_NOT_SUPPORTED` で拒否され、JVM も落ちない。ただし `java` ランチャーで動くので「HotSpot らしいか」の判定を通って SIGQUIT が送られ、1 回の試行で `javacore.*.txt` が 4 つ作業ディレクトリに書かれる。docs は HotSpot のみ対応としているので仕様の範囲内だが、Limitations に副作用として書くか、`/proc/<pid>/maps` の `libj9vm` などで事前に弾く余地がある |
-| B-22 | ホストから `--pid <コンテナ JVM のホスト側 PID>` は、別 PID 名前空間でも attach 自体は成功し、コンテナ内の JVM の local agent を起動する (`jcmd 1 ManagementAgent.status` が disabled から enabled に変わることを確認)。agent のアドレスはコンテナ内の 127.0.0.1 なのでホストからは届かず、`CONNECTION_FAILED` (`retryable: true`) になる。再試行しても成功せず、agent は JVM の再起動まで残る。docs に「コンテナ内の JVM には `docker exec` で ajmx を実行するか `--url` を使う」とあるとよい。PID 名前空間が違うときに attach 前に止める余地もある |
+| A-05 / A-06 | `libz.so.1` と `libc.so.6` にリンクし、`GLIBC_2.34` まで要求する。v0.1.0 も同じ (G-03) |
+| A-08 | alpine (musl) では起動しない (`exec ... no such file or directory`)。glibc 前提なので想定どおり |
+| B-13d | OpenJ9 に 1 回試すと javacore が 4 つ書かれた |
 | F-18 | `need.client.auth=true` は `TLS_FAILED` (`(certificate_required) Received fatal alert: certificate_required`)。Limitations どおり |
-| G-02a / G-02 | v0.1.0 で 100,000 段の値を読むと `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `UNSUPPORTED_TYPE` (retryable でない) になり、#90 の修正を確認 |
-| G-02b | v0.1.0 で `--tls` なしの信頼できない TLS 接続は `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `TLS_FAILED` (F-12)。リトライするスクリプトに影響する挙動変更なので、リリースノートで触れたい |
+| G-02a / G-02 | v0.1.0 で 100,000 段の値を読むと `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `UNSUPPORTED_TYPE` (D-03) |
+| G-02b | v0.1.0 で `--tls` なしの信頼できない TLS 接続は `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `TLS_FAILED` (`retryable: false`、F-12)。リリースノートに書く挙動変更 |
 
-### 5. この環境で実行できなかったもの
+## この環境で実行できなかったもの
 
-- **G-01 install.sh**: プロキシが `https://github.com/yagipass/ajmx/releases/v0.1.0` (Accept: application/json) を 403 にするため、タグの解決で止まる。代わりにアセットと `.sha256` を直接取得し、チェックサムと実行を確かめた (G-01b, G-01c)。install.sh 自体は v0.1.0 から変わっていない。リリース後に H-01, H-02 で確認する。
-- TESTCASES.md の H (Homebrew, Nix, attestation, macOS, arm64, docs サイト) はリリース後の手動確認。
-
-## テストハーネス側で直したもの
-
-最初の実行で FAIL になり、原因がハーネスにあったもの。製品の問題ではない。
-
-- C-43: `--limit` が先に配列を 100 件に切り、`--max-bytes 2048` に収まっていた。400 KB の文字列を使うように変更。
-- F-08, F-09, F-12: `ssl` と `registry.ssl` が違う JVM は、`port` と `rmi.port` が同じだと JDK が `BindException` で起動しない。この 2 つは `rmi.port=7200` にした。
-- F-11d: キャプチャ用コンテナの busybox grep は NUL バイトの後を見ない。pcap をホストに取り出して GNU grep で調べるように変更。
+- **G-01 install.sh**: プロキシが `https://github.com/yagipass/ajmx/releases/v0.1.0` (Accept: application/json) を 403 にするため、タグの解決で止まる。代わりにアセットと `.sha256` を直接取得し、チェックサムと実行を確かめた (G-01b, G-01c)。install.sh は v0.1.0 から変わっていない。リリース後に H-01, H-02 で確認する。
+- CI がビルドしたバイナリ。リリース後に配布バイナリで A の項目を確認する (H-06)。
+- TESTCASES.md の H (Homebrew, Nix, attestation, macOS, arm64, docs サイト, リリースノート)。
 
 ## 全結果
 
@@ -80,12 +71,17 @@ troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject 
 | A-04 | PASS | 0 | --help prints the usage like help |
 | A-05 | INFO | 0 | dynamic libraries |
 | A-06 | INFO | 0 | newest glibc symbol version required |
-| A-07[ubuntu:20.04] | FAIL | 1 | runs version and ps on ubuntu:20.04 |
-| A-07[ubuntu:24.04] | PASS | 0 | runs version and ps on ubuntu:24.04 |
-| A-07[debian:11] | FAIL | 1 | runs version and ps on debian:11 |
-| A-07[rockylinux:8] | FAIL | 1 | runs version and ps on rockylinux:8 |
-| A-07[amazonlinux:2] | FAIL | 1 | runs version and ps on amazonlinux:2 |
-| A-07[gcr.io/distroless/base-debian12] | FAIL | 127 | runs version and ps on gcr.io/distroless/base-debian12 |
+| A-07[ubuntu:22.04] | PASS | 0 | runs ps on ubuntu:22.04, which install.md lists as supported |
+| A-07[ubuntu:24.04] | PASS | 0 | runs ps on ubuntu:24.04, which install.md lists as supported |
+| A-07[debian:12] | PASS | 0 | runs ps on debian:12, which install.md lists as supported |
+| A-07[rockylinux:9] | PASS | 0 | runs ps on rockylinux:9, which install.md lists as supported |
+| A-07[amazonlinux:2023] | PASS | 0 | runs ps on amazonlinux:2023, which install.md lists as supported |
+| A-07b[ubuntu:20.04] | PASS | 1 | fails on ubuntu:20.04 with the glibc error install.md quotes |
+| A-07b[debian:11] | PASS | 1 | fails on debian:11 with the glibc error install.md quotes |
+| A-07b[rockylinux:8] | PASS | 1 | fails on rockylinux:8 with the glibc error install.md quotes |
+| A-07b[amazonlinux:2] | PASS | 1 | fails on amazonlinux:2 with the glibc error install.md quotes |
+| A-07c[gcr.io/distroless/base-debian12] | PASS | 127 | fails on gcr.io/distroless/base-debian12 for want of zlib, as install.md says |
+| A-07c[gcr.io/distroless/cc-debian12] | PASS | 127 | fails on gcr.io/distroless/cc-debian12 for want of zlib, as install.md says |
 | A-08[alpine] | INFO | 255 | runs on musl (alpine:3.20) |
 | B-01[jdk8] | PASS | 0 | ps lists the JVM (PID 1) with mainClass and displayName |
 | B-02[jdk8] | PASS | 0 | ping attaches and starts the local agent |
@@ -125,9 +121,10 @@ troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject 
 | B-10[corretto21] | PASS | 0 | Amazon Corretto 21: ping and read VmVendor |
 | B-11[zulu17] | PASS | 0 | Azul Zulu 17: read VmVendor |
 | B-12[jre21] | PASS | 0 | Temurin 21 JRE image: ping |
-| B-13[openj9] | PASS | 3 | OpenJ9 is refused rather than attached |
+| B-13[openj9] | PASS | 3 | OpenJ9 fails after about --timeout with the message in troubleshooting.md |
 | B-13b[openj9] | PASS | 0 | OpenJ9 JVM is still running after the attempt |
-| B-13c[openj9] | INFO | 0 | files OpenJ9 wrote in reply to SIGQUIT |
+| B-13c[openj9] | PASS | 0 | OpenJ9 wrote javacore files into its working directory, as the docs warn |
+| B-13d[openj9] | INFO | 0 | number of javacore files from one try |
 | B-14 | PASS | 0 | -XX:-UsePerfData: ps does not list it |
 | B-14b | PASS | 0 | -XX:-UsePerfData: --pid still connects |
 | B-15 | PASS | 3 | -XX:+DisableAttachMechanism fails with ATTACH_NOT_SUPPORTED |
@@ -138,14 +135,25 @@ troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject 
 | B-18b | PASS | 0 | user 1000 connects to its own JVM |
 | B-18c | PASS | 3 | another user is refused with processUser |
 | B-18d | PASS | 0 | user 1000 lists its JVM with ps |
-| B-19 | INFO | 0 | a JVM of a UID without a passwd entry (OpenShift style): ps as that UID |
+| B-18e | PASS | 3 | root without CAP_SYS_PTRACE, user 1000's JVM that ps does not list: refused |
+| B-18f | PASS | 0 | user 1000 still connects to it |
+| B-18g | PASS | 0 | root with CAP_SYS_PTRACE connects to it |
+| B-19 | PASS | 0 | a JVM of a UID without a passwd entry is not listed by ps (docs) |
 | B-19b | PASS | 0 | a JVM of a UID without a passwd entry: --pid as that UID |
-| B-19c | FAIL | 3 | a JVM of a UID without a passwd entry: --pid as root |
+| B-19c | PASS | 3 | a JVM of a UID without a passwd entry: root without CAP_SYS_PTRACE is refused (docs) |
+| B-19d | PASS | 0 | a JVM of a UID without a passwd entry: root with CAP_SYS_PTRACE connects (docs) |
 | B-20 | PASS | 3 | a jlink runtime without jdk.management.agent |
 | B-21 | PASS | 0 | a JVM that is not PID 1 (pid 7) |
-| B-22 | INFO | 3 | host ajmx --pid on a JVM inside a container (other PID namespace) |
-| B-22b | PASS | 0 | the container JVM is still running after B-22 |
+| B-22 | PASS | 3 | host --pid on a JVM in a container with its own network: refused at once |
+| B-22a | PASS | 3 | the same again |
+| B-22b | PASS | 0 | the JVM's local agent was not started |
 | B-22c | PASS | 0 | host ps does not list JVMs inside containers |
+| B-22d | PASS | 3 | ajmx in another container sharing the host's PID namespace: refused |
+| B-22e | PASS | 0 | ajmx in a container sharing the JVM's network and the host's PID namespace connects |
+| B-22f | PASS | 0 | ajmx inside the JVM's container still connects |
+| B-24 | PASS | 0 | host --pid on a JVM in a container on the host network (--network host) connects |
+| B-25 | PASS | 0 | host: ps lists a JVM on the host |
+| B-25b | PASS | 0 | host: --pid on a JVM on the host connects |
 | B-23 | PASS | 0 | Tomcat: ps shows Bootstrap |
 | B-23b | PASS | 0 | Tomcat: search the thread pools |
 | B-23c | PASS | 0 | Tomcat: read maxThreads |
@@ -248,7 +256,8 @@ troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject 
 | F-05 | PASS | 3 | without --tls-ca a self-signed certificate is not trusted |
 | F-06 | PASS | 3 | --tls-ca with another certificate |
 | F-07 | PASS | 3 | a certificate for another host name |
-| F-07b | FAIL | 3 | ...with the reason troubleshooting.md lists for it |
+| F-07b | PASS | 3 | ...with a reason the troubleshooting.md row matches (DNS name) |
+| F-07c | PASS | 3 | a certificate with only an IP address, by host name: the row matches 'No name matching' |
 | F-08 | PASS | 3 | a registry without TLS (registry.ssl=false) |
 | F-09 | PASS | 3 | a connection without TLS (ssl=false, registry.ssl=true) |
 | F-10 | PASS | 3 | --tls against a JVM without any TLS |
@@ -277,7 +286,3 @@ troubleshooting.md の TLS_FAILED の表は「`(certificate_unknown) No subject 
 | G-02 | INFO | 3 | for comparison: v0.1.0 reads the 100,000-level value |
 | G-02b | INFO | 3 | for comparison: v0.1.0 without --tls against an untrusted TLS connection |
 | G-03 | INFO | 0 | newest glibc symbol version the released v0.1.0 requires |
-| G-04[ubuntu:20.04] | INFO | 1 | the released v0.1.0 binary on ubuntu:20.04 |
-| G-04[debian:11] | INFO | 1 | the released v0.1.0 binary on debian:11 |
-| G-04[rockylinux:8] | INFO | 1 | the released v0.1.0 binary on rockylinux:8 |
-| G-04[amazonlinux:2] | INFO | 1 | the released v0.1.0 binary on amazonlinux:2 |
