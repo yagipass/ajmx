@@ -62,8 +62,8 @@ restarts, so later commands connect directly.
   default, connects to another user's JVM only if `ps` lists it.
 - The attach mechanism must be enabled. A JVM started with `-XX:+DisableAttachMechanism` fails
   with `ATTACH_NOT_SUPPORTED`.
-- The same network namespace. A container started with `--network host` shares the host's. If
-  ajmx can read both namespaces in `/proc`, it refuses a JVM in another one with
+- On Linux, the same network namespace. A container started with `--network host` shares the
+  host's. If ajmx can read both namespaces in `/proc`, it refuses a JVM in another one with
   `ATTACH_NOT_SUPPORTED` before it attaches. Run ajmx inside the JVM's container, such as with
   `docker exec`, or [use `--url`](./remote.md).
 
