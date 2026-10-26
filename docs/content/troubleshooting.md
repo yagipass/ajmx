@@ -31,7 +31,8 @@ ajmx ps | jq '.result.items[] | select(.mainClass == "com.example.shop.ShopAppli
 :::
 
 Find the other PID with your operating system's tools, such as `pgrep -f ShopApplication`.
-`--pid` still connects if the JVM runs the `java` launcher.
+`--pid` still connects if the JVM runs the `java` launcher, except as root without `CAP_SYS_PTRACE`
+for another user's JVM.
 
 ::: terminal
 
