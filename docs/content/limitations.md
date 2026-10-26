@@ -17,10 +17,10 @@ instead.
 ## Values nested too deeply or holding long arrays
 
 ajmx does not read a value nested more than 500 levels deep, or holding an array of more than
-16,777,216 elements. Lists, sets and maps of about that size, such as `ArrayList`, `HashMap` and
-`TabularData`, are refused too. `LinkedList`, `TreeMap` and `ConcurrentHashMap` are not. It fails
-with `UNSUPPORTED_TYPE`, and `details` gives the limits as `maxDepth` and `maxArrayLength`. The
-limits keep a JVM from making ajmx run out of stack with a deep value, or out of memory with an
+16,777,216 elements. Some lists, sets and maps of about that size, such as `ArrayList`, `HashMap`
+and `TabularData`, are refused too. `LinkedList`, `TreeMap` and `ConcurrentHashMap` are not. It
+fails with `UNSUPPORTED_TYPE`, and `details` gives the limits as `maxDepth` and `maxArrayLength`.
+The limits keep a JVM from making ajmx run out of stack with a deep value, or out of memory with an
 array it declares but does not send. A JVM that does send more data than ajmx has memory for can
 still make it run out of memory.
 
