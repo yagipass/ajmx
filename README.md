@@ -154,10 +154,10 @@ Use `error.code` to handle errors. Exit codes group them for shell scripts.
 - A value nested more than 500 levels deep, or holding an array of more than 16,777,216 elements or a collection such as `ArrayList` or `HashMap` of about that size, is not read and fails with `UNSUPPORTED_TYPE`.
 - A Standard MBean attribute of an application-defined enum can be neither read nor written. MXBean enums work as strings.
 - `write` and `invoke` accept primitives and their wrappers, `String`, `ObjectName`, `BigInteger`, `BigDecimal`, and one-dimensional arrays of these. A `byte[]` is given as an array of numbers from -128 to 127, not as `{"$base64": ...}`.
-- `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
+- `--pid` supports HotSpot JVMs of the same user, or any user for root on Linux. Root without `CAP_SYS_PTRACE`, as in a Docker container by default, reaches another user's JVM only if `ps` lists it. JDK 8 to 25 are tested. It refuses a process that does not look like a HotSpot JVM with `ATTACH_NOT_SUPPORTED`, because attaching sends SIGQUIT, which kills many non-JVM processes.
 - `--pid` starts the local JMX agent in the target JVM. It stays until the JVM restarts.
 - `--tls` needs TLS for both the RMI registry and the connection, takes PEM certificates rather than a key store, and cannot present a client certificate.
-- `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`. `--pid` still connects to them if they run the `java` launcher.
+- `ps` does not list JVMs started with `-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or running as a UID with no user name, such as one missing from `/etc/passwd`. `--pid` still connects to them if they run the `java` launcher.
 
 ## Development
 

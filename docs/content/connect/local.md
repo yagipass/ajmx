@@ -44,7 +44,7 @@ ajmx ps | jq '.result.items[] | select(.displayName == "OrderService")'
 
 ## How it connects
 
-1. ajmx checks that the process runs as the same user. Root may connect to any user's JVM on Linux.
+1. ajmx checks that the process runs as the same user, or that ajmx runs as root on Linux.
 2. It reads the JVM's performance data file, `hsperfdata_<user>/<pid>` under the temporary
    directory. If the JVM's local JMX agent is already running, ajmx connects to it.
 3. Otherwise ajmx attaches with the Attach API, starts the local JMX agent, and connects to it.
@@ -55,7 +55,8 @@ restarts, so later commands connect directly.
 ## Requirements
 
 - A HotSpot JVM. JDK 8 to 25 are tested.
-- The same user, or root on Linux.
+- The same user, or root on Linux. Root without `CAP_SYS_PTRACE`, as in a Docker container by
+  default, connects to another user's JVM only if `ps` lists it.
 - The attach mechanism must be enabled. A JVM started with `-XX:+DisableAttachMechanism` fails
   with `ATTACH_NOT_SUPPORTED`.
 
@@ -66,8 +67,9 @@ refuses a process that has no performance data file and does not run the `java` 
 ## JVMs that ps does not list
 
 `ps` finds JVMs by their performance data files. It does not list JVMs started with
-`-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`. `--pid` still connects to them if they run the
-`java` launcher.
+`-XX:-UsePerfData` or `-XX:+PerfDisableSharedMem`, or JVMs running as a UID with no user name,
+such as one missing from `/etc/passwd`, which write no such file. `--pid` still connects to them if
+they run the `java` launcher, except as root without `CAP_SYS_PTRACE` for another user's JVM.
 
 ## Next
 
