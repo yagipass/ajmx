@@ -17,7 +17,7 @@ ajmx reads or changes a JVM in one command and prints the result as one JSON doc
 
 ## Install
 
-On macOS (Apple silicon) and Linux (x86_64, arm64):
+On macOS (Apple silicon) and Linux (x86_64, arm64, with glibc 2.34 or later and zlib):
 
 ```sh
 curl -fsSL https://github.com/yagipass/ajmx/releases/latest/download/install.sh | sh -s -- -b ~/.local/bin

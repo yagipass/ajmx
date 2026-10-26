@@ -7,6 +7,10 @@ description: Install the ajmx native binary on macOS or Linux with the install s
 ajmx is a single native binary for macOS on Apple silicon and Linux on x86_64 or arm64. It needs
 no JVM.
 
+On Linux, ajmx needs glibc 2.34 or later and zlib (`libz.so.1`). Ubuntu 22.04, Debian 12, RHEL 9,
+Amazon Linux 2023 and later have both. On Ubuntu 20.04, Debian 11, RHEL 8 and Amazon Linux 2, it
+fails with ``version `GLIBC_2.34' not found``. Distroless `base` and `cc` images have no zlib.
+
 ::: code-group
 
 ```sh [Install script]
