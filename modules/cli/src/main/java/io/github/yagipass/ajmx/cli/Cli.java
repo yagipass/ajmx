@@ -18,9 +18,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -31,6 +35,48 @@ public final class Cli {
     record Success(Outcome outcome) implements Result {}
 
     record Failure(AjmxException error) implements Result {}
+  }
+
+  private static final class ControlCharacterEscaper extends Writer {
+    private final PrintStream out;
+
+    ControlCharacterEscaper(PrintStream out) {
+      this.out = out;
+    }
+
+    @Override
+    public void write(char[] chars, int offset, int length) {
+      escape(CharBuffer.wrap(chars), offset, length);
+    }
+
+    @Override
+    public void write(String s, int offset, int length) {
+      escape(s, offset, length);
+    }
+
+    @Override
+    public void flush() {
+      out.flush();
+    }
+
+    @Override
+    public void close() {
+      flush();
+    }
+
+    private void escape(CharSequence s, int offset, int length) {
+      int end = offset + length;
+      @Var int start = offset;
+      for (int i = offset; i < end; i++) {
+        char c = s.charAt(i);
+        if (Character.isISOControl(c) && c != '\n' && c != '\t') {
+          out.append(s, start, i);
+          out.print(String.format(Locale.ROOT, "\\u%04x", (int) c));
+          start = i + 1;
+        }
+      }
+      out.append(s, start, end);
+    }
   }
 
   private Cli() {}
@@ -171,10 +217,16 @@ public final class Cli {
               .forEach(
                   (path, e) -> {
                     err.println("ajmx: .result" + path);
-                    e.printStackTrace(err);
+                    printStackTrace(err, e);
                   });
-      case Result.Failure(AjmxException error) -> error.printStackTrace(err);
+      case Result.Failure(AjmxException error) -> printStackTrace(err, error);
     }
+  }
+
+  private static void printStackTrace(PrintStream err, Throwable e) {
+    PrintWriter writer = new PrintWriter(new ControlCharacterEscaper(err));
+    e.printStackTrace(writer);
+    writer.flush();
   }
 
   private static OutputFitter.Output render(Result result, long durationMs, long maxBytes) {

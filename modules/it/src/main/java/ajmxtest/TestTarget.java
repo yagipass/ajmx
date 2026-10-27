@@ -189,6 +189,8 @@ public final class TestTarget {
     void failRuntime();
 
     void failVerbose();
+
+    void failWithControlCharacters();
   }
 
   public static final class Cache implements CacheMBean {
@@ -551,6 +553,11 @@ public final class TestTarget {
         message.append("0123456789");
       }
       throw new IllegalStateException(message.toString());
+    }
+
+    @Override
+    public void failWithControlCharacters() {
+      throw new IllegalStateException("\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped");
     }
   }
 
