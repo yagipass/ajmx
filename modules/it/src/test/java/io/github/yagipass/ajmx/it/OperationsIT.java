@@ -650,6 +650,13 @@ final class OperationsIT {
     assertTrue(strings(r.json()).noneMatch(s -> frames.stream().anyMatch(s::contains)), r.stdout());
   }
 
+  @Test
+  void debugEscapesControlCharactersFromTheTargetSoTheTerminalPrintsThemAsText() throws Exception {
+    String err = ajmx("--debug", "invoke", CACHE, "failWithControlCharacters").stderr();
+    assertTrue(err.contains("\\u001b]0;retitled\\u0007\\u001b[2Jcleared\\u000dovertyped"), err);
+    assertTrue(err.chars().noneMatch(c -> Character.isISOControl(c) && c != '\n' && c != '\t'));
+  }
+
   private static Ajmx.Result ajmx(String... args) throws Exception {
     List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
     all.addAll(List.of(args));

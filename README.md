@@ -101,7 +101,7 @@ The whole batch is checked before any request runs, so a typo rejects it with `I
 | `--credentials-stdin` | | read `{"username", "password"}` from stdin (with `--url`) |
 | `--tls` | | require TLS for the registry and the connection (with `--url`) |
 | `--tls-ca <file>` | built-in CAs | PEM certificates to trust (with `--tls`) |
-| `--debug` | | print stack traces to stderr |
+| `--debug` | | print stack traces to stderr, with control characters escaped as `\uXXXX` |
 | `--help` | | print the usage, like `help` |
 | `--version` | | print the version, like `version` |
 

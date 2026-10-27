@@ -72,6 +72,20 @@ final class BatchIT {
   }
 
   @Test
+  void debugEscapesControlCharactersFromTheTargetInEachPartialFailure() throws Exception {
+    String err =
+        batch(
+                """
+                {"id": "control", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "failWithControlCharacters"}
+                """,
+                "--debug")
+            .stderr();
+    assertTrue(err.contains("ajmx: .result.items[0].error\n"), err);
+    assertTrue(err.contains("\\u001b]0;retitled\\u0007\\u001b[2Jcleared\\u000dovertyped"), err);
+    assertTrue(err.chars().noneMatch(c -> Character.isISOControl(c) && c != '\n' && c != '\t'));
+  }
+
+  @Test
   void misspelledFieldRejectsTheWholeBatchSoNothingRuns() throws Exception {
     long before = readCache("ClearCount");
     Ajmx.Result r =

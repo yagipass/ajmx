@@ -18,9 +18,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -171,10 +174,26 @@ public final class Cli {
               .forEach(
                   (path, e) -> {
                     err.println("ajmx: .result" + path);
-                    e.printStackTrace(err);
+                    printStackTrace(err, e);
                   });
-      case Result.Failure(AjmxException error) -> error.printStackTrace(err);
+      case Result.Failure(AjmxException error) -> printStackTrace(err, error);
     }
+  }
+
+  private static void printStackTrace(PrintStream err, Throwable e) {
+    StringWriter writer = new StringWriter();
+    e.printStackTrace(new PrintWriter(writer));
+    String trace = writer.toString();
+    StringBuilder escaped = new StringBuilder(trace.length());
+    for (int i = 0; i < trace.length(); i++) {
+      char c = trace.charAt(i);
+      if (Character.isISOControl(c) && c != '\n' && c != '\t') {
+        escaped.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
+      } else {
+        escaped.append(c);
+      }
+    }
+    err.print(escaped);
   }
 
   private static OutputFitter.Output render(Result result, long durationMs, long maxBytes) {

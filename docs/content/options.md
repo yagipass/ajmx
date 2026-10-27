@@ -16,7 +16,7 @@ description: Every ajmx option, from choosing the target JVM to timeouts and the
 | `--credentials-stdin` | | Read `{"username", "password"}` from stdin. Needs `--url` |
 | `--tls` | | Require TLS for the registry and the connection. Needs `--url`. See [TLS](./connect/remote.md#tls) |
 | `--tls-ca <file>` | built-in CAs | PEM certificates to trust. Needs `--tls` |
-| `--debug` | | Print stack traces to stderr |
+| `--debug` | | Print stack traces to stderr. Control characters other than newline and tab are escaped as `\uXXXX` |
 | `--help` | | Print the usage, like `help` |
 | `--version` | | Print the version, like `version` |
 
