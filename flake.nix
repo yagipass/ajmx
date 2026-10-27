@@ -80,6 +80,15 @@
 
             convco.enable = true;
 
+            jactionlint = {
+              enable = true;
+              name = "jactionlint";
+              package = pkgs.jactionlint;
+              entry = "${pkgs.jactionlint}/bin/jactionlint --shellcheck=${pkgs.shellcheck}/bin/shellcheck";
+              files = "^\\.github/";
+              pass_filenames = false;
+            };
+
             end-of-file-fixer.enable = true;
             trim-trailing-whitespace.enable = true;
             check-merge-conflicts = {
