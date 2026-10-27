@@ -200,6 +200,7 @@ jobs:
     needs: [tagpr, release]
     permissions:
       contents: read
+    # jactionlint ignore=unpinned-uses
     uses: yagipass/homebrew-tap/.github/workflows/bump.yml@main
     with:
       formula: ajmx
