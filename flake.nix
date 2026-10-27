@@ -124,7 +124,7 @@
             JAVA_HOME = graalvm.home;
             GRAALVM_HOME = graalvm.home;
 
-            shellHook = config.pre-commit.installationScript;
+            shellHook = config.pre-commit.shellHook;
           };
 
           devShells.docs = pkgs.mkShell {
@@ -135,7 +135,7 @@
             ]
             ++ config.pre-commit.settings.enabledPackages;
 
-            shellHook = config.pre-commit.installationScript;
+            shellHook = config.pre-commit.shellHook;
           };
         };
     };
