@@ -7,7 +7,7 @@
 }:
 
 let
-  version = "0.2.0";
+  version = "0.2.1";
   graalvm = graalvmPackages.graalvm-ce;
   gradle = gradle_9.override { java = graalvm; };
   fs = lib.fileset;
