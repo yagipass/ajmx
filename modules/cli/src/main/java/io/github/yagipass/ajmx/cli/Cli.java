@@ -19,7 +19,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +35,48 @@ public final class Cli {
     record Success(Outcome outcome) implements Result {}
 
     record Failure(AjmxException error) implements Result {}
+  }
+
+  private static final class ControlCharacterEscaper extends Writer {
+    private final PrintStream out;
+
+    ControlCharacterEscaper(PrintStream out) {
+      this.out = out;
+    }
+
+    @Override
+    public void write(char[] chars, int offset, int length) {
+      escape(CharBuffer.wrap(chars), offset, length);
+    }
+
+    @Override
+    public void write(String s, int offset, int length) {
+      escape(s, offset, length);
+    }
+
+    @Override
+    public void flush() {
+      out.flush();
+    }
+
+    @Override
+    public void close() {
+      flush();
+    }
+
+    private void escape(CharSequence s, int offset, int length) {
+      int end = offset + length;
+      @Var int start = offset;
+      for (int i = offset; i < end; i++) {
+        char c = s.charAt(i);
+        if (Character.isISOControl(c) && c != '\n' && c != '\t') {
+          out.append(s, start, i);
+          out.print(String.format(Locale.ROOT, "\\u%04x", (int) c));
+          start = i + 1;
+        }
+      }
+      out.append(s, start, end);
+    }
   }
 
   private Cli() {}
@@ -181,19 +224,9 @@ public final class Cli {
   }
 
   private static void printStackTrace(PrintStream err, Throwable e) {
-    StringWriter writer = new StringWriter();
-    e.printStackTrace(new PrintWriter(writer));
-    String trace = writer.toString();
-    StringBuilder escaped = new StringBuilder(trace.length());
-    for (int i = 0; i < trace.length(); i++) {
-      char c = trace.charAt(i);
-      if (Character.isISOControl(c) && c != '\n' && c != '\t') {
-        escaped.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
-      } else {
-        escaped.append(c);
-      }
-    }
-    err.print(escaped);
+    PrintWriter writer = new PrintWriter(new ControlCharacterEscaper(err));
+    e.printStackTrace(writer);
+    writer.flush();
   }
 
   private static OutputFitter.Output render(Result result, long durationMs, long maxBytes) {
