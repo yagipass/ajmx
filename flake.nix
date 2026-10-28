@@ -138,7 +138,7 @@
 
           devShells.docs = pkgs.mkShell {
             packages = [
-              pkgs.nodejs_24
+              pkgs.nodejs_26
               pkgs.pnpm
               pkgs.git
             ]
