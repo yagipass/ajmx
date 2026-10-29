@@ -657,6 +657,16 @@ final class OperationsIT {
     assertTrue(err.chars().noneMatch(c -> Character.isISOControl(c) && c != '\n' && c != '\t'));
   }
 
+  @Test
+  void stdoutEscapesControlCharactersFromTheTargetSoTheTerminalPrintsThemAsText() throws Exception {
+    Ajmx.Result r =
+        ajmx("invoke", CACHE, "failWithControlCharacters").assertError("REMOTE_EXCEPTION", 5);
+    assertEquals(
+        "\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped\u009b2Jcleared again",
+        r.details().get("exceptionMessage"));
+    assertTrue(r.stdout().strip().chars().noneMatch(Character::isISOControl), r.stdout());
+  }
+
   private static Ajmx.Result ajmx(String... args) throws Exception {
     List<String> all = new ArrayList<>(List.of("--pid", target.pidArg()));
     all.addAll(List.of(args));
