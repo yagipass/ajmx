@@ -35,6 +35,15 @@ final class JsonTest {
   }
 
   @Test
+  void everyControlCharacterIsEscapedSoATerminalPrintsItAsText() {
+    assertEquals("\"\\u001b\"", Json.write("\u001b"));
+    for (char c = 0x7f; c <= 0x9f; c++) {
+      assertEquals("\"\\u00" + Integer.toHexString(c) + "\"", Json.write(String.valueOf(c)));
+    }
+    assertEquals("\"é\"", Json.write("é"));
+  }
+
+  @Test
   void nonFiniteNumbersBecomeStringsBecauseJsonHasNoNaN() {
     assertEquals(
         "[\"NaN\",\"Infinity\",1.5]",
@@ -48,7 +57,9 @@ final class JsonTest {
         "k\"ey",
         Arrays.asList(
             null, true, 1, 2L, 3.5, Float.NaN, Double.NEGATIVE_INFINITY, new BigDecimal("1e-7")));
-    nested.put("text", "a\"b\\c\n\t\u0001 \u00e9 \u65e5\u672c \ud83d\ude00 lone \ud800 end \udc00");
+    nested.put(
+        "text",
+        "a\"b\\c\n\t\u0001 \u007f\u009b \u00e9 \u65e5\u672c \ud83d\ude00 lone \ud800 end \udc00");
     for (Object value :
         List.of(
             "",

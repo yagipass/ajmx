@@ -354,7 +354,7 @@ public final class Json {
         case '\f' -> sink.text("\\f");
         default -> {
           boolean loneSurrogate = Character.isSurrogate(c) && !isPairedSurrogate(s, i);
-          if (c < 0x20 || loneSurrogate) {
+          if (Character.isISOControl(c) || loneSurrogate) {
             sink.text(String.format(Locale.ROOT, "\\u%04x", (int) c));
           } else {
             sink.append(c);

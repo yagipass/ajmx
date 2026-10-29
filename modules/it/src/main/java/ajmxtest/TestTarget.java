@@ -557,7 +557,8 @@ public final class TestTarget {
 
     @Override
     public void failWithControlCharacters() {
-      throw new IllegalStateException("\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped");
+      throw new IllegalStateException(
+          "\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped\u009b2Jcleared again");
     }
   }
 
