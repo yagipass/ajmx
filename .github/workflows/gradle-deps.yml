@@ -32,9 +32,10 @@ jobs:
       - env:
           GH_PAT: ${{ secrets.GH_PAT }}
           HEAD_REF: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git diff --quiet && exit 0
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -am 'build(nix): update ajmx deps.json'
-          git push "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${HEAD_REF}"
+          git push --force-with-lease="refs/heads/${HEAD_REF}:${HEAD_SHA}" "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${HEAD_REF}"
