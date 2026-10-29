@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Runs the manual test cases of TESTCASES.md against an ajmx binary, with the JVMs in Docker.
 #
-#   manual-test/run.sh <ajmx-linux-amd64-binary> <modules/it/build/classes/java/main> [id-regex]
+#   VERSION=0.2.2 manual-test/run.sh <ajmx-linux-amd64-binary> <modules/it/build/classes/java/main> [id-regex]
 #
 # The binary runs on the host and inside the containers, so it must be a Linux binary for the
 # host's architecture. The second argument holds ajmxtest.TestTarget, built by
-# `./gradlew :it:classes`. Results go to $OUT (default: a new temporary directory).
+# `./gradlew :it:classes`. VERSION is the version the binary must report, and PREV (default
+# v0.2.1) the earlier release to compare it with. Results go to $OUT (default: a new temporary
+# directory).
 set -uo pipefail
+
+VERSION=${VERSION:?set VERSION to the version under test, such as 0.2.2}
+PREV=${PREV:-v0.2.1}
 
 BIN=$(realpath "$1")
 CLASSES=$(realpath "$2")
@@ -81,8 +86,8 @@ c() { ax client "$@"; }
 # === A: the binary ===============================================================================
 if section A; then
   echo "== A: binary"
-  check A-01 "version prints the release version" 0 '.result.version == "0.2.0"' -- "$BIN" version
-  check A-02 "--version prints the same" 0 '.result.version == "0.2.0"' -- "$BIN" --version
+  check A-01 "version prints the release version" 0 ".result.version == \"$VERSION\"" -- "$BIN" version
+  check A-02 "--version prints the same" 0 ".result.version == \"$VERSION\"" -- "$BIN" --version
   check A-03 "help is JSON and lists --tls and --tls-ca" 0 '(tostring | contains("--tls")) and (tostring | contains("--tls-ca"))' -- "$BIN" help
   check A-04 "--help prints the usage like help" 0 '.ok' -- "$BIN" --help
   info A-05 "dynamic libraries" -- ldd "$BIN"
@@ -362,6 +367,41 @@ EOF
   check C-59 "--credentials-stdin with --pid" 2 '.error.code == "INVALID_ARGUMENT"' -- a --credentials-stdin ping
   check C-60 "--tls with --pid" 2 '.error.code == "INVALID_ARGUMENT"' -- a --tls ping
   check C-61 "--tls-ca without --tls" 2 '.error.code == "INVALID_ARGUMENT"' -- ax jdk21 --url "$(url localhost)" --tls-ca /ajmx/conf/tls.pem ping
+
+  # Control characters from the target JVM (#102 on stderr, #118 on stdout).
+  CTL_VALUE='a\u009b2Jb\u009d0;title\u0007c\u007fd\u001b[31me\u0085f'
+  check C-70 "an exception message with C0 and C1 controls: REMOTE_EXCEPTION with the exact message" 5 \
+    '.error.code == "REMOTE_EXCEPTION" and .error.details.exceptionMessage == "\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped\u009b2Jcleared again"' -- \
+    a invoke "$CACHE" failWithControlCharacters
+  check C-70b "...and stdout holds no raw control character" 0 - -- no_controls out a invoke "$CACHE" failWithControlCharacters
+  check C-71 "--debug: the stack trace on stderr shows the message escaped" 5 're:\\u001b\]0;retitled\\u0007\\u001b\[2Jcleared\\u000dovertyped\\u009b2J' -- \
+    a --debug invoke "$CACHE" failWithControlCharacters
+  check C-71b "--debug: stderr holds no raw control character" 0 - -- no_controls err a --debug invoke "$CACHE" failWithControlCharacters
+  check C-71c "--debug: stdout holds no raw control character either" 0 - -- no_controls out a --debug invoke "$CACHE" failWithControlCharacters
+  check C-72 "a return value with C0, DEL and C1 controls reads back exactly" 0 ".result.returnValue == (\"hello \" + \"$CTL_VALUE\")" -- \
+    a invoke "$CACHE" greet --args "[\"$CTL_VALUE\"]"
+  check C-72b "...and stdout holds no raw control character" 0 - -- no_controls out a invoke "$CACHE" greet --args "[\"$CTL_VALUE\"]"
+  check C-73 "an attribute value with controls, written and read in a batch, reads back exactly" 0 \
+    "[.result.items[].ok] == [true, true] and .result.items[1].result.attributes.Name == \"$CTL_VALUE\"" -- ai batch <<EOF
+{"id": "w", "op": "write", "mbean": "$CACHE", "attribute": "Name", "value": "$CTL_VALUE"}
+{"id": "r", "op": "read", "mbean": "$CACHE", "attributes": ["Name"]}
+EOF
+  check C-73b "read of that attribute: stdout holds no raw control character" 0 - -- no_controls out a read "$CACHE" Name
+  c73() {
+    echo "{\"id\": \"c\", \"op\": \"invoke\", \"mbean\": \"$CACHE\", \"operation\": \"failWithControlCharacters\"}" |
+      ai --debug batch >"$WORK/c73.out" 2>"$WORK/c73.err"
+    no_controls out cat "$WORK/c73.out" && no_controls out cat "$WORK/c73.err" &&
+      grep -q '^ajmx: .result.items\[0\].error' "$WORK/c73.err"
+  }
+  check C-73c "batch with --debug and a failing request: stdout and stderr hold no raw control character" 0 - -- c73
+  # --max-bytes counts an escaped C1 control as the 6 bytes it takes.
+  C1_200=$(printf '\\u009b%.0s' $(seq 200))
+  C1_SIZE=$(a invoke "$CACHE" greet --args "[\"$C1_200\"]" | wc -c)
+  check C-74 "200 C1 controls: the output fits --max-bytes of its own size ($C1_SIZE bytes)" 0 '.ok' -- \
+    a --max-bytes $((C1_SIZE + 5)) invoke "$CACHE" greet --args "[\"$C1_200\"]"
+  check C-74b "...and 10 bytes less is OUTPUT_TRUNCATED with that size in outputBytes" 7 \
+    ".error.code == \"OUTPUT_TRUNCATED\" and ((.error.details.outputBytes - $C1_SIZE) as \$d | \$d <= 3 and \$d >= -3)" -- \
+    a --max-bytes $((C1_SIZE - 10)) invoke "$CACHE" greet --args "[\"$C1_200\"]"
 fi
 
 # === D: limits on deserialization (#90) ===========================================================
@@ -438,6 +478,9 @@ EOF
   check E-17 "501 levels over --url: UNSUPPORTED_TYPE" 5 '.error.code == "UNSUPPORTED_TYPE" and .error.details.maxDepth == 500' -- \
     c --url "$(url plain)" invoke "$CACHE" nested --args '[501]'
   check E-18 "100,000 levels over --url: UNSUPPORTED_TYPE" 5 '.error.code == "UNSUPPORTED_TYPE"' -- c --url "$(url plain)" read "$CACHE" DeepValue
+  check E-19 "an exception message with controls over --url: stdout holds no raw control character" 0 - -- \
+    no_controls out c --url "$(url plain)" invoke "$CACHE" failWithControlCharacters
+  check E-19b "...and --debug stderr neither" 0 - -- no_controls err c --url "$(url plain)" --debug invoke "$CACHE" failWithControlCharacters
   docker rm -f "${P}docs" "${P}loopback" "${P}badhost" "${P}plain8" >/dev/null 2>&1
 fi
 
@@ -544,25 +587,31 @@ if section G; then
   echo "== G: install.sh"
   mkdir -p "$WORK/install"
   docker inspect "${P}jdk21" >/dev/null 2>&1 || target jdk21 "$T21" --
-  check G-01 "install.sh installs the released v0.1.0 into -b" 0 - -- sh "$HERE/../install.sh" -b "$WORK/install" v0.1.0
+  check G-01 "install.sh installs the released $PREV into -b" 0 - -- sh "$HERE/../install.sh" -b "$WORK/install" "$PREV"
   if [[ ! -x $WORK/install/ajmx ]]; then
     # Where install.sh cannot look up the tag, fetch the asset and its checksum the same way it does.
-    check G-01b "download the v0.1.0 asset and check its SHA-256" 0 - -- sh -c "cd '$WORK/install' &&
-      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/v0.1.0/ajmx-linux-amd64 &&
-      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/v0.1.0/ajmx-linux-amd64.sha256 &&
+    check G-01b "download the $PREV asset and check its SHA-256" 0 - -- sh -c "cd '$WORK/install' &&
+      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/$PREV/ajmx-linux-amd64 &&
+      curl -fsSLO https://github.com/yagipass/ajmx/releases/download/$PREV/ajmx-linux-amd64.sha256 &&
       sha256sum -c ajmx-linux-amd64.sha256 && chmod +x ajmx-linux-amd64 && mv ajmx-linux-amd64 ajmx"
   fi
-  check G-01c "the released v0.1.0 binary runs" 0 '.result.version == "0.1.0"' -- "$WORK/install/ajmx" version
-  if [[ -x $WORK/install/ajmx ]] && docker inspect "${P}jdk21" >/dev/null 2>&1; then
-    docker cp "$WORK/install/ajmx" "${P}jdk21:/tmp/ajmx-0.1.0" >/dev/null
-    info G-02a "for comparison: v0.1.0 ping" -- docker exec "${P}jdk21" /tmp/ajmx-0.1.0 --pid 1 ping
-    info G-02 "for comparison: v0.1.0 reads the 100,000-level value" -- docker exec "${P}jdk21" /tmp/ajmx-0.1.0 --pid 1 read "$CACHE" DeepValue
-    info G-02b "for comparison: v0.1.0 without --tls against an untrusted TLS connection" -- \
-      docker exec -e JMX_USERNAME=operator -e JMX_PASSWORD=s3cret-pw "${P}jdk21" /tmp/ajmx-0.1.0 --url "$(url tls-noreg)" ping
-  fi
+  check G-01c "the released $PREV binary runs" 0 ".result.version == \"${PREV#v}\"" -- "$WORK/install/ajmx" version
   if [[ -x $WORK/install/ajmx ]]; then
-    info G-03 "newest glibc symbol version the released v0.1.0 requires" -- \
+    # The released binary was built by CI, so it stands in for the one the next release builds.
+    info G-03 "newest glibc symbol version the released $PREV requires" -- \
       sh -c "objdump -T '$WORK/install/ajmx' | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1"
+    for img in ubuntu:22.04 debian:12 rockylinux:9 amazonlinux:2023; do
+      check "G-04[$img]" "the released $PREV binary, built by CI, runs on $img" 0 '.ok' -- \
+        docker run --rm -v "$WORK/install/ajmx:$BIN_IN:ro" --entrypoint "$BIN_IN" "$img" ps
+    done
+    check G-04b "the released $PREV binary fails on ubuntu:20.04 with the glibc error" nz "re:version .GLIBC_2.34' not found" -- \
+      docker run --rm -v "$WORK/install/ajmx:$BIN_IN:ro" --entrypoint "$BIN_IN" ubuntu:20.04 ps
+    if docker inspect "${P}jdk21" >/dev/null 2>&1; then
+      docker cp "$WORK/install/ajmx" "${P}jdk21:/tmp/ajmx-prev" >/dev/null
+      # The control for C-70b: the check finds the raw U+009B that the earlier release writes.
+      check G-02 "control: $PREV writes the exception message with a raw C1 control on stdout" 1 - -- \
+        no_controls out docker exec "${P}jdk21" /tmp/ajmx-prev --pid 1 invoke "$CACHE" failWithControlCharacters
+    fi
   fi
 fi
 

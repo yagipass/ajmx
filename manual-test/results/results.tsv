@@ -76,7 +76,7 @@ B-19b	PASS	0	a JVM of a UID without a passwd entry: --pid as that UID
 B-19c	PASS	3	a JVM of a UID without a passwd entry: root without CAP_SYS_PTRACE is refused (docs)
 B-19d	PASS	0	a JVM of a UID without a passwd entry: root with CAP_SYS_PTRACE connects (docs)
 B-20	PASS	3	a jlink runtime without jdk.management.agent
-B-21	PASS	0	a JVM that is not PID 1 (pid 7)
+B-21	PASS	0	a JVM that is not PID 1 (pid 8)
 B-22	PASS	3	host --pid on a JVM in a container with its own network: refused at once
 B-22a	PASS	3	the same again
 B-22b	PASS	0	the JVM's local agent was not started
@@ -150,6 +150,18 @@ C-58	PASS	2	the same option twice
 C-59	PASS	2	--credentials-stdin with --pid
 C-60	PASS	2	--tls with --pid
 C-61	PASS	2	--tls-ca without --tls
+C-70	PASS	5	an exception message with C0 and C1 controls: REMOTE_EXCEPTION with the exact message
+C-70b	PASS	0	...and stdout holds no raw control character
+C-71	PASS	5	--debug: the stack trace on stderr shows the message escaped
+C-71b	PASS	0	--debug: stderr holds no raw control character
+C-71c	PASS	0	--debug: stdout holds no raw control character either
+C-72	PASS	0	a return value with C0, DEL and C1 controls reads back exactly
+C-72b	PASS	0	...and stdout holds no raw control character
+C-73	PASS	0	an attribute value with controls, written and read in a batch, reads back exactly
+C-73b	PASS	0	read of that attribute: stdout holds no raw control character
+C-73c	PASS	0	batch with --debug and a failing request: stdout and stderr hold no raw control character
+C-74	PASS	0	200 C1 controls: the output fits --max-bytes of its own size (1363 bytes)
+C-74b	PASS	7	...and 10 bytes less is OUTPUT_TRUNCATED with that size in outputBytes
 D-01	PASS	7	a value 500 levels deep is read (and cut at 32 for output)
 D-02	PASS	5	501 levels: UNSUPPORTED_TYPE with the limits, not retryable
 D-03	PASS	5	an attribute 100,000 levels deep: UNSUPPORTED_TYPE, not INTERNAL_ERROR
@@ -180,6 +192,8 @@ E-15	PASS	2	batch with --credentials-stdin is refused
 E-16	PASS	0	batch with credentials from the environment
 E-17	PASS	5	501 levels over --url: UNSUPPORTED_TYPE
 E-18	PASS	5	100,000 levels over --url: UNSUPPORTED_TYPE
+E-19	PASS	0	an exception message with controls over --url: stdout holds no raw control character
+E-19b	PASS	0	...and --debug stderr neither
 F-01	PASS	0	--tls --tls-ca: ping (docs recipe)
 F-02	PASS	0	read over TLS
 F-02b	PASS	0	write over TLS
@@ -212,10 +226,13 @@ F-19	PASS	3	an IP address in the URL that the certificate does not name
 F-20	PASS	3	a wrong password over TLS is AUTH_FAILED
 F-21	PASS	3	viewer write over TLS is AUTH_FAILED
 F-22	PASS	5	501 levels over TLS: UNSUPPORTED_TYPE
-G-01	FAIL	1	install.sh installs the released v0.1.0 into -b
-G-01b	PASS	0	download the v0.1.0 asset and check its SHA-256
-G-01c	PASS	0	the released v0.1.0 binary runs
-G-02a	INFO	0	for comparison: v0.1.0 ping
-G-02	INFO	3	for comparison: v0.1.0 reads the 100,000-level value
-G-02b	INFO	3	for comparison: v0.1.0 without --tls against an untrusted TLS connection
-G-03	INFO	0	newest glibc symbol version the released v0.1.0 requires
+G-01	FAIL	1	install.sh installs the released v0.2.1 into -b
+G-01b	PASS	0	download the v0.2.1 asset and check its SHA-256
+G-01c	PASS	0	the released v0.2.1 binary runs
+G-03	INFO	0	newest glibc symbol version the released v0.2.1 requires
+G-04[ubuntu:22.04]	PASS	0	the released v0.2.1 binary, built by CI, runs on ubuntu:22.04
+G-04[debian:12]	PASS	0	the released v0.2.1 binary, built by CI, runs on debian:12
+G-04[rockylinux:9]	PASS	0	the released v0.2.1 binary, built by CI, runs on rockylinux:9
+G-04[amazonlinux:2023]	PASS	0	the released v0.2.1 binary, built by CI, runs on amazonlinux:2023
+G-04b	PASS	1	the released v0.2.1 binary fails on ubuntu:20.04 with the glibc error
+G-02	PASS	1	control: v0.2.1 writes the exception message with a raw C1 control on stdout

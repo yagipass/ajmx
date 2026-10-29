@@ -1,65 +1,57 @@
-# ajmx 0.2.0 手動テスト結果 (2026-10-26, 2 回目)
+# ajmx 0.2.2 手動テスト結果 (2026-10-29)
 
-[TESTCASES.md](TESTCASES.md) のケースを `run.sh` で Docker 上で実行した結果。生の出力は [results/results.tsv](results/results.tsv) と [results/details.log](results/details.log)。
+[TESTCASES.md](TESTCASES.md) のケースを `run.sh` で Docker 上で実行した結果。生の出力は [results/results.tsv](results/results.tsv) と [results/details.log](results/details.log)。0.2.0 のときの結果はこのファイルの git の履歴にある。
 
-**221 件: PASS 211 / FAIL 1 / INFO 9。** 製品の不具合による FAIL はない。FAIL の 1 件 (G-01 install.sh) はこの環境のプロキシ制限で実行できなかったもの。
+**238 件: PASS 231 / FAIL 1 / INFO 6。** 製品の不具合による FAIL はない。FAIL の 1 件 (G-01 install.sh) は、この環境のプロキシ制限で実行できなかったもの。
 
 ## 判定
 
-0.2.0 はリリースしてよい。
+0.2.2 はリリースしてよい。
 
-- TLS (#88)、デシリアライズ制限 (#90)、別ネットワーク名前空間の拒否 (#101) は期待どおりに動き、既存機能の回帰もない。
-- 1 回目で見つかった点は、#96〜#99 で docs に書いた挙動、メッセージ、対応ディストリビューションが実際と一致し、#101 で修正された。
-- 残っているのは、リリースノートに `TLS_FAILED` の挙動変更を書くことと、リリース後の確認 (TESTCASES.md の H)。
+- v0.2.1 から入る製品の変更は #118 (JSON 出力で DEL と C1 制御文字をエスケープ) だけ。例外メッセージ、戻り値、属性値、`batch`、`--url` のどの経路でも、stdout に生の制御文字が出ず、パースすると元の文字列に戻る。`--max-bytes` もエスケープ後の 6 バイトで数えている。
+- #102 (0.2.1 の `--debug` のエスケープ) も stderr で確認した。
+- それ以外の 0.2.0 からのケースは、前回と同じくすべて PASS (回帰なし)。
 
 ## 環境
 
 | 項目 | 値 |
 |---|---|
-| テスト対象 | リリース PR (yagipass/ajmx#23) の head `a5c8348` (main `dbc9d76` + `version=0.2.0`) を `./gradlew :cli:nativeCompile :it:classes` でビルドしたもの |
+| テスト対象 | リリース PR (yagipass/ajmx#106) の head `dc11723` (main `6633f46` + `version=0.2.2`) を `./gradlew :cli:nativeCompile :it:classes` でビルドしたもの |
 | ビルド環境 | `ghcr.io/graalvm/native-image-community:25` (GraalVM CE 25.0.2, Oracle Linux 9)。CI は ubuntu-latest と setup-graalvm |
+| 比較対象 | リリース済み v0.2.1 の `ajmx-linux-amd64` (CI ビルド、SHA-256 を確認) |
 | ホスト | Linux 6.18 x86_64, Docker 29.9.2, ホストの JVM は OpenJDK 21.0.12 (B-25) |
 | ターゲット JVM | Temurin 1.8.0_504 / 11.0.32.1 / 17.0.20.1 / 21.0.12.1 / 25.0.4.1, Temurin 21 JRE, Corretto 21.0.13, Zulu 17.0.20.1, Semeru (OpenJ9) 21.0.12, Tomcat 10.1.61 (Temurin 21) |
 
-CI の成果物はこの環境のプロキシが取得を拒否するため、手元でビルドしたバイナリを使った。glibc の要件 (`GLIBC_2.34`) は、リリース済みの v0.1.0 (CI ビルド) と同じ (A-06, G-03)。
+## 0.2.2 で追加したケース
 
-## 1 回目 (main `12ded42`) からの変化
-
-| 1 回目の指摘 | 対応 | 今回の確認 |
+| ID | 内容 | 結果 |
 |---|---|---|
-| glibc 2.34 未満と distroless で起動しない | #96 で docs に要件と環境を記載 | install.md が対応とする ubuntu:22.04 / 24.04, debian:12, rockylinux:9, amazonlinux:2023 で起動する (A-07)。動かないとする 4 つは docs が引用する ``version `GLIBC_2.34' not found`` で失敗し (A-07b)、distroless base / cc は `libz.so.1` がなく失敗する (A-07c) |
-| troubleshooting.md のホスト名不一致の reason が DNS 名の場合と合わない | #97 で表の行を拡張 | DNS 名の SAN (`No subject alternative DNS name matching`)、IP の SAN だけの証明書にホスト名で接続 (`No name matching`)、IP アドレスで接続 (`No subject alternative names matching IP address`) のどれも表の行に合う (F-07b, F-07c, F-19) |
-| OpenJ9 で javacore が書かれる | #99 で docs に記載 | troubleshooting.md のメッセージどおり、`--timeout 5s` に対して 4.5 秒で `ATTACH_NOT_SUPPORTED`。JVM は生きていて、javacore が 4 つ書かれた (B-13〜B-13d) |
-| `CAP_SYS_PTRACE` のない root が passwd にない UID の JVM に繋がらない | #98 で docs に記載 | docs どおり、`ps` に出ない他ユーザーの JVM (passwd にない UID、`-XX:-UsePerfData`) には `CAP_SYS_PTRACE` のない root だけが `ATTACH_NOT_SUPPORTED` になり、`--cap-add SYS_PTRACE` した root と同じ UID は繋がる (B-18e〜B-18g, B-19〜B-19d) |
-| ホストからコンテナ内 JVM に `--pid` すると agent を起動したうえで retryable な `CONNECTION_FAILED` | #101 で attach 前に拒否 | 下記 |
+| C-70 / C-70b | 例外メッセージ `\u001b]0;retitled\u0007\u001b[2Jcleared\rovertyped\u009b2Jcleared again` | `exceptionMessage` が元の文字列と一致。stdout に生の制御文字なし |
+| C-71〜C-71c | 同じ操作を `--debug` で | stderr に `\u001b]0;retitled\u0007\u001b[2Jcleared\u000dovertyped\u009b2J...` とエスケープされて出る。stderr にも stdout にも生の制御文字なし |
+| C-72 / C-72b | 戻り値に U+009B, U+009D, BEL, DEL, ESC, U+0085 | 元の文字列と一致。stdout に生の制御文字なし |
+| C-73〜C-73c | 同じ文字を含む属性値を `batch` で書いて読む、`read`、`batch --debug` で失敗する要求 | 一致。stdout にも stderr にも生の制御文字なし |
+| C-74 / C-74b | U+009B 200 個の戻り値 (出力 1,363 バイト) と `--max-bytes` | +5 バイトでは成功、-10 バイトでは `OUTPUT_TRUNCATED` で `outputBytes` が実際のサイズと一致 |
+| E-19 / E-19b | `--url` で例外メッセージ | stdout にも `--debug` の stderr にも生の制御文字なし |
+| G-02 | 対照: v0.2.1 で C-70b と同じ判定 | 生の U+009B が検出される (exit 1)。判定が機能していることの確認 |
+| G-04 / G-04b | v0.2.1 (CI ビルド) を ubuntu:22.04, debian:12, rockylinux:9, amazonlinux:2023, ubuntu:20.04 で | 前の 4 つで動き、ubuntu:20.04 は glibc のエラー。CI のバイナリが docs の要件どおり |
 
-### #101 (別ネットワーク名前空間の拒否) の確認
-
-| ajmx | JVM | 結果 |
-|---|---|---|
-| ホスト | 自分のネットワークを持つコンテナ | `ATTACH_NOT_SUPPORTED` (`The JVM runs in another network namespace ...`)、retryable でない、1〜2 ms。2 回目も同じ。`jcmd 1 ManagementAgent.status` は `Agent: disabled` のまま (B-22〜B-22b) |
-| 別コンテナ (`--pid host`、別ネットワーク) | 同上 | 同じく拒否 (B-22d) |
-| 別コンテナ (`--pid host`、JVM のネットワークを共有) | 同上 | 繋がる (B-22e) |
-| 同じコンテナ (`docker exec`) | 同上 | 繋がる (B-22f, B 全般) |
-| ホスト | `--network host` のコンテナ | 繋がる (B-24) |
-| ホスト | ホスト上の JVM (コンテナなし) | `ps` に出て、`--pid` で読める (B-25) |
+生の制御文字の判定 (`lib.sh` の `no_controls`) は、出力のバイト列に C0 (改行とタブを除く)、DEL、UTF-8 の C1 (`C2 80`〜`C2 9F`) があるかを見る。
 
 ## INFO の内容
 
 | ID | 内容 |
 |---|---|
-| A-05 / A-06 | `libz.so.1` と `libc.so.6` にリンクし、`GLIBC_2.34` まで要求する。v0.1.0 も同じ (G-03) |
-| A-08 | alpine (musl) では起動しない (`exec ... no such file or directory`)。glibc 前提なので想定どおり |
-| B-13d | OpenJ9 に 1 回試すと javacore が 4 つ書かれた |
-| F-18 | `need.client.auth=true` は `TLS_FAILED` (`(certificate_required) Received fatal alert: certificate_required`)。Limitations どおり |
-| G-02a / G-02 | v0.1.0 で 100,000 段の値を読むと `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `UNSUPPORTED_TYPE` (D-03) |
-| G-02b | v0.1.0 で `--tls` なしの信頼できない TLS 接続は `CONNECTION_FAILED` (`retryable: true`)。0.2.0 は `TLS_FAILED` (`retryable: false`、F-12)。リリースノートに書く挙動変更 |
+| A-05 / A-06 | `libz.so.1` と `libc.so.6` にリンクし、`GLIBC_2.34` まで要求する。v0.2.1 (CI ビルド) も同じ (G-03) |
+| A-08 | alpine (musl) では起動しない。glibc 前提なので想定どおり |
+| B-13d | OpenJ9 に 1 回試すと javacore が 4 つ書かれた (docs どおり)。失敗まで 4.5 秒 (`--timeout 5s`) |
+| F-18 | `need.client.auth=true` は `TLS_FAILED` (`(certificate_required) ...`)。Limitations どおり |
 
 ## この環境で実行できなかったもの
 
-- **G-01 install.sh**: プロキシが `https://github.com/yagipass/ajmx/releases/v0.1.0` (Accept: application/json) を 403 にするため、タグの解決で止まる。代わりにアセットと `.sha256` を直接取得し、チェックサムと実行を確かめた (G-01b, G-01c)。install.sh は v0.1.0 から変わっていない。リリース後に H-01, H-02 で確認する。
-- CI がビルドしたバイナリ。リリース後に配布バイナリで A の項目を確認する (H-06)。
-- TESTCASES.md の H (Homebrew, Nix, attestation, macOS, arm64, docs サイト, リリースノート)。
+- **G-01 install.sh**: プロキシが `https://github.com/yagipass/ajmx/releases/v0.2.1` (Accept: application/json) を 403 にするため、タグの解決で止まる。代わりにアセットと `.sha256` を直接取得し、チェックサムと実行を確かめた (G-01b, G-01c)。install.sh は v0.1.0 から変わっていない。
+- **attestation**: `gh attestation verify` は Sigstore の初期化に失敗した (この環境から Sigstore に届かない)。
+- **0.2.2 の CI ビルドのバイナリ**: リリースで初めて作られる。代わりに v0.2.1 の CI ビルドが docs の要件どおりに動くことを確認した (G-04)。
+- TESTCASES.md の H (Homebrew, Nix, attestation, macOS, arm64, docs サイト) はリリース後に確認する。
 
 ## 全結果
 
@@ -143,7 +135,7 @@ CI の成果物はこの環境のプロキシが取得を拒否するため、�
 | B-19c | PASS | 3 | a JVM of a UID without a passwd entry: root without CAP_SYS_PTRACE is refused (docs) |
 | B-19d | PASS | 0 | a JVM of a UID without a passwd entry: root with CAP_SYS_PTRACE connects (docs) |
 | B-20 | PASS | 3 | a jlink runtime without jdk.management.agent |
-| B-21 | PASS | 0 | a JVM that is not PID 1 (pid 7) |
+| B-21 | PASS | 0 | a JVM that is not PID 1 (pid 8) |
 | B-22 | PASS | 3 | host --pid on a JVM in a container with its own network: refused at once |
 | B-22a | PASS | 3 | the same again |
 | B-22b | PASS | 0 | the JVM's local agent was not started |
@@ -217,6 +209,18 @@ CI の成果物はこの環境のプロキシが取得を拒否するため、�
 | C-59 | PASS | 2 | --credentials-stdin with --pid |
 | C-60 | PASS | 2 | --tls with --pid |
 | C-61 | PASS | 2 | --tls-ca without --tls |
+| C-70 | PASS | 5 | an exception message with C0 and C1 controls: REMOTE_EXCEPTION with the exact message |
+| C-70b | PASS | 0 | ...and stdout holds no raw control character |
+| C-71 | PASS | 5 | --debug: the stack trace on stderr shows the message escaped |
+| C-71b | PASS | 0 | --debug: stderr holds no raw control character |
+| C-71c | PASS | 0 | --debug: stdout holds no raw control character either |
+| C-72 | PASS | 0 | a return value with C0, DEL and C1 controls reads back exactly |
+| C-72b | PASS | 0 | ...and stdout holds no raw control character |
+| C-73 | PASS | 0 | an attribute value with controls, written and read in a batch, reads back exactly |
+| C-73b | PASS | 0 | read of that attribute: stdout holds no raw control character |
+| C-73c | PASS | 0 | batch with --debug and a failing request: stdout and stderr hold no raw control character |
+| C-74 | PASS | 0 | 200 C1 controls: the output fits --max-bytes of its own size (1363 bytes) |
+| C-74b | PASS | 7 | ...and 10 bytes less is OUTPUT_TRUNCATED with that size in outputBytes |
 | D-01 | PASS | 7 | a value 500 levels deep is read (and cut at 32 for output) |
 | D-02 | PASS | 5 | 501 levels: UNSUPPORTED_TYPE with the limits, not retryable |
 | D-03 | PASS | 5 | an attribute 100,000 levels deep: UNSUPPORTED_TYPE, not INTERNAL_ERROR |
@@ -247,6 +251,8 @@ CI の成果物はこの環境のプロキシが取得を拒否するため、�
 | E-16 | PASS | 0 | batch with credentials from the environment |
 | E-17 | PASS | 5 | 501 levels over --url: UNSUPPORTED_TYPE |
 | E-18 | PASS | 5 | 100,000 levels over --url: UNSUPPORTED_TYPE |
+| E-19 | PASS | 0 | an exception message with controls over --url: stdout holds no raw control character |
+| E-19b | PASS | 0 | ...and --debug stderr neither |
 | F-01 | PASS | 0 | --tls --tls-ca: ping (docs recipe) |
 | F-02 | PASS | 0 | read over TLS |
 | F-02b | PASS | 0 | write over TLS |
@@ -279,10 +285,13 @@ CI の成果物はこの環境のプロキシが取得を拒否するため、�
 | F-20 | PASS | 3 | a wrong password over TLS is AUTH_FAILED |
 | F-21 | PASS | 3 | viewer write over TLS is AUTH_FAILED |
 | F-22 | PASS | 5 | 501 levels over TLS: UNSUPPORTED_TYPE |
-| G-01 | FAIL | 1 | install.sh installs the released v0.1.0 into -b |
-| G-01b | PASS | 0 | download the v0.1.0 asset and check its SHA-256 |
-| G-01c | PASS | 0 | the released v0.1.0 binary runs |
-| G-02a | INFO | 0 | for comparison: v0.1.0 ping |
-| G-02 | INFO | 3 | for comparison: v0.1.0 reads the 100,000-level value |
-| G-02b | INFO | 3 | for comparison: v0.1.0 without --tls against an untrusted TLS connection |
-| G-03 | INFO | 0 | newest glibc symbol version the released v0.1.0 requires |
+| G-01 | FAIL | 1 | install.sh installs the released v0.2.1 into -b |
+| G-01b | PASS | 0 | download the v0.2.1 asset and check its SHA-256 |
+| G-01c | PASS | 0 | the released v0.2.1 binary runs |
+| G-03 | INFO | 0 | newest glibc symbol version the released v0.2.1 requires |
+| G-04[ubuntu:22.04] | PASS | 0 | the released v0.2.1 binary, built by CI, runs on ubuntu:22.04 |
+| G-04[debian:12] | PASS | 0 | the released v0.2.1 binary, built by CI, runs on debian:12 |
+| G-04[rockylinux:9] | PASS | 0 | the released v0.2.1 binary, built by CI, runs on rockylinux:9 |
+| G-04[amazonlinux:2023] | PASS | 0 | the released v0.2.1 binary, built by CI, runs on amazonlinux:2023 |
+| G-04b | PASS | 1 | the released v0.2.1 binary fails on ubuntu:20.04 with the glibc error |
+| G-02 | PASS | 1 | control: v0.2.1 writes the exception message with a raw C1 control on stdout |

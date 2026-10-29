@@ -147,3 +147,23 @@ alive() { docker exec "$P$1" sh -c "kill -0 $2"; }
 cleanup() {
   docker ps -aq --filter "name=^$P" | xargs -r docker rm -f >/dev/null 2>&1
 }
+
+# no_controls out|err COMMAND...   Exits 0 if the command's stdout (out) or stderr (err) holds no
+# raw control characters other than newline and tab: no C0 byte, no DEL, and no UTF-8 encoded C1
+# control (U+0080 to U+009F). Exits 1 and prints them otherwise.
+no_controls() {
+  local stream=$1 f
+  shift
+  f=$(mktemp)
+  if [[ $stream == out ]]; then
+    "$@" >"$f" 2>/dev/null
+  else
+    "$@" 2>"$f" >/dev/null
+  fi
+  if LC_ALL=C grep -aqP '[\x00-\x08\x0b-\x1f\x7f]|\xc2[\x80-\x9f]' "$f"; then
+    LC_ALL=C grep -aoP '.{0,20}([\x00-\x08\x0b-\x1f\x7f]|\xc2[\x80-\x9f]).{0,20}' "$f" | head -3 | od -c | head -8
+    rm -f "$f"
+    return 1
+  fi
+  rm -f "$f"
+}

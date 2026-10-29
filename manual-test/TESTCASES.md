@@ -1,16 +1,17 @@
-# ajmx 0.2.0 リリース前 手動テストケース
+# ajmx リリース前 手動テストケース
 
-v0.1.0 から 0.2.0 までの変更のうち、CI (`./gradlew -Pnative check` と JDK マトリクス) が見ていない「実環境に近い条件」を手で確かめるためのテストケース。
+リリースする変更のうち、CI (`./gradlew -Pnative check` と JDK マトリクス) が見ていない「実環境に近い条件」を手で確かめるためのテストケース。0.2.0 のために作り、0.2.2 で #102 と #118 のケースを足した。リリースのたびに全件を流す。
 
 ## 対象と観点
 
 | 変更 | 観点 |
 |---|---|
+| #102 `--debug` のスタックトレースの制御文字をエスケープ (0.2.1)、#118 JSON 出力の DEL と C1 制御文字をエスケープ (0.2.2) | ターゲットが返す例外メッセージ、戻り値、属性値に C0 / DEL / C1 制御文字があっても、stdout と stderr に生の制御文字が出ないか。JSON をパースすると元の文字列に戻るか。`--max-bytes` がエスケープ後の 6 バイトで数えるか。`--pid`、`--url`、`batch` のどれでも同じか |
 | #88 `--tls` / `--tls-ca` / `TLS_FAILED` | docs の手順どおりに TLS の JVM を立てて繋がるか。信頼できない証明書、ホスト名違い、registry や接続が平文の JVM を拒否するか。平文の JVM に資格情報を送らないか。`--tls` なしの TLS 失敗が `CONNECTION_FAILED` (retryable) から `TLS_FAILED` に変わったこと |
 | #90 デシリアライズ制限 (`maxdepth=500;maxarray=16777216`) | 境界値 (500/501 段、16,777,216/16,777,217 要素) で読める/`UNSUPPORTED_TYPE` になるか。`--pid`/`--url`/TLS/`batch` のどの経路でも効くか。v0.1.0 との差 |
 | #101 別ネットワーク名前空間の JVM を `--pid` で拒否 | ホストや別コンテナからコンテナ内の JVM を指定すると、attach せずにすぐ `ATTACH_NOT_SUPPORTED` で拒否するか。同じ名前空間 (コンテナ内、`--network host`、ネットワーク共有、コンテナなしのホスト) では今までどおり繋がるか |
 | #96〜#99 ドキュメント (glibc と zlib、TLS の reason、OpenJ9、`CAP_SYS_PTRACE` のない root) | docs に書いた挙動、メッセージ、対応ディストリビューションが実際と合うか |
-| Maven から Gradle への移行 (#33) ほかビルドの変更 | `version` が 0.2.0 を返すか。ネイティブバイナリが動く Linux ディストリビューションと、リンクするライブラリ |
+| Maven から Gradle への移行 (#33) ほかビルドの変更 | `version` がリリースのバージョンを返すか。ネイティブバイナリが動く Linux ディストリビューションと、リンクするライブラリ |
 | 既存機能 (回帰) | ターゲット JDK 8〜25 とベンダー違い、コンテナ、ユーザー違い、Tomcat 等の実アプリ、docs の例のコマンド |
 
 ## 実行方法
@@ -18,10 +19,11 @@ v0.1.0 から 0.2.0 までの変更のうち、CI (`./gradlew -Pnative check` �
 `run.sh` が下の ID のうち「自動」のものを Docker で実行する。ターゲットには IT と同じ `ajmxtest.TestTarget` を使う。
 
 ```sh
-# 0.2.0 のソース (tagpr のリリース PR のブランチ) をビルドする。GraalVM 25 のコンテナでもよい
+# リリース PR のブランチ (tagpr-from-vX.Y.Z) をビルドする。GraalVM 25 のコンテナでもよい
 ./gradlew :cli:nativeCompile :it:classes
-manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/classes/java/main
-# 一部だけ: SECTIONS=EF manual-test/run.sh ... 、ID で絞る: manual-test/run.sh ... ... '^F-1'
+# VERSION はバイナリが返すべきバージョン、PREV は比べる前のリリース (既定 v0.2.1)
+VERSION=0.2.2 PREV=v0.2.1 manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/classes/java/main
+# 一部だけ: SECTIONS=EF VERSION=... manual-test/run.sh ... 、ID で絞る: VERSION=... manual-test/run.sh ... ... '^F-1'
 ```
 
 結果は `results.tsv` (ID・PASS/FAIL/INFO・終了コード・説明) と `details.log` (コマンドと出力) に出る。INFO は判定せず挙動を記録するだけのケース。
@@ -32,7 +34,7 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 
 | ID | 観点 | 手順 | 期待結果 |
 |---|---|---|---|
-| A-01 | バージョン | `ajmx version` | `result.version == "0.2.0"` |
+| A-01 | バージョン | `ajmx version` | `result.version` が `VERSION` |
 | A-02 | `--version` | `ajmx --version` | 同上 |
 | A-03 | help に新オプション | `ajmx help` | JSON に `--tls`, `--tls-ca` がある |
 | A-04 | `--help` | `ajmx --help` | `ok: true` |
@@ -98,6 +100,11 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 | C-42 | `invoke` がタイムアウトした後の `write` と `read` | `TIMEOUT`, `SKIPPED`, ok |
 | C-43 | `batch` が `--max-bytes` を超える | 大きい項目が `{"id","ok","truncated": true}` に置き換わる |
 | C-50〜C-61 | オプションの誤り: 未知のコマンド (`allowed`)、未知のオプション、`--pid` と `--url`、ターゲットなし、不正な duration、`--limit=2` とコマンド後のオプション、`--` 以降の引数、`--debug` (stderr にスタックトレース、stdout は JSON)、同じオプション 2 回、`--credentials-stdin`/`--tls` を `--pid` と、`--tls-ca` だけ | 期待どおりの `INVALID_ARGUMENT` (exit 2) または成功 |
+| C-70 / C-70b | 例外メッセージに C0 と C1 の制御文字 (`failWithControlCharacters`) | `REMOTE_EXCEPTION`、`exceptionMessage` が元の文字列と一致。stdout に生の制御文字がない |
+| C-71〜C-71c | 同じ操作を `--debug` で | stderr のスタックトレースにメッセージが `\u001b...\u000d...\u009b` とエスケープされて出る。stderr にも stdout にも生の制御文字がない |
+| C-72 / C-72b | 戻り値に C0 / DEL / C1 (`greet` の引数を `\u` エスケープした JSON で渡す) | 戻り値が元の文字列と一致。stdout に生の制御文字がない |
+| C-73〜C-73c | 属性値に制御文字を `batch` で書いて読む、`read` で読む、`batch --debug` で失敗する要求 | 元の値と一致。stdout にも stderr にも生の制御文字がない。stderr に `ajmx: .result.items[0].error` |
+| C-74 / C-74b | C1 制御文字 200 個の戻り値と `--max-bytes` | 自分のサイズ +5 では成功、-10 では `OUTPUT_TRUNCATED` で `outputBytes` が実際のサイズ (±3) と一致する (C1 1 文字を 6 バイトで数える) |
 
 ## D. デシリアライズ制限 (#90)
 
@@ -111,7 +118,6 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 | D-06 | `batch` の中の 501 段 | その項目だけ失敗、他は ok (exit 7) |
 | D-07 / D-08 | 1 億文字の文字列 | `OUTPUT_TRUNCATED`。その後も普通に使える |
 | B-06, E-17, E-18, F-22 | `--pid` の各 JDK、`--url`、TLS 経由 | どれも `UNSUPPORTED_TYPE` |
-| G-02a / G-02 | 比較: v0.1.0 で同じ 100,000 段の値 | 記録 (INFO) |
 
 ## E. `--url` (TLS なし)
 
@@ -125,6 +131,7 @@ manual-test/run.sh modules/cli/build/native/nativeCompile/ajmx modules/it/build/
 | E-07 / E-08 | 誰も listen していないポート / `--url localhost:7199` | `CONNECTION_FAILED` / `INVALID_ARGUMENT` |
 | E-09〜E-12 | 認証: operator の ping と write、viewer の read と write と `findDeadlockedThreads`、誤ったパスワード、資格情報なし | operator は成功。viewer の write/invoke は `AUTH_FAILED` で `details.mbean`。誤り・なしは `AUTH_FAILED` で `details.url`、retryable でない |
 | E-13〜E-16 | `--credentials-stdin`、不正な JSON、`batch` と `--credentials-stdin`、環境変数で `batch` | 成功 / `INVALID_ARGUMENT` / `INVALID_ARGUMENT` / 成功 |
+| E-19 / E-19b | `--url` で例外メッセージに制御文字 | stdout にも `--debug` の stderr にも生の制御文字がない |
 
 ## F. `--tls` / `--tls-ca` (#88)
 
@@ -151,14 +158,15 @@ docs (connect/remote.md の TLS) の手順で証明書と `ssl.config.file` を�
 | F-20 / F-21 | TLS 上で誤ったパスワード / viewer の write | `AUTH_FAILED` |
 | F-22 | TLS 上で 501 段の値 | `UNSUPPORTED_TYPE` |
 
-## G. インストールと v0.1.0 との比較
+## G. インストールと前のリリース (`PREV`) との比較
 
 | ID | 観点 | 期待結果 |
 |---|---|---|
-| G-01 | `install.sh -b <dir> v0.1.0` | インストールされる |
-| G-01b / G-01c | (G-01 ができない環境の代わり) v0.1.0 のアセットと `.sha256` を直接取得して検証、実行 | チェックサム OK、`version == "0.1.0"` |
-| G-02a / G-02 / G-02b | v0.1.0 で ping、100,000 段の値、`--tls` なしの TLS 失敗 | 記録 (INFO)。0.2.0 との差を見る |
-| G-03 | リリース済み v0.1.0 (CI ビルド) が必要とする glibc | 記録 (INFO)。A-06 と比べる |
+| G-01 | `install.sh -b <dir> $PREV` | インストールされる |
+| G-01b / G-01c | (G-01 ができない環境の代わり) `PREV` のアセットと `.sha256` を直接取得して検証、実行 | チェックサム OK、`version` が `PREV` |
+| G-02 | 対照: `PREV` で `failWithControlCharacters` を呼び、stdout を C-70b と同じ方法で調べる | 0.2.1 以前は生の U+009B を書くので検出される (exit 1)。C-70b の判定が実際に検出できることの確認 |
+| G-03 | `PREV` (CI ビルド) が必要とする glibc | 記録 (INFO)。A-06 と比べる |
+| G-04 / G-04b | `PREV` (CI ビルド) を ubuntu:22.04, debian:12, rockylinux:9, amazonlinux:2023 と ubuntu:20.04 で実行 | 前の 4 つで動き、ubuntu:20.04 は glibc のエラー。CI が作るバイナリが docs の要件どおりであることの確認 |
 
 ## H. リリース後に手で確認すること (Docker では実行しない)
 
