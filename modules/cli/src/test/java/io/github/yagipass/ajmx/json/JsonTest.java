@@ -36,8 +36,11 @@ final class JsonTest {
 
   @Test
   void everyControlCharacterIsEscapedSoATerminalPrintsItAsText() {
-    assertEquals(
-        "\"\\u001b\\u007f\\u0080\\u009b\\u009fé\"", Json.write("\u001b\u007f\u0080\u009b\u009fé"));
+    assertEquals("\"\\u001b\"", Json.write("\u001b"));
+    for (char c = 0x7f; c <= 0x9f; c++) {
+      assertEquals("\"\\u00" + Integer.toHexString(c) + "\"", Json.write(String.valueOf(c)));
+    }
+    assertEquals("\"é\"", Json.write("é"));
   }
 
   @Test
