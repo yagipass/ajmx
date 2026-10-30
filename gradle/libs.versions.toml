@@ -16,5 +16,5 @@ spotless-member-order = "io.github.yagipass:spotless-member-order:0.2.0"
 
 [plugins]
 errorprone = "net.ltgt.errorprone:5.1.1"
-graalvm-native = "org.graalvm.buildtools.native:1.1.14"
+graalvm-native = "org.graalvm.buildtools.native:1.1.16"
 spotless = "com.diffplug.spotless:8.10.4"
