@@ -46,8 +46,8 @@ Open an issue before you start on a new feature or a change in behavior, with th
 
 A pull request:
 
-- references its issue (`Closes #N`).
-- adds tests. A bug fix adds a test that reproduces the bug.
+- references its issue (`Closes #N`), if it has one.
+- adds tests when it changes behavior. A bug fix adds a test that reproduces the bug.
 - passes `./gradlew check`.
 - has a Conventional Commits title. Pull requests are squash-merged, so the title becomes the commit on `main`.
 
