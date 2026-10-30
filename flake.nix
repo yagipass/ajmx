@@ -115,7 +115,6 @@
           devShells.default = pkgs.mkShell {
             packages = [
               graalvm
-              pkgs.git
               pkgs.hyperfine
             ]
             ++ config.pre-commit.settings.enabledPackages;
@@ -126,11 +125,10 @@
             shellHook = config.pre-commit.shellHook;
           };
 
-          devShells.docs = pkgs.mkShell {
+          devShells.docs = pkgs.mkShellNoCC {
             packages = [
               pkgs.nodejs_26
               pkgs.pnpm
-              pkgs.git
             ]
             ++ config.pre-commit.settings.enabledPackages;
 
