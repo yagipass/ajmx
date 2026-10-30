@@ -34,6 +34,7 @@ The docs site in `docs/` is built with [ox-content](https://github.com/ubugeeei-
 
 - `./gradlew check` fails on unformatted code, including members out of the order set in `build.gradle.kts`, and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
 - `./gradlew spotlessApply` moves overloads with different visibilities apart, which Error Prone's `UngroupedOverloads` rejects. Give them different names.
+- The `gitleaks` hook checks the staged changes of each commit. CI checks every commit with `gitleaks git`, so a secret that a later commit removes still fails the `checks` jobs.
 - Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
 - Name branches `<type>/<slug>` after the Conventional Commits type. `labeler.yml` labels the pull request by it, and the label picks its section of the release notes in `.github/release.yml`.
 - When the CLI's behavior changes, update `docs/content` and `skills/ajmx/SKILL.md` with it. `README.md` holds only the overview, the install commands, usage examples and links to the docs site, so update it only when one of those changes.

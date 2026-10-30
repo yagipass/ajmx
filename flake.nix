@@ -64,19 +64,7 @@
               package = config.treefmt.build.wrapper;
             };
 
-            gitleaks = {
-              enable = true;
-              name = "gitleaks";
-              entry = "${pkgs.writeShellScript "gitleaks-files" ''
-                status=0
-                for file in "$@"; do
-                  ${pkgs.gitleaks}/bin/gitleaks dir --config .gitleaks.toml --redact --verbose --no-banner --log-level warn "$file" || status=1
-                done
-                exit $status
-              ''}";
-              args = [ ];
-              pass_filenames = true;
-            };
+            gitleaks.enable = true;
 
             convco.enable = true;
 
