@@ -292,51 +292,47 @@ public final class Json {
   }
 
   private static void writeValue(Sink sink, @Nullable Object value) {
-    if (value == null) {
-      sink.text("null");
-    } else if (value instanceof String s) {
-      writeString(sink, s);
-    } else if (value instanceof Boolean b) {
-      sink.text(b.toString());
-    } else if (value instanceof Double || value instanceof Float) {
-      double d = ((Number) value).doubleValue();
-      if (Double.isFinite(d)) {
-        sink.text(value.toString());
-      } else {
-        writeString(sink, value.toString());
-      }
-    } else if (value instanceof Integer
-        || value instanceof Long
-        || value instanceof Short
-        || value instanceof Byte
-        || value instanceof BigInteger) {
-      sink.text(value.toString());
-    } else if (value instanceof BigDecimal bd) {
-      sink.text(bd.toString());
-    } else if (value instanceof Map<?, ?> map) {
-      sink.append('{');
-      @Var boolean first = true;
-      for (Map.Entry<?, ?> e : map.entrySet()) {
-        if (!first) {
-          sink.append(',');
+    switch (value) {
+      case null -> sink.text("null");
+      case String s -> writeString(sink, s);
+      case Boolean b -> sink.text(b.toString());
+      case Double _, Float _ -> {
+        double d = ((Number) value).doubleValue();
+        if (Double.isFinite(d)) {
+          sink.text(value.toString());
+        } else {
+          writeString(sink, value.toString());
         }
-        first = false;
-        writeString(sink, (String) e.getKey());
-        sink.append(':');
-        writeValue(sink, e.getValue());
       }
-      sink.append('}');
-    } else if (value instanceof List<?> list) {
-      sink.append('[');
-      for (int i = 0; i < list.size(); i++) {
-        if (i > 0) {
-          sink.append(',');
+      case Integer _, Long _, Short _, Byte _, BigInteger _ -> sink.text(value.toString());
+      case BigDecimal bd -> sink.text(bd.toString());
+      case Map<?, ?> map -> {
+        sink.append('{');
+        @Var boolean first = true;
+        for (Map.Entry<?, ?> e : map.entrySet()) {
+          if (!first) {
+            sink.append(',');
+          }
+          first = false;
+          writeString(sink, (String) e.getKey());
+          sink.append(':');
+          writeValue(sink, e.getValue());
         }
-        writeValue(sink, list.get(i));
+        sink.append('}');
       }
-      sink.append(']');
-    } else {
-      throw new IllegalArgumentException("Not a JSON model value: " + value.getClass().getName());
+      case List<?> list -> {
+        sink.append('[');
+        for (int i = 0; i < list.size(); i++) {
+          if (i > 0) {
+            sink.append(',');
+          }
+          writeValue(sink, list.get(i));
+        }
+        sink.append(']');
+      }
+      default ->
+          throw new IllegalArgumentException(
+              "Not a JSON model value: " + value.getClass().getName());
     }
   }
 
