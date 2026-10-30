@@ -40,8 +40,8 @@ jobs:
           authToken: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
       - run: nix flake check -L
       - run: |
-          opts=(--full-history --all --diff-filter=tuxdb --diff-merges=first-parent)
-          git log "${opts[@]}" -1 > /dev/null
+          opts=(--full-history --all --diff-filter=uxdb --diff-merges=first-parent)
+          git log -p -U0 "${opts[@]}" > /dev/null
           nix run --inputs-from . nixpkgs#gitleaks -- git --log-opts="${opts[*]}" --redact --verbose
 
   native:
