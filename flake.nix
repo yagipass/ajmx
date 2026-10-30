@@ -39,7 +39,12 @@
       ];
 
       perSystem =
-        { config, pkgs, ... }:
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         let
           graalvm = pkgs.graalvmPackages.graalvm-ce;
         in
@@ -67,15 +72,6 @@
             gitleaks.enable = true;
 
             convco.enable = true;
-
-            jactionlint = {
-              enable = true;
-              name = "jactionlint";
-              package = pkgs.jactionlint;
-              entry = "${pkgs.jactionlint}/bin/jactionlint --shellcheck=${pkgs.shellcheck}/bin/shellcheck";
-              files = "^\\.github/";
-              pass_filenames = false;
-            };
 
             end-of-file-fixer.enable = true;
             trim-trailing-whitespace.enable = true;
@@ -107,6 +103,14 @@
                 MD033 = false;
                 MD060 = false;
               };
+            };
+
+            jactionlint = {
+              enable = true;
+              package = pkgs.jactionlint;
+              entry = "${lib.getExe pkgs.jactionlint} --shellcheck=${lib.getExe pkgs.shellcheck} --pyflakes=${lib.getExe pkgs.python3Packages.pyflakes}";
+              files = "^\\.github/|(^|/)action\\.ya?ml$";
+              pass_filenames = false;
             };
           };
 
