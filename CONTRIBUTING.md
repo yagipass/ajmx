@@ -20,17 +20,7 @@ Run `nix develop` (or `direnv allow`). It provides GraalVM CE 25 and [hyperfine]
 
 The integration tests live in `modules/it` and attach to `ajmxtest.TestTarget` (compiled for Java 8). `-Pajmx.test.java` selects the JDK that runs it.
 
-## Rules
-
-- `./gradlew check` fails on unformatted code, including members out of the order set in `build.gradle.kts`, and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
-- `./gradlew spotlessApply` moves overloads with different visibilities apart, which Error Prone's `UngroupedOverloads` rejects. Give them different names.
-- Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
-- Name branches `<type>/<slug>` after the Conventional Commits type. `labeler.yml` labels the pull request by it, and the label picks its section of the release notes in `.github/release.yml`.
-- When the CLI's behavior changes, update `README.md`, `skills/ajmx/SKILL.md` and `docs/content` with it.
-- A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
-- After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
-
-## Docs
+### Docs site
 
 The docs site in `docs/` is built with [ox-content](https://github.com/ubugeeei-prod/ox-content). `nix develop .#docs` (or `direnv allow` in `docs/`) provides Node.js and pnpm. Run these in `docs/`:
 
@@ -40,11 +30,34 @@ The docs site in `docs/` is built with [ox-content](https://github.com/ubugeeei-
 | `pnpm dev` | serve the site and reload on changes |
 | `pnpm build` | build the site into `docs/dist` |
 
+## Rules
+
+- `./gradlew check` fails on unformatted code, including members out of the order set in `build.gradle.kts`, and on any javac (`-Xlint:all -Werror`) or Error Prone warning.
+- `./gradlew spotlessApply` moves overloads with different visibilities apart, which Error Prone's `UngroupedOverloads` rejects. Give them different names.
+- Commit messages follow Conventional Commits, checked by the `commit-msg` hook.
+- Name branches `<type>/<slug>` after the Conventional Commits type. `labeler.yml` labels the pull request by it, and the label picks its section of the release notes in `.github/release.yml`.
+- When the CLI's behavior changes, update `docs/content` and `skills/ajmx/SKILL.md` with it. `README.md` holds only the overview, the install commands, usage examples and links to the docs site, so update it only when one of those changes.
+- A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
+- After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
+
+## Proposing a change
+
+Open an issue before you start on a new feature or a change in behavior, with the commands you ran and the output you expected. A small fix, such as a typo, can go straight to a pull request.
+
+A pull request:
+
+- references its issue (`Closes #N`), if it has one.
+- adds tests when it changes behavior. A bug fix adds a test that reproduces the bug.
+- passes `./gradlew check`.
+- has a Conventional Commits title. Pull requests are squash-merged, so the title becomes the commit on `main`.
+
 ## Release
 
-Merge the release pull request that [tagpr](https://github.com/Songmu/tagpr) keeps open, after approving its checks. Label it `tagpr:minor` or `tagpr:major` for more than a patch release. `build.yml` then tags `vX.Y.Z`, publishes the attested binaries and `install.sh` as a GitHub release, updates `Formula/ajmx.rb` in [yagipass/homebrew-tap](https://github.com/yagipass/homebrew-tap), and deploys the docs site to Cloudflare Workers.
+Merge the release pull request that [tagpr](https://github.com/Songmu/tagpr) keeps open, after approving its checks. Label it `tagpr:minor` or `tagpr:major` for more than a patch release. `build.yml` then tags `vX.Y.Z`, publishes the attested binaries and `install.sh` as a GitHub release, updates `Formula/ajmx.rb` in [yagipass/homebrew-tap](https://github.com/yagipass/homebrew-tap), and deploys the docs site to Cloudflare Workers. tagpr writes the version in `gradle.properties` and `nix/ajmx.nix`, so do not edit it by hand.
 
-The `checks` jobs of runs on `main` push their Nix build to [ajmx.cachix.org](https://app.cachix.org/cache/ajmx), so a release is in the cache before it is tagged. Runs on other refs, such as pull requests, only pull from it.
+Updating the tap needs the secret `HOMEBREW_TAP_TOKEN`, a token that can push to it. The docs deploy runs in the `Cloudflare` environment with `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+The `checks` jobs of runs on `main` push their Nix build to [ajmx.cachix.org](https://app.cachix.org/cache/ajmx) with the secret `CACHIX_AUTH_TOKEN`, so a release is in the cache before it is tagged. Runs on other refs, such as pull requests, only pull from it.
 
 `install.sh` is generated by [insmith](https://github.com/Songmu/insmith). Do not edit it. Regenerate it when the release file names or `build.yml` change:
 
@@ -59,4 +72,6 @@ go run github.com/Songmu/insmith/cmd/insmith@v0.0.4 \
 
 ## Repository settings
 
-The repository settings, labels, rulesets and Actions permissions are managed with [gh-infra](https://github.com/babarot/gh-infra) in `.github/infra.yml`. Change them by editing that file, not on GitHub. `gh infra plan .github/infra.yml` shows the difference from GitHub, and `gh infra apply .github/infra.yml` applies it, which needs admin access to this repository. Environments and secrets are not managed by it; change them on GitHub.
+The repository settings, labels, rulesets and Actions permissions are managed with [gh-infra](https://github.com/babarot/gh-infra) in `.github/infra.yml`. To change them, edit the file, review the difference with `gh infra plan .github/infra.yml`, and apply it with `gh infra apply .github/infra.yml`. Applying needs admin access to the repository.
+
+Environments and secrets are not managed by gh-infra. Change them in the repository settings on GitHub.
