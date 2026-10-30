@@ -39,7 +39,12 @@
       ];
 
       perSystem =
-        { config, pkgs, ... }:
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         let
           graalvm = pkgs.graalvmPackages.graalvm-ce;
         in
@@ -55,39 +60,16 @@
 
           treefmt = {
             projectRootFile = "flake.nix";
+            flakeCheck = false;
             programs.nixfmt.enable = true;
           };
 
           pre-commit.settings.hooks = {
-            treefmt = {
-              enable = true;
-              package = config.treefmt.build.wrapper;
-            };
+            treefmt.enable = true;
 
-            gitleaks = {
-              enable = true;
-              name = "gitleaks";
-              entry = "${pkgs.writeShellScript "gitleaks-files" ''
-                status=0
-                for file in "$@"; do
-                  ${pkgs.gitleaks}/bin/gitleaks dir --config .gitleaks.toml --redact --verbose --no-banner --log-level warn "$file" || status=1
-                done
-                exit $status
-              ''}";
-              args = [ ];
-              pass_filenames = true;
-            };
+            gitleaks.enable = true;
 
             convco.enable = true;
-
-            jactionlint = {
-              enable = true;
-              name = "jactionlint";
-              package = pkgs.jactionlint;
-              entry = "${pkgs.jactionlint}/bin/jactionlint --shellcheck=${pkgs.shellcheck}/bin/shellcheck";
-              files = "^\\.github/";
-              pass_filenames = false;
-            };
 
             end-of-file-fixer.enable = true;
             trim-trailing-whitespace.enable = true;
@@ -120,12 +102,19 @@
                 MD060 = false;
               };
             };
+
+            jactionlint = {
+              enable = true;
+              package = pkgs.jactionlint;
+              entry = "${lib.getExe pkgs.jactionlint} --shellcheck=${lib.getExe pkgs.shellcheck} --pyflakes=${lib.getExe pkgs.python3Packages.pyflakes}";
+              files = "^\\.github/|(^|/)action\\.ya?ml$";
+              pass_filenames = false;
+            };
           };
 
           devShells.default = pkgs.mkShell {
             packages = [
               graalvm
-              pkgs.git
               pkgs.hyperfine
             ]
             ++ config.pre-commit.settings.enabledPackages;
@@ -136,11 +125,10 @@
             shellHook = config.pre-commit.shellHook;
           };
 
-          devShells.docs = pkgs.mkShell {
+          devShells.docs = pkgs.mkShellNoCC {
             packages = [
               pkgs.nodejs_26
               pkgs.pnpm
-              pkgs.git
             ]
             ++ config.pre-commit.settings.enabledPackages;
 
