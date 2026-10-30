@@ -72,10 +72,10 @@
    "module": "sha256-SrIVTJ83agthp6/i0djQJ+pvOQ08hyzkcKbZgqR+Wv4=",
    "pom": "sha256-70jsrBwclJAdj/ML8J16CClTQCNnLdXiVyek6Vh+oFM="
   },
-  "io/github/yagipass#spotless-member-order/0.2.0": {
-   "jar": "sha256-eT0Q5G73hGkkaCOptCZkeV/X36lPB6lLMbzYZ+cs9hs=",
-   "module": "sha256-oX5G/4fipLbKOBcpWHRvWxinjoGRW0TrAJlmU4WDOfo=",
-   "pom": "sha256-61DFGBPmJyoEKqrLrzwomCx22/bsAcEVuToSlazyAZQ="
+  "io/github/yagipass#spotless-member-order/0.3.0": {
+   "jar": "sha256-LHNtQmcT1aCezfOtmEO04li1tRL8b68he1inZcRiry4=",
+   "module": "sha256-hZ20SnAUS0OuCsgByBogRqqjuxvcy1r0CKNV2e/iu34=",
+   "pom": "sha256-pDP3Vrse08+n9j0LZUTfE1cmqaSMS+FT+CmUF5AOm1Y="
   },
   "net/java/dev/jna#jna-platform/5.19.1": {
    "jar": "sha256-Ozhk9bRJ6cPCSxaGFSS2IrCGVj9E4M2DhMjvxaYFL4I=",
