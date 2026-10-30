@@ -60,14 +60,12 @@
 
           treefmt = {
             projectRootFile = "flake.nix";
+            flakeCheck = false;
             programs.nixfmt.enable = true;
           };
 
           pre-commit.settings.hooks = {
-            treefmt = {
-              enable = true;
-              package = config.treefmt.build.wrapper;
-            };
+            treefmt.enable = true;
 
             gitleaks.enable = true;
 
