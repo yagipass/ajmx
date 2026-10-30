@@ -19,10 +19,6 @@ workflows:
         - 'cachix/install-nix-action@v31.11.2'
     '.github/workflows/labeler.yml':
         - 'actions/labeler@v7.0.0'
-    '.github/workflows/update-flake-lock.yml':
-        - 'actions/checkout@v7.0.1'
-        - 'cachix/install-nix-action@v31.11.2'
-        - 'peter-evans/create-pull-request@v8.1.1'
 dependencies:
     'actions/attest@v4.2.2':
         ref: 'v4.2.2'
@@ -74,11 +70,6 @@ dependencies:
         commit: 'sha1-3f5f9adaf7d9fecd50b5935e54106014257a94e6'
         owner_id: 124156
         repo_id: 743626948
-    'peter-evans/create-pull-request@v8.1.1':
-        ref: 'v8.1.1'
-        commit: 'sha1-5f6978faf089d4d20b00c7766989d076bb2fc7f1'
-        owner_id: 18365890
-        repo_id: 197176365
     'songmu/tagpr@v1.21.3':
         ref: 'v1.21.3'
         commit: 'sha1-1fcd7292d1fe8ea9a8313eef46b8d80b7a15d227'
