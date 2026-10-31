@@ -1,5 +1,5 @@
 [versions]
-errorprone = "2.50.0"
+errorprone = "2.51.0"
 junit = "6.1.3"
 
 [libraries]
@@ -11,10 +11,10 @@ jspecify = "org.jspecify:jspecify:1.0.1"
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-nullaway = "com.uber.nullaway:nullaway:0.14.2"
+nullaway = "com.uber.nullaway:nullaway:0.14.3"
 spotless-member-order = "io.github.yagipass:spotless-member-order:0.3.0"
 
 [plugins]
 errorprone = "net.ltgt.errorprone:5.1.1"
-graalvm-native = "org.graalvm.buildtools.native:1.1.14"
+graalvm-native = "org.graalvm.buildtools.native:1.1.16"
 spotless = "com.diffplug.spotless:8.10.4"
