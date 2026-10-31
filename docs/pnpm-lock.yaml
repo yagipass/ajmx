@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@ox-content/vite-plugin':
-        specifier: 3.3.0
-        version: 3.3.0(katex@0.16.47)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vite@8.3.4(esbuild@0.28.2)(terser@5.51.2)(yaml@2.9.1))
+        specifier: 3.4.0
+        version: 3.4.0(katex@0.16.47)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vite@8.3.4(esbuild@0.28.2)(terser@5.51.2)(yaml@2.9.1))
       vite:
         specifier: 8.3.4
         version: 8.3.4(esbuild@0.28.2)(terser@5.51.2)(yaml@2.9.1)
@@ -660,50 +660,50 @@ packages:
   '@mermaid-js/parser@1.2.1':
     resolution: {integrity: sha512-n12NohV3mrUyUL2o93IgG/ifeW9FTyeJn3zDxkhwa8MJ9Fxg3HQMlA3RiGmD/3UnJvheztkjjQAjA2T4LmUcpw==}
 
-  '@ox-content/binding-darwin-arm64@3.3.0':
-    resolution: {integrity: sha512-bSYYmuE7ihVo4LyIDTHUDnwZgT6wj6GwRONsN5pY1cbLcVL5jRsIqxOago8GpYaogPPQrtqcwc7cQmBMBpTgtg==}
+  '@ox-content/binding-darwin-arm64@3.4.0':
+    resolution: {integrity: sha512-OHktOj7zm8dvgwYPZ2A3XkRsE+lQXcxIt0dRbyQNFCmimVKu6GQLJ4d8ejecTUwnJif7MhJKrpxPJitxgWpdDw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ox-content/binding-darwin-x64@3.3.0':
-    resolution: {integrity: sha512-Zv4olBK0TGhafsU42zDtloj2y90J48K5f3qT5GdvD8oGje37Trs0vn1wjOUA3vM6AD2NhI4JBcjO0R5OGJPPHQ==}
+  '@ox-content/binding-darwin-x64@3.4.0':
+    resolution: {integrity: sha512-6pCcbN7lETeSVq+oxGZ+hLcNrWs0E6JlLml01YMDbvx/V7EdbRQXjGDK2Taa6h0eYM31/RRwwU4CSn5crjYx7A==}
     cpu: [x64]
     os: [darwin]
 
-  '@ox-content/binding-linux-arm64-gnu@3.3.0':
-    resolution: {integrity: sha512-Xwztj/tr1cpEKFaZ2aH/Pp0sG1Q8Xoxumldp4p0dHh5kdY4hwdyEsl81DAywRnjUc5WqyiePAOmpammHVgWTuw==}
+  '@ox-content/binding-linux-arm64-gnu@3.4.0':
+    resolution: {integrity: sha512-omsC9LyyvMQXUQXMA6zvbDXwPw7YY/cn45EEW5VL5tUDVGnH+4DL0wxHqmnPx8oyrRbiCLS4i35XJ/QN1TsWRw==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@ox-content/binding-linux-arm64-musl@3.3.0':
-    resolution: {integrity: sha512-Kvs6/v2vP7XgvvNYysVc8VisYzabio6mlJkI9mQ5SLL9JFVU9h/aYJUf+Ozx6ilwy5XZ9CkAc2KWU+R60sN+qg==}
+  '@ox-content/binding-linux-arm64-musl@3.4.0':
+    resolution: {integrity: sha512-vXLcZeCLnifMooC5pz0ssCDzIWrDFwMbI4dGjgaMD9t9bAPDxNgQjEF6TuesvV8skXvToOeLRzBVFO8P0HK6Zg==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@ox-content/binding-linux-x64-gnu@3.3.0':
-    resolution: {integrity: sha512-powrvCBPj2pYtP601o0jtGtks3rgpo2FTvEHFJ+t7a4FErSGwPlFHrzrZOxGmRcZHkU+ND9qzfY715LDsXWaIw==}
+  '@ox-content/binding-linux-x64-gnu@3.4.0':
+    resolution: {integrity: sha512-nzsOieLwvK+qg8ooYBPVKoOnRrbxexQuRSqHryc7HWdLAyrIvdaQHs/HzfqYJLmFuP882+o/ZtjkjjW8JvbR9g==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@ox-content/binding-linux-x64-musl@3.3.0':
-    resolution: {integrity: sha512-xCsYIK7vOfWe15K/YOE9tHbxW0dDn16I+LOyvCU6rKMOKb6eG3Jblzk3ii8sH2YokdjwvVEFqft0ItIxjxpbow==}
+  '@ox-content/binding-linux-x64-musl@3.4.0':
+    resolution: {integrity: sha512-P1JQQrye2zDxmIueP2++krRWRKKOtUgdQGEmyVMvu2FG4HREViKLC+TJgY6qdwY6vNMo9DRxXjDhmLjtayvn7A==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@ox-content/binding-win32-x64-msvc@3.3.0':
-    resolution: {integrity: sha512-VpLJwDUfpo3e3TvGOJhnYWM3FA4D3fU4oOxuZgIO0Af7WXPLWtbhhXBEZL8RMGheAReBfKmhTf+mSmgwaCvCBw==}
+  '@ox-content/binding-win32-x64-msvc@3.4.0':
+    resolution: {integrity: sha512-y5IqHv3A10BNngtfCSIT8Ti+XJBEwlzBhRdI7jyKgFEnMzXSAtn7ZIMfgIw9+HiB3E4qZuVJlIocvfYIgR2LsA==}
     cpu: [x64]
     os: [win32]
 
-  '@ox-content/napi@3.3.0':
-    resolution: {integrity: sha512-uRPUW3kTOtnQq0L5X47eJzPd2WBrIh0KWUNuqe/PbMHdznYvXa9x4eQGrbPUAga6sKNBzj2ludpQrZfb1hhp5w==}
+  '@ox-content/napi@3.4.0':
+    resolution: {integrity: sha512-/uFtEBTk26N64BlXRDdHFCp6vjuzruAf70haXTdy91C8osBnpZHRmTxZu4h7cerGf4tXQ59Z5iSeGjD3vFw4rg==}
 
-  '@ox-content/vite-plugin@3.3.0':
-    resolution: {integrity: sha512-51O/ZE1ZE4oM6kHHBNihw0bhXCdGmPYeY82oBgpIJjrOdsH9akqg0jTzpPbMY+AfKAk0tp8F8DVogB1/41ujGw==}
+  '@ox-content/vite-plugin@3.4.0':
+    resolution: {integrity: sha512-s+pjh/R9QIK9EO+M8UrkJyRwOboexSvA4GVytKayqPd89xDWfQDdik6wIZaAwHhUk3EHHfJcFndpo7uIpNKhvg==}
     hasBin: true
     peerDependencies:
       '@vue/compiler-sfc': ^3.4.0
@@ -2711,44 +2711,44 @@ snapshots:
     dependencies:
       '@chevrotain/types': 11.1.2
 
-  '@ox-content/binding-darwin-arm64@3.3.0':
+  '@ox-content/binding-darwin-arm64@3.4.0':
     optional: true
 
-  '@ox-content/binding-darwin-x64@3.3.0':
+  '@ox-content/binding-darwin-x64@3.4.0':
     optional: true
 
-  '@ox-content/binding-linux-arm64-gnu@3.3.0':
+  '@ox-content/binding-linux-arm64-gnu@3.4.0':
     optional: true
 
-  '@ox-content/binding-linux-arm64-musl@3.3.0':
+  '@ox-content/binding-linux-arm64-musl@3.4.0':
     optional: true
 
-  '@ox-content/binding-linux-x64-gnu@3.3.0':
+  '@ox-content/binding-linux-x64-gnu@3.4.0':
     optional: true
 
-  '@ox-content/binding-linux-x64-musl@3.3.0':
+  '@ox-content/binding-linux-x64-musl@3.4.0':
     optional: true
 
-  '@ox-content/binding-win32-x64-msvc@3.3.0':
+  '@ox-content/binding-win32-x64-msvc@3.4.0':
     optional: true
 
-  '@ox-content/napi@3.3.0':
+  '@ox-content/napi@3.4.0':
     optionalDependencies:
-      '@ox-content/binding-darwin-arm64': 3.3.0
-      '@ox-content/binding-darwin-x64': 3.3.0
-      '@ox-content/binding-linux-arm64-gnu': 3.3.0
-      '@ox-content/binding-linux-arm64-musl': 3.3.0
-      '@ox-content/binding-linux-x64-gnu': 3.3.0
-      '@ox-content/binding-linux-x64-musl': 3.3.0
-      '@ox-content/binding-win32-x64-msvc': 3.3.0
+      '@ox-content/binding-darwin-arm64': 3.4.0
+      '@ox-content/binding-darwin-x64': 3.4.0
+      '@ox-content/binding-linux-arm64-gnu': 3.4.0
+      '@ox-content/binding-linux-arm64-musl': 3.4.0
+      '@ox-content/binding-linux-x64-gnu': 3.4.0
+      '@ox-content/binding-linux-x64-musl': 3.4.0
+      '@ox-content/binding-win32-x64-msvc': 3.4.0
 
-  '@ox-content/vite-plugin@3.3.0(katex@0.16.47)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vite@8.3.4(esbuild@0.28.2)(terser@5.51.2)(yaml@2.9.1))':
+  '@ox-content/vite-plugin@3.4.0(katex@0.16.47)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vite@8.3.4(esbuild@0.28.2)(terser@5.51.2)(yaml@2.9.1))':
     dependencies:
       '@cspell/dict-de-de': 4.1.2
       '@cspell/dict-en_us': 4.4.40
       '@cspell/dict-fr-fr': 2.3.2
       '@cspell/dict-pl_pl': 3.0.6
-      '@ox-content/napi': 3.3.0
+      '@ox-content/napi': 3.4.0
       '@resvg/resvg-js': 2.6.2
       '@standard-schema/spec': 1.1.0
       clean-css: 5.3.3
