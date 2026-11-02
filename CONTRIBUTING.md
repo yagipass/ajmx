@@ -73,6 +73,6 @@ go run github.com/Songmu/insmith/cmd/insmith@v0.0.4 \
 
 ## Repository settings
 
-The repository settings, labels, rulesets and Actions permissions are managed with [gh-infra](https://github.com/babarot/gh-infra) in `.github/infra.yml`. To change them, edit the file, review the difference with `gh infra plan .github/infra.yml`, and apply it with `gh infra apply .github/infra.yml`. Applying needs admin access to the repository.
+The repository settings, labels, rulesets, environments and Actions permissions are managed with [gh-infra](https://github.com/babarot/gh-infra) in `.github/infra.yml`. To change them, edit the file, review the difference with `gh infra plan .github/infra.yml`, and apply it with `gh infra apply .github/infra.yml`. Applying needs admin access to the repository.
 
-Environments and secrets are not managed by gh-infra. Change them in the repository settings on GitHub.
+Secrets are not managed by gh-infra, and it never deletes an environment. Do those in the repository settings on GitHub.
