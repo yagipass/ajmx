@@ -160,6 +160,13 @@ spec:
     can_approve_pull_requests: true
     fork_pr_approval: first_time_contributors
   environments:
+  - name: Cachix
+    wait_timer: 0
+    can_admins_bypass: true
+    reviewers: []
+    deployment_branch_policy:
+      custom_branch_policies:
+      - name: main
   - name: Cloudflare
     wait_timer: 0
     can_admins_bypass: true
