@@ -85,13 +85,13 @@
    "jar": "sha256-T7FB3Y72sFhf/O6kvElgL7xjEvqXfixIh5TqPmqv7K4=",
    "pom": "sha256-kRt1SgO2avD+0rvf3DqGgHNg3QNq07SB71FixoXkVr8="
   },
-  "net/ltgt/errorprone#net.ltgt.errorprone.gradle.plugin/5.1.1": {
-   "pom": "sha256-LDA6AgvBfhhtRE8fdtEDlqgfBaUnj4qJoYFIo4VEZ4o="
+  "net/ltgt/errorprone#net.ltgt.errorprone.gradle.plugin/5.2.0": {
+   "pom": "sha256-GTM0n/G9AeNxU0zSW13J35Z6r7E4Djj+BOEsIPeSHBE="
   },
-  "net/ltgt/gradle#gradle-errorprone-plugin/5.1.1": {
-   "jar": "sha256-0DBOEdC0EjBVDkS43/291Vg1kIQFwpNxc1g37ZFrywU=",
-   "module": "sha256-+xcyg/8AkT72PeAWrTXbCG9SQYL039lGH4dDiqbFnrU=",
-   "pom": "sha256-wDRtxtv57xPZNivYNo/8BKYtlK2C1ODN73oIBk94iGE="
+  "net/ltgt/gradle#gradle-errorprone-plugin/5.2.0": {
+   "jar": "sha256-iRJMcP6O50ckxLhLxmsC+TGW0Qt1s08nMANvaWRE2to=",
+   "module": "sha256-gMzta8kqH3pIvwfvTAOVrY97lkpcs0GOULXtyp1WRXU=",
+   "pom": "sha256-PQwDToW5BfUTxHCYI3yaWRWZS6G1Kiah6jxxAnR7rnw="
   },
   "org/apache#apache/39": {
    "pom": "sha256-cXUu1MJDWh2Dhf4KTTMPOdBO/sifDRul0VmNOfc5ekQ="
