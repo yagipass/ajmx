@@ -19,23 +19,23 @@
    "module": "sha256-IFNqlfL+sr9DBRKMaq7Lb9idxFeYqchfJgK4qAnXUNs=",
    "pom": "sha256-Q1z/VXiZht7arXF/aPuo1UgklHhWLc2EsirU1lZvRAs="
   },
-  "com/diffplug/spotless#com.diffplug.spotless.gradle.plugin/8.10.4": {
-   "pom": "sha256-AqHuNBhS7Y2MdzeMAFL8MmUiNGguQdslNqReqnhstQk="
+  "com/diffplug/spotless#com.diffplug.spotless.gradle.plugin/8.11.0": {
+   "pom": "sha256-iBIXhjMNCZysMnpLBbTHZzuVGTie8IF0Ektz+S9JeJU="
   },
-  "com/diffplug/spotless#spotless-lib-extra/4.10.4": {
+  "com/diffplug/spotless#spotless-lib-extra/4.11.0": {
    "jar": "sha256-g4Tzj28x/ZAq7K33iIdxENa0AxzVwn4GYESx5zg7Chs=",
-   "module": "sha256-6VdqrcAroD0RHkMszQ26olc1cfEEwYHPAqzSsI7lXgk=",
-   "pom": "sha256-oGe1iOL5eXSyXlsZb3mEev984twFH9aVTGdxRVVxm6w="
+   "module": "sha256-oTu/fH2Bnqyd7UqCPHirXzL5qENbMPGlaDAIcZojbl0=",
+   "pom": "sha256-nSWQcXEbVB1oaqIndKwmF9Xg7UXGaMc+IAY+iPwry54="
   },
-  "com/diffplug/spotless#spotless-lib/4.10.4": {
-   "jar": "sha256-79Qo+eT98YfcDsoK7gINY5h0zYObRY85VmvxBfYVAqo=",
-   "module": "sha256-dhZnqdIEKkcep6TuLH7O/M94dXcb/U+nT6tytY5LGXI=",
-   "pom": "sha256-dfbXLrWG4Ys0TJRf3s+QuXeTOkgYr/CiLxN9zYvzhiY="
+  "com/diffplug/spotless#spotless-lib/4.11.0": {
+   "jar": "sha256-2qdiRhwk/u95D4Pp6fKiSISyq1ydJVNxnN/kjxvRXDY=",
+   "module": "sha256-YrkGppV4epuXHFxNF7bjoTt8viyVUwek5wYMyP5+mp8=",
+   "pom": "sha256-zKE+UxAqiEJY79BuB8Ucf+LLU6uqCnF6+Y+VYuUWkEA="
   },
-  "com/diffplug/spotless#spotless-plugin-gradle/8.10.4": {
-   "jar": "sha256-+rQVJxTGCH42/WdsWK0Vpb6vcdrqVXs+AhlQcjKEzNc=",
-   "module": "sha256-A9d5bq+otLpVHuI7Ot+nIM1hfxOR9zMKAlOgvBxW30k=",
-   "pom": "sha256-3mpDIdJYIIZgV01kaR+ym0Qjrv/0weE9BO+cP19HMZM="
+  "com/diffplug/spotless#spotless-plugin-gradle/8.11.0": {
+   "jar": "sha256-NxtekPO/cNmyUTwhp4lLYaW7DptmOZVyiPhn7dYOht8=",
+   "module": "sha256-RpBf+awtCM9+NM4PYcG5oFmVFH6wsNuTyB5gPAHHHz8=",
+   "pom": "sha256-8DOvCdEDMbk8WZ+h4S0vaOM1YHjeD7Wa/EBSlG9sP7w="
   },
   "com/github/openjson#openjson/1.0.13": {
    "jar": "sha256-fUGEz4kfNZ7nIJWkzhy5zY88Z2Z23+cW6on6tNDm6VM=",
