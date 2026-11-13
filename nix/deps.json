@@ -389,13 +389,13 @@
    "jar": "sha256-TJsPpIHjbXF2845XLBNGVkJM+WAbwZCFXQ+JR435AcY=",
    "pom": "sha256-29OXmkXlxrTctXwOcZYcPezbfgifW49bk3VMLI4XiXM="
   },
-  "org/graalvm/sdk#nativeimage/25.4.4.1.1": {
-   "jar": "sha256-1jPLmJXwHbRD29K25UIRzVBeZ5J59nRahLH+6EMVZnc=",
-   "pom": "sha256-OfDBUdFUhFl3rFeLBAJ0Wx3QeHvzaMDUzcSa3GPx1d4="
+  "org/graalvm/sdk#nativeimage/25.5.5.0.3": {
+   "jar": "sha256-uNM3qdQTFplTKFtgC7G9JD8bKUoQZUoyR1H1ayqI10k=",
+   "pom": "sha256-CTIefAOHFELnQ+S2aznk4rU0egMDSl12Xr5kbL79XtY="
   },
-  "org/graalvm/sdk#word/25.4.4.1.1": {
-   "jar": "sha256-8gt63xdKjGEBjOTnF9ndpl/sJ9AFQOVH5j8br6QArJo=",
-   "pom": "sha256-2ZUQ7na31p2YexGZXQ8aw6AENRtN7Pw9BLxq8eERGwU="
+  "org/graalvm/sdk#word/25.5.5.0.3": {
+   "jar": "sha256-EaIcf2oTK9IcVm7EuLOX+wZlbbXSk/9Slm7oWCt53dE=",
+   "pom": "sha256-7XigdQfj0Rc8C0sBnAsHWM2Mx80rtg+OFAOcxKmjz6E="
   },
   "org/jspecify#jspecify/1.0.1": {
    "jar": "sha256-Bw118mH+TFuCAlCDZnFffy1GYPiMjvfm01deSMloO2Y=",
