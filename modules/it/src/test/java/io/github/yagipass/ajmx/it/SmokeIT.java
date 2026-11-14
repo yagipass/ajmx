@@ -34,10 +34,9 @@ final class SmokeIT {
     assertEquals(0, r.exitCode(), r.stdout());
     boolean found =
         list(r.result().get("items")).stream()
-            .anyMatch(
-                i ->
-                    number(map(i).get("pid")) == target.pid()
-                        && Objects.equals(map(i).get("mainClass"), "ajmxtest.TestTarget"));
+            .anyMatch(i ->
+                number(map(i).get("pid")) == target.pid()
+                    && Objects.equals(map(i).get("mainClass"), "ajmxtest.TestTarget"));
     assertTrue(found, r.stdout());
   }
 

@@ -19,12 +19,11 @@ public final class Timeouts {
   }
 
   private static final ExecutorService EXECUTOR =
-      Executors.newCachedThreadPool(
-          r -> {
-            Thread t = new Thread(r, "ajmx-call");
-            t.setDaemon(true);
-            return t;
-          });
+      Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r, "ajmx-call");
+        t.setDaemon(true);
+        return t;
+      });
 
   private Timeouts() {}
 
@@ -61,11 +60,10 @@ public final class Timeouts {
 
   public static void runQuietly(Cleanup task, long timeoutMs) {
     Future<?> future =
-        EXECUTOR.submit(
-            () -> {
-              task.run();
-              return null;
-            });
+        EXECUTOR.submit(() -> {
+          task.run();
+          return null;
+        });
     try {
       future.get(timeoutMs, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
