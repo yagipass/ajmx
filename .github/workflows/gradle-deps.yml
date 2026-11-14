@@ -32,7 +32,7 @@ jobs:
           update_script=$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)
           "$update_script"
       - id: diff
-        run: git diff --quiet || echo 'changed=true' >> "$GITHUB_OUTPUT"
+        run: git diff --quiet -- nix/deps.json || echo 'changed=true' >> "$GITHUB_OUTPUT"
       - if: steps.diff.outputs.changed == 'true'
         uses: actions/upload-artifact@v7.0.2
         with:
