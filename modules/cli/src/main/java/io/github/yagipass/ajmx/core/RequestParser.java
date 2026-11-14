@@ -13,11 +13,10 @@ final class RequestParser {
     String token = string(fields, "op");
     Op op =
         Token.find(Op.values(), token)
-            .orElseThrow(
-                () ->
-                    new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unknown op")
-                        .with("op", token)
-                        .with("allowed", Token.tokens(Op.values())));
+            .orElseThrow(() ->
+                new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unknown op")
+                    .with("op", token)
+                    .with("allowed", Token.tokens(Op.values())));
     List<String> allowed = new ArrayList<>(List.of("id", "op"));
     allowed.addAll(op.fields());
     for (String key : fields.keySet()) {

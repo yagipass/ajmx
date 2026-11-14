@@ -26,15 +26,14 @@ final class BatchTest {
             entry("a", Op.READ), entry("npe", Op.READ), entry("soe", Op.READ), entry("b", Op.READ));
     List<Object> executed = new ArrayList<>();
     Outcome outcome =
-        batch.run(
-            r -> {
-              executed.add(id(r));
-              return switch (id(r)) {
-                case "npe" -> throw new NullPointerException();
-                case "soe" -> throw new StackOverflowError();
-                default -> Outcome.of(Map.of("done", id(r)));
-              };
-            });
+        batch.run(r -> {
+          executed.add(id(r));
+          return switch (id(r)) {
+            case "npe" -> throw new NullPointerException();
+            case "soe" -> throw new StackOverflowError();
+            default -> Outcome.of(Map.of("done", id(r)));
+          };
+        });
 
     assertEquals(List.of("a", "npe", "soe", "b"), executed);
     assertTrue(outcome.partial());
@@ -51,17 +50,14 @@ final class BatchTest {
     AjmxException request = new AjmxException(ErrorCode.MBEAN_NOT_FOUND, "request");
     Outcome outcome =
         batch(entry("a", Op.READ), entry("b", Op.READ), entry("c", Op.READ))
-            .run(
-                r ->
-                    switch (id(r)) {
-                      case "a" ->
-                          Outcome.plain(
-                              Map.of(),
-                              Map.of(".errors[\"X\"]", attribute),
-                              Execution.NOT_EXECUTED);
-                      case "b" -> throw request;
-                      default -> Outcome.of(Map.of());
-                    });
+            .run(r ->
+                switch (id(r)) {
+                  case "a" ->
+                      Outcome.plain(
+                          Map.of(), Map.of(".errors[\"X\"]", attribute), Execution.NOT_EXECUTED);
+                  case "b" -> throw request;
+                  default -> Outcome.of(Map.of());
+                });
     assertEquals(
         List.of(".items[0].result.errors[\"X\"]", ".items[1].error"),
         List.copyOf(outcome.failuresByPath().keySet()));
@@ -80,18 +76,16 @@ final class BatchTest {
             entry("r", Op.READ));
     List<Object> executed = new ArrayList<>();
     Outcome outcome =
-        batch.run(
-            r -> {
-              executed.add(id(r));
-              return switch (id(r)) {
-                case "lookup" ->
-                    throw new AjmxException(ErrorCode.TIMEOUT, "getMBeanInfo timed out");
-                case "slow" ->
-                    throw new AjmxException(ErrorCode.TIMEOUT, "invoke timed out")
-                        .withExecution(Execution.UNKNOWN);
-                default -> Outcome.of(Map.of());
-              };
-            });
+        batch.run(r -> {
+          executed.add(id(r));
+          return switch (id(r)) {
+            case "lookup" -> throw new AjmxException(ErrorCode.TIMEOUT, "getMBeanInfo timed out");
+            case "slow" ->
+                throw new AjmxException(ErrorCode.TIMEOUT, "invoke timed out")
+                    .withExecution(Execution.UNKNOWN);
+            default -> Outcome.of(Map.of());
+          };
+        });
 
     assertEquals(List.of("lookup", "w1", "slow", "r"), executed);
     Map<?, ?> skipped =
@@ -216,11 +210,10 @@ final class BatchTest {
   void eachNonBlankLineIsOneRequestSoHeredocsAndCrlfFilesRunAsWritten() {
     Batch batch = Batch.parse("\n" + readLine("a") + "\r\n  \r\n" + readLine("b") + "\n");
     List<Object> executed = new ArrayList<>();
-    batch.run(
-        r -> {
-          executed.add(id(r));
-          return Outcome.of(Map.of());
-        });
+    batch.run(r -> {
+      executed.add(id(r));
+      return Outcome.of(Map.of());
+    });
     assertEquals(List.of("a", "b"), executed);
   }
 
@@ -245,14 +238,13 @@ final class BatchTest {
   private static List<Object> requestsRunAfter(AjmxException failure) {
     List<Object> executed = new ArrayList<>();
     batch(entry("first", Op.INVOKE), entry("w", Op.WRITE), entry("r", Op.READ))
-        .run(
-            r -> {
-              executed.add(id(r));
-              if (id(r).equals("first")) {
-                throw failure;
-              }
-              return Outcome.of(Map.of());
-            });
+        .run(r -> {
+          executed.add(id(r));
+          if (id(r).equals("first")) {
+            throw failure;
+          }
+          return Outcome.of(Map.of());
+        });
     return executed;
   }
 
