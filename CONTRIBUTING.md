@@ -39,7 +39,7 @@ The docs site in `docs/` is built with [ox-content](https://github.com/ubugeeei-
 - Name branches `<type>/<slug>` after the Conventional Commits type. `labeler.yml` labels the pull request by it, and the label picks its section of the release notes in `.github/release.yml`.
 - When the CLI's behavior changes, update `docs/content` and `skills/ajmx/SKILL.md` with it. `README.md` holds only the overview, the install commands, usage examples and links to the docs site, so update it only when one of those changes.
 - A macOS binary built in `nix develop` links libz from `/nix/store`. Use it locally only; release binaries are built by GitHub Actions.
-- After changing a dependency or plugin, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
+- After changing a dependency, a plugin or the Gradle wrapper version, regenerate `nix/deps.json` with `$(nix build --no-link --print-out-paths .#ajmx.mitmCache.updateScript)`. On Dependabot pull requests, `gradle-deps.yml` commits it, which needs a `GH_PAT` Dependabot secret that can push to this repository.
 
 ## Proposing a change
 

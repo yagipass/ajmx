@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - gradle/libs.versions.toml
+      - gradle/wrapper/gradle-wrapper.properties
       - "**.gradle.kts"
 
 concurrency:
