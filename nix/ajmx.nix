@@ -1,7 +1,7 @@
 {
   lib,
   stdenv,
-  gradle_9,
+  gradle-packages,
   graalvmPackages,
   buildGraalvmNativeImage,
 }:
@@ -9,7 +9,25 @@
 let
   version = "0.2.2";
   graalvm = graalvmPackages.graalvm-ce;
-  gradle = gradle_9.override { java = graalvm; };
+  wrapperProperties = lib.splitString "\n" (
+    builtins.readFile ../gradle/wrapper/gradle-wrapper.properties
+  );
+  wrapperProperty =
+    name:
+    lib.removePrefix "${name}=" (
+      lib.findFirst (lib.hasPrefix "${name}=") (throw "gradle-wrapper.properties has no ${name}")
+        wrapperProperties
+    );
+  gradle =
+    (gradle-packages.mkGradle {
+      version = lib.head (builtins.match ".*/gradle-(.+)-bin\\.zip" (wrapperProperty "distributionUrl"));
+      hash = builtins.convertHash {
+        hash = wrapperProperty "distributionSha256Sum";
+        hashAlgo = "sha256";
+        toHashFormat = "sri";
+      };
+      defaultJava = graalvm;
+    }).wrapped;
   fs = lib.fileset;
 
   jar = stdenv.mkDerivation (finalAttrs: {
