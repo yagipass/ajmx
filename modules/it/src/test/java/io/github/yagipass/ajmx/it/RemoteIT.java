@@ -157,12 +157,11 @@ final class RemoteIT {
       List<Socket> held = new ArrayList<>();
       Thread acceptor =
           new Thread(
-              new FutureTask<>(
-                  () -> {
-                    while (true) {
-                      held.add(blackHole.accept());
-                    }
-                  }));
+              new FutureTask<>(() -> {
+                while (true) {
+                  held.add(blackHole.accept());
+                }
+              }));
       acceptor.setDaemon(true);
       acceptor.start();
       long start = System.nanoTime();

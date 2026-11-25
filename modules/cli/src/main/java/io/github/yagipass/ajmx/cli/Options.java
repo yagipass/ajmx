@@ -89,11 +89,10 @@ record Options(
       if (command == null) {
         command =
             Token.find(Command.values(), arg)
-                .orElseThrow(
-                    () ->
-                        new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unknown command")
-                            .with("command", arg)
-                            .with("allowed", Command.tokens()));
+                .orElseThrow(() ->
+                    new AjmxException(ErrorCode.INVALID_ARGUMENT, "Unknown command")
+                        .with("command", arg)
+                        .with("allowed", Command.tokens()));
       } else {
         args.add(arg);
       }

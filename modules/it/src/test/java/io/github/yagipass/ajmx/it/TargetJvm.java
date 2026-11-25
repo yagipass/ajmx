@@ -51,21 +51,20 @@ final class TargetJvm implements AutoCloseable {
     BufferedReader out =
         new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
     CompletableFuture<String> ready =
-        CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                StringBuilder log = new StringBuilder();
-                for (String line; (line = out.readLine()) != null; ) {
-                  if (line.startsWith("READY ")) {
-                    return line.substring(6).trim();
-                  }
-                  log.append(line).append('\n');
-                }
-                throw new IllegalStateException("Target JVM exited before READY:\n" + log);
-              } catch (IOException e) {
-                throw new IllegalStateException(e);
+        CompletableFuture.supplyAsync(() -> {
+          try {
+            StringBuilder log = new StringBuilder();
+            for (String line; (line = out.readLine()) != null; ) {
+              if (line.startsWith("READY ")) {
+                return line.substring(6).trim();
               }
-            });
+              log.append(line).append('\n');
+            }
+            throw new IllegalStateException("Target JVM exited before READY:\n" + log);
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        });
     String pid;
     try {
       pid = ready.get(60, TimeUnit.SECONDS);

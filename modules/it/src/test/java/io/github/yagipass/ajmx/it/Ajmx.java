@@ -141,9 +141,8 @@ final class Ajmx {
           macOs
               ? lines.stream()
                   .filter(line -> line.endsWith(" maximum resident set size"))
-                  .mapToLong(
-                      line ->
-                          Long.parseLong(line.replace(" maximum resident set size", "").strip()))
+                  .mapToLong(line ->
+                      Long.parseLong(line.replace(" maximum resident set size", "").strip()))
                   .findFirst()
                   .orElseThrow(() -> new AssertionError("no maximum RSS in " + lines))
               : Long.parseLong(lines.getLast().strip()) * 1024;

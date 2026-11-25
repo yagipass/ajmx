@@ -85,11 +85,10 @@ public final class AjmxFeature implements Feature {
     try (Stream<Path> modules = Files.list(jrt.getPath("/modules"))) {
       return modules
           .map(m -> m.getFileName().toString())
-          .filter(
-              m ->
-                  FULLY_REGISTERED_MODULES.contains(m)
-                      || API_REGISTERED_JDK_MODULES.contains(m)
-                      || (m.startsWith("java.") && !NATIVE_LIBRARY_MODULES.contains(m)))
+          .filter(m ->
+              FULLY_REGISTERED_MODULES.contains(m)
+                  || API_REGISTERED_JDK_MODULES.contains(m)
+                  || (m.startsWith("java.") && !NATIVE_LIBRARY_MODULES.contains(m)))
           .toList();
     } catch (IOException e) {
       throw new IllegalStateException("Cannot list the JDK modules", e);

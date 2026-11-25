@@ -151,20 +151,19 @@ final class LocalConnectorTest {
       Thread jdk =
           Thread.ofPlatform()
               .daemon()
-              .start(
-                  () -> {
-                    for (int step = 1; step <= 10; step++) {
-                      try {
-                        Thread.sleep(1000);
-                      } catch (InterruptedException _) {
-                        ignoredInterrupts.incrementAndGet();
-                      }
-                    }
-                    attachFileRemoved.set(true);
-                    outcome.complete(
-                        LocalConnector.classifyAttachFailure(
-                            2000, new AttachNotSupportedException(NO_RESPONSE), hasPerfData));
-                  });
+              .start(() -> {
+                for (int step = 1; step <= 10; step++) {
+                  try {
+                    Thread.sleep(1000);
+                  } catch (InterruptedException _) {
+                    ignoredInterrupts.incrementAndGet();
+                  }
+                }
+                attachFileRemoved.set(true);
+                outcome.complete(
+                    LocalConnector.classifyAttachFailure(
+                        2000, new AttachNotSupportedException(NO_RESPONSE), hasPerfData));
+              });
       AjmxException e =
           LocalConnector.timedOutDuring(
               new LocalConnector.Handshake(jdk, hasPerfData, outcome), 2000);

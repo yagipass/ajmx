@@ -105,13 +105,12 @@ final class OperationsIT {
     List<String> operations =
         list(r.get("operations")).stream()
             .map(Ajmx::map)
-            .map(
-                o ->
-                    o.get("name")
-                        + list(o.get("signature")).stream()
-                            .map(p -> (String) map(p).get("type"))
-                            .toList()
-                            .toString())
+            .map(o ->
+                o.get("name")
+                    + list(o.get("signature")).stream()
+                        .map(p -> (String) map(p).get("type"))
+                        .toList()
+                        .toString())
             .toList();
     assertEquals(
         List.of("put[java.lang.String, int]", "put[java.lang.String, long]", "reset[]"),

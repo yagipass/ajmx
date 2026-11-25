@@ -214,11 +214,10 @@ public final class Cli {
       case Result.Success(Outcome outcome) ->
           outcome
               .failuresByPath()
-              .forEach(
-                  (path, e) -> {
-                    err.println("ajmx: .result" + path);
-                    printStackTrace(err, e);
-                  });
+              .forEach((path, e) -> {
+                err.println("ajmx: .result" + path);
+                printStackTrace(err, e);
+              });
       case Result.Failure(AjmxException error) -> printStackTrace(err, error);
     }
   }

@@ -36,11 +36,11 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "heap", "op": "read", "mbean": "java.lang:type=Memory", "attributes": ["HeapMemoryUsage"]}
-                {"id": "missing", "op": "read", "mbean": "ajmxtest:type=Nope", "attributes": ["X"]}
-                {"id": "nope", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "nope"}
-                {"id": "size", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
-                """);
+            {"id": "heap", "op": "read", "mbean": "java.lang:type=Memory", "attributes": ["HeapMemoryUsage"]}
+            {"id": "missing", "op": "read", "mbean": "ajmxtest:type=Nope", "attributes": ["X"]}
+            {"id": "nope", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "nope"}
+            {"id": "size", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
+            """);
     assertEquals(7, r.exitCode(), "partial failure");
     List<Object> items = list(r.result().get("items"));
     assertEquals(
@@ -58,9 +58,9 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "partial", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size", "Nope"]}
-                {"id": "missing", "op": "describe", "mbean": "ajmxtest:type=Nope"}
-                """,
+            {"id": "partial", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size", "Nope"]}
+            {"id": "missing", "op": "describe", "mbean": "ajmxtest:type=Nope"}
+            """,
             "--debug");
     assertEquals(7, r.exitCode(), r.stdout());
     String err = r.stderr();
@@ -105,11 +105,11 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
-                {"id": "deep", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["DeepValue"]}
-                {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                """);
+            {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
+            {"id": "deep", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["DeepValue"]}
+            {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            """);
     assertEquals(7, r.exitCode(), r.stdout());
     List<Object> items = list(r.result().get("items"));
     assertEquals(true, map(items.get(1)).get("ok"), r.stdout());
@@ -124,9 +124,9 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "shared", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Shared"]}
-                {"id": "size", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
-                """,
+            {"id": "shared", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Shared"]}
+            {"id": "size", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
+            """,
             "--max-bytes",
             "10000");
     assertEquals(7, r.exitCode(), r.stdout());
@@ -144,11 +144,11 @@ final class BatchIT {
         String.format(
             Locale.ROOT,
             """
-                {"id": "w", "op": "write", "mbean": "ajmxtest:type=Cache", "attribute": "MaxConnections", "value": %d}
-                {"id": "c", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
-                {"id": "i", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "put", "args": ["k", 1], "signature": ["java.lang.String", "int"]}
-                {"id": "r", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["MaxConnections", "ClearCount"]}
-                """,
+            {"id": "w", "op": "write", "mbean": "ajmxtest:type=Cache", "attribute": "MaxConnections", "value": %d}
+            {"id": "c", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
+            {"id": "i", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "put", "args": ["k", 1], "signature": ["java.lang.String", "int"]}
+            {"id": "r", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["MaxConnections", "ClearCount"]}
+            """,
             connections + 1);
 
     Ajmx.Result r = batch(stdin);
@@ -165,12 +165,12 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "before", "op": "read", "mbean": "ajmxtest:type=ArrayEcho", "attributes": ["InfoCalls"]}
-                {"id": "d", "op": "describe", "mbean": "ajmxtest:type=ArrayEcho"}
-                {"id": "i1", "op": "invoke", "mbean": "ajmxtest:type=ArrayEcho", "operation": "classOf", "args": [[1]], "signature": ["[I"]}
-                {"id": "i2", "op": "invoke", "mbean": "ajmxtest:type=ArrayEcho", "operation": "classOf", "args": [["s"]], "signature": ["[Ljava.lang.String;"]}
-                {"id": "after", "op": "read", "mbean": "ajmxtest:type=ArrayEcho", "attributes": ["InfoCalls"]}
-                """);
+            {"id": "before", "op": "read", "mbean": "ajmxtest:type=ArrayEcho", "attributes": ["InfoCalls"]}
+            {"id": "d", "op": "describe", "mbean": "ajmxtest:type=ArrayEcho"}
+            {"id": "i1", "op": "invoke", "mbean": "ajmxtest:type=ArrayEcho", "operation": "classOf", "args": [[1]], "signature": ["[I"]}
+            {"id": "i2", "op": "invoke", "mbean": "ajmxtest:type=ArrayEcho", "operation": "classOf", "args": [["s"]], "signature": ["[Ljava.lang.String;"]}
+            {"id": "after", "op": "read", "mbean": "ajmxtest:type=ArrayEcho", "attributes": ["InfoCalls"]}
+            """);
     assertEquals(0, r.exitCode(), r.stdout());
     List<Object> items = list(r.result().get("items"));
     assertEquals(1, infoCalls(items.get(4)) - infoCalls(items.get(0)), r.stdout());
@@ -205,9 +205,9 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "slow", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "sleep", "args": [20000]}
-                {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
-                """,
+            {"id": "slow", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "sleep", "args": [20000]}
+            {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
+            """,
             "--timeout",
             "1s");
     List<Object> items = list(r.result().get("items"));
@@ -220,11 +220,11 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                {"id": "slow", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "sleep", "args": [20000]}
-                {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
-                {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                """,
+            {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            {"id": "slow", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "sleep", "args": [20000]}
+            {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
+            {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            """,
             "--timeout",
             "1s");
     List<Object> items = list(r.result().get("items"));
@@ -242,11 +242,11 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                {"id": "lost", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "touch", "args": ["unsendable"]}
-                {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
-                {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
-                """);
+            {"id": "before", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            {"id": "lost", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "touch", "args": ["unsendable"]}
+            {"id": "clear", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "clear"}
+            {"id": "after", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["ClearCount"]}
+            """);
     List<Object> items = list(r.result().get("items"));
     Map<String, Object> lost = map(map(items.get(1)).get("error"));
     assertEquals("CONNECTION_FAILED", lost.get("code"), r.stdout());
@@ -264,10 +264,10 @@ final class BatchIT {
     Ajmx.Result r =
         batch(
             """
-                {"id": "big", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["LargeText"]}
-                {"id": "verbose", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "failVerbose"}
-                {"id": "small", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
-                """,
+            {"id": "big", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["LargeText"]}
+            {"id": "verbose", "op": "invoke", "mbean": "ajmxtest:type=Cache", "operation": "failVerbose"}
+            {"id": "small", "op": "read", "mbean": "ajmxtest:type=Cache", "attributes": ["Size"]}
+            """,
             "--max-bytes",
             "1024");
     assertEquals(7, r.exitCode(), r.stdout());

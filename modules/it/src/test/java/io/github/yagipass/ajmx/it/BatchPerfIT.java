@@ -76,12 +76,11 @@ final class BatchPerfIT {
 
   private static String requests(int n) {
     return IntStream.rangeClosed(1, n)
-        .mapToObj(
-            i ->
-                "{\"id\": \"r"
-                    + i
-                    + "\", \"op\": \"read\", \"mbean\": \"java.lang:type=Memory\","
-                    + " \"attributes\": [\"HeapMemoryUsage\"]}")
+        .mapToObj(i ->
+            "{\"id\": \"r"
+                + i
+                + "\", \"op\": \"read\", \"mbean\": \"java.lang:type=Memory\","
+                + " \"attributes\": [\"HeapMemoryUsage\"]}")
         .collect(Collectors.joining("\n", "", "\n"));
   }
 

@@ -185,11 +185,10 @@ public final class MBeanClient {
       Map<String, Object> errors = new LinkedHashMap<>();
       fetched
           .failures()
-          .forEach(
-              (attribute, e) -> {
-                errors.put(attribute, e.toJson());
-                failuresByPath.put(".errors[" + Json.write(attribute) + "]", e);
-              });
+          .forEach((attribute, e) -> {
+            errors.put(attribute, e.toJson());
+            failuresByPath.put(".errors[" + Json.write(attribute) + "]", e);
+          });
       result.put("errors", errors);
     }
     return outcome(result, encoder, failuresByPath, Execution.NOT_EXECUTED);
@@ -248,10 +247,9 @@ public final class MBeanClient {
         Arrays.stream(info(name).getAttributes())
             .filter(a -> a.getName().equals(attribute))
             .findFirst()
-            .orElseThrow(
-                () ->
-                    new AjmxException(ErrorCode.ATTRIBUTE_NOT_FOUND, "Attribute was not found")
-                        .withContext(context));
+            .orElseThrow(() ->
+                new AjmxException(ErrorCode.ATTRIBUTE_NOT_FOUND, "Attribute was not found")
+                    .withContext(context));
     if (!info.isWritable()) {
       throw new AjmxException(ErrorCode.ATTRIBUTE_NOT_WRITABLE, "Attribute is not writable")
           .withContext(context);
