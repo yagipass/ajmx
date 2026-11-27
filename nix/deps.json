@@ -340,10 +340,10 @@
   "com/google/protobuf#protobuf-parent/4.36.2": {
    "pom": "sha256-rKdv5XH8kEU2fRTkWm+theKmuPH1tBHSo4bfCJ4hEbI="
   },
-  "com/uber/nullaway#nullaway/0.14.3": {
-   "jar": "sha256-RA0yF/anTTuNq3ZrDGPb+7h76jbXmIeYZSGCSdw/FgQ=",
-   "module": "sha256-7/HeVAJ82fG6g0HfQ4fg9JRLfy/ZdiJMzD5Vpo9Ut7I=",
-   "pom": "sha256-ZeuuBDec4OSmEcZ3IGt1rPWnf45+Tydkum7d+6NJFoo="
+  "com/uber/nullaway#nullaway/0.14.4": {
+   "jar": "sha256-mMLv/8aJ/mBhti2lOQ9rvVPd2IRFsi1G6JRmZWaQRO0=",
+   "module": "sha256-a64rJIZZ4nZxYOZEKD0sBUeq0AG7UgRU9zSFy9wQqOE=",
+   "pom": "sha256-sPwvImpxS7NwGOB717UXqhFI+1Gp2XSeRg13SJiuxlQ="
   },
   "io/github/eisop#dataflow-errorprone/3.41.0-eisop1": {
    "jar": "sha256-EENPuk5T9V+px2kEzeQUuRiTJUjJ38Ti1jSsBf96fRA=",
