@@ -7,11 +7,11 @@ workflows:
         - 'actions/attest@v4.2.2'
         - 'actions/checkout@v7.0.1'
         - 'actions/download-artifact@v8.0.2'
-        - 'actions/setup-java@v6.2.0'
+        - 'actions/setup-java@v6.3.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'cachix/cachix-action@v17'
         - 'cachix/install-nix-action@v31.11.5'
-        - 'graalvm/setup-graalvm@v1.6.9'
+        - 'graalvm/setup-graalvm@v1.6.10'
         - 'gradle/actions@v6.4.1'
         - 'songmu/tagpr@v1.22.0'
     '.github/workflows/gradle-deps.yml':
@@ -42,9 +42,9 @@ dependencies:
         commit: 'sha1-bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13'
         owner_id: 44036562
         repo_id: 177139928
-    'actions/setup-java@v6.2.0':
-        ref: 'v6.2.0'
-        commit: 'sha1-77dd5b2ce225ea11469928ac317850245a74ae78'
+    'actions/setup-java@v6.3.0':
+        ref: 'v6.3.0'
+        commit: 'sha1-d1374f8ac74474200d16ef8ecee22c7ae7a51880'
         owner_id: 44036562
         repo_id: 196057608
     'actions/upload-artifact@v7.0.2':
@@ -62,9 +62,9 @@ dependencies:
         commit: 'sha1-3dc140bfc76c49fbd4dd958429132e3746bcb086'
         owner_id: 36824654
         repo_id: 212301524
-    'graalvm/setup-graalvm@v1.6.9':
-        ref: 'v1.6.9'
-        commit: 'sha1-d6eca2595046623d69d636041513c80abf745406'
+    'graalvm/setup-graalvm@v1.6.10':
+        ref: 'v1.6.10'
+        commit: 'sha1-60e76998d25690099182b796e99b8804da582d90'
         owner_id: 10176827
         repo_id: 443997241
     'gradle/actions@v6.4.1':
