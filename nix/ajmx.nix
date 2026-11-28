@@ -7,7 +7,7 @@
 }:
 
 let
-  version = "0.2.3";
+  version = "0.2.4";
   graalvm = graalvmPackages.graalvm-ce;
   wrapperProperties = lib.splitString "\n" (
     builtins.readFile ../gradle/wrapper/gradle-wrapper.properties
