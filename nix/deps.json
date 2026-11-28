@@ -166,23 +166,23 @@
    "jar": "sha256-FIFMHxpzf94KLVbEei8Cz0yMXe50h1bEdj5nTK4hQlA=",
    "pom": "sha256-XUG8QBmthbh+kDS6D/MJbHtmhWoOz2TGGaXQvhxwaCQ="
   },
-  "org/graalvm/buildtools#graalvm-reachability-metadata/1.1.18": {
+  "org/graalvm/buildtools#graalvm-reachability-metadata/1.1.19": {
    "jar": "sha256-aCpHXQmzrBFSZysvcGyI9UtgSPbIijOmll973yTagEo=",
-   "module": "sha256-igcnWxkn+JfDxI0CSXkn0Ojqr6fPH0lWebA2dhjQ+x4=",
-   "pom": "sha256-B+vh+L2cK4sxiAWjjuHdaemjq/Spx7WmU12ytBYVj8U="
+   "module": "sha256-PjOQ1KkjILa2sZ99y8GBhtxbMGkaFi2dsiUpl9YOHK8=",
+   "pom": "sha256-Re8JlIc8aeF0PKw7GkTXtyy6Qq4fLIUWFN0G5BDNcqI="
   },
-  "org/graalvm/buildtools#native-gradle-plugin/1.1.18": {
-   "jar": "sha256-F2rV+VO3iBYjtAvTkKXW3EVKzsKt2InxYLXnhMnjQzI=",
-   "module": "sha256-2WB2YscluNOWVXlUejcz1VoPkMW0/zFUaSNh+z8h8Eg=",
-   "pom": "sha256-KgB+0WwjWB1QGwgOXlYyagoAg6LdSO6LmzNL64qfylY="
+  "org/graalvm/buildtools#native-gradle-plugin/1.1.19": {
+   "jar": "sha256-iJW6eCOTReFTHpmAXq5rgGKh9MQq2GjMMCgVdA3/MoE=",
+   "module": "sha256-AZs/8KCvmgOr6tQAfUd5NUL++OWAmXTahKmKYZrtj1w=",
+   "pom": "sha256-EUo1druSMu5AAfSKqkesorBT78fFeFR09/1zyS0Tj30="
   },
-  "org/graalvm/buildtools#utils/1.1.18": {
-   "jar": "sha256-2rU7EyHO5Obe7lBTIcNuQVOJBcoenRW+xT9EqJ5riME=",
-   "module": "sha256-ddsST9mIggyY91uqNDlC/qujd3/+B8JNRuxthl3WRtw=",
-   "pom": "sha256-1VbcJ+tBLt8s0IA4110Xmc8uE9NILXmC+JbMuH6F1Jw="
+  "org/graalvm/buildtools#utils/1.1.19": {
+   "jar": "sha256-/xp931EnkBTOIl8WxfsfY30KgkOrXB3n6IaSLcg4gxI=",
+   "module": "sha256-qcstkRxDWMzS3GurxICdPo4glX3sP4DPYvwKH+0u2IQ=",
+   "pom": "sha256-r6pCsRV4mM/8XmmixfZFyfJUekxzY2QhCZyOYaIzGAw="
   },
-  "org/graalvm/buildtools/native#org.graalvm.buildtools.native.gradle.plugin/1.1.18": {
-   "pom": "sha256-K4OeczkxmShx9eJDhucUw4yT/WwTkyvBcSJrq0bwh1s="
+  "org/graalvm/buildtools/native#org.graalvm.buildtools.native.gradle.plugin/1.1.19": {
+   "pom": "sha256-zmlk7Hltu4DUK+tUPNjc3J+KdVM6RTjmi3UkDiWQtPw="
   },
   "org/jetbrains#annotations/13.0": {
    "jar": "sha256-rOKhDcji1f00kl7KwD5JiLLA+FFlDJS4zvSbob0RFHg=",
